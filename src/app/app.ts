@@ -1,9 +1,10 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { DynamicForm } from './features/form-fill/dynamic-form/dynamic-form';
+//import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [DynamicForm],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
