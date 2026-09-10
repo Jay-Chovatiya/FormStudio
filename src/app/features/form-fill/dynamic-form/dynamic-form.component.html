@@ -1,0 +1,68 @@
+<p>dynamic-form works!</p>
+<form [formGroup]="form" (ngSubmit)="submit()">
+  @for (field of fields; track field.id) {
+    <label [for]="field.name">{{ field.label }}</label>
+    @if (field.type === 'Dropdown') {
+      <select [formControlName]="field.name">
+        @for (option of field.options ?? []; track option.id) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    } @else if (field.type === 'Checkbox') {
+      <input type="checkbox" [formControlName]="field.name" /> {{ field.placeholder }}
+    } @else if (field.type === 'RadioButton') {
+      @for (option of field.options ?? []; track option.id) {
+        <div>
+          <input
+            type="radio"
+            [id]="field.id + '-' + option.id"
+            [formControlName]="field.name"
+            [value]="option.value"
+          />
+          <label [for]="field.id + '-' + option.value">{{ option.label }}</label>
+        </div>
+      }
+    } @else {
+      <input
+        [type]="getInputType(field.type)"
+        [formControlName]="field.name"
+        [placeholder]="field.placeholder ?? ''"
+      />
+    }
+
+    @let control = getControl(field.name);
+
+    @if (control?.invalid && control?.touched) {
+      @if (control?.errors?.['required']) {
+        <p>{{ field.label }} is required.</p>
+      }
+      @if (control?.errors?.['email']) {
+        <p>{{ field.label }} must be a valid email.</p>
+      }
+      @if (control?.errors?.['minlength']) {
+        <p>
+          {{ field.label }} must be at least
+          {{ control?.errors?.['minlength']?.requiredLength }} characters.
+        </p>
+      }
+      @if (control?.errors?.['maxlength']) {
+        <p>
+          {{ field.label }} must be at most
+          {{ control?.errors?.['maxlength']?.requiredLength }} characters.
+        </p>
+      }
+      @if (control?.errors?.['min']) {
+        <p>{{ field.label }} must be at least {{ control?.errors?.['min']?.min }}.</p>
+      }
+      @if (control?.errors?.['max']) {
+        <p>{{ field.label }} must be at most {{ control?.errors?.['max']?.max }}.</p>
+      }
+      @if (control?.errors?.['pattern']) {
+        <p>{{ field.label }} has an invalid format.</p>
+      }
+    }
+    <br />
+  }
+
+  <button type="submit">Submit</button>
+</form>

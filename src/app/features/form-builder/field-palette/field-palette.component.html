@@ -1,0 +1,9 @@
+<div>
+  <h3>Fields</h3>
+
+  @for (field of fields; track field.type) {
+    <div (click)="selectField(field)">
+      {{ field.label }}
+    </div>
+  }
+</div>

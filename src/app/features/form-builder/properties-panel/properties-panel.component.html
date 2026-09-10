@@ -1,0 +1,171 @@
+<p>properties-panel works!</p>
+
+@if (selectedField(); as field) {
+  <label>
+    Label
+    <input [value]="field.label" (blur)="updateFieldProperty('label', $event)" />
+  </label>
+
+  <label>
+    Field Name
+    <input [value]="field.name" (blur)="updateFieldProperty('name', $event)" />
+  </label>
+
+  <label>
+    Visibility
+    <input
+      type="checkbox"
+      [checked]="field.visibility"
+      (change)="updateFieldProperty('visibility', $event)"
+    />
+  </label>
+
+  @if (supportsOptions(field.type)) {
+    <li>Label -- Value</li>
+    <button (click)="addOption()">+ Add Option</button>
+    @for (option of field.options ?? []; track option.id) {
+      <div>
+        <input [value]="option.label" (blur)="updateOption(option.id, 'label', $event)" />
+        <input [value]="option.value" (blur)="updateOption(option.id, 'value', $event)" />
+        <button (click)="deleteOption(option.id)">Delete</button>
+      </div>
+    }
+  }
+  <label>
+    Helper Description
+    <input
+      [value]="field.helperDescription ?? ''"
+      (blur)="updateFieldProperty('helperDescription', $event)"
+    />
+  </label>
+  <label>
+    Placeholder
+    <input [value]="field.placeholder ?? ''" (blur)="updateFieldProperty('placeholder', $event)" />
+  </label>
+  <div>
+    <strong>Default {{ field.default }}</strong>
+    @if (field.type === 'RadioButton') {
+      @for (option of field.options ?? []; track option.id) {
+        <label>
+          <input
+            type="radio"
+            name="default-radio"
+            [value]="option.value"
+            [checked]="field.default === option.value"
+            (change)="updateFieldProperty('default', $event)"
+          />
+
+          {{ option.label }}
+        </label>
+      }
+    } @else if (field.type === 'Dropdown') {
+      <select (change)="updateFieldProperty('default', $event)">
+        <option value="">No default</option>
+
+        @for (option of field.options ?? []; track option.id) {
+          <option [value]="option.value" [selected]="field.default === option.value">
+            {{ option.label }}
+          </option>
+        }
+      </select>
+    } @else if (field.type === 'Checkbox') {
+      <input
+        type="checkbox"
+        [checked]="field.default === true"
+        (change)="updateFieldProperty('default', $event)"
+      />
+    } @else {
+      <input
+        [type]="field.type === 'Number' ? 'number' : 'text'"
+        [value]="field.default ?? ''"
+        (blur)="updateFieldProperty('default', $event)"
+      />
+    }
+  </div>
+  <div>
+    <strong>Validation</strong>
+    <label>
+      <input
+        type="checkbox"
+        [checked]="isValidationEnabled('required')"
+        (change)="toggleValidation('required', $event)"
+      />
+      Required
+    </label>
+    @if (field.type === 'Textbox' || field.type === 'Textarea') {
+      <label>
+        Min Length
+        <input
+          type="number"
+          [value]="getValidationValue('minLength')"
+          (blur)="updateValidationValue('minLength', $event)"
+        />
+        @if (getPropertyError('minLength'); as error) {
+          <small>{{ error }}</small>
+        }
+      </label>
+
+      <label>
+        Max Length
+        <input
+          type="number"
+          [value]="getValidationValue('maxLength')"
+          (blur)="updateValidationValue('maxLength', $event)"
+        />
+        @if (getPropertyError('maxLength'); as error) {
+          <small>{{ error }}</small>
+        }
+      </label>
+    }
+
+    @if (field.type === 'Number') {
+      <label>
+        Min Value
+        <input
+          type="number"
+          [value]="getValidationValue('minValue')"
+          (blur)="updateValidationValue('minValue', $event)"
+        />
+        @if (getPropertyError('minValue'); as error) {
+          <small>{{ error }}</small>
+        }
+      </label>
+
+      <label>
+        Max Value
+        <input
+          type="number"
+          [value]="getValidationValue('maxValue')"
+          (blur)="updateValidationValue('maxValue', $event)"
+        />
+        @if (getPropertyError('maxValue'); as error) {
+          <small>{{ error }}</small>
+        }
+      </label>
+    }
+    @if (field.type === 'Email') {
+      <label>
+        <input
+          type="checkbox"
+          [checked]="isValidationEnabled('email')"
+          (change)="toggleValidation('email', $event)"
+        />
+        Email Format
+      </label>
+    }
+    @if (field.type === 'Textbox' || field.type === 'Textarea' || field.type === 'Email') {
+      <label>
+        Pattern
+        <input
+          type="text"
+          [value]="getPatternValidationValue()"
+          (blur)="updatePatternValidation($event)"
+          placeholder="Enter regex pattern"
+        />
+        @if (getPropertyError('pattern'); as error) {
+          <small>{{ error }}</small>
+        }
+      </label>
+    }
+  </div>
+}

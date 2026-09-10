@@ -1,0 +1,13 @@
+<p>form canvas is here</p>
+@if (form(); as currentForm) {
+  @for (section of currentForm.sections; track section.id) {
+    <div (click)="selectSection(section.id)" [class.selected]="isSectionSelected(section.id)">
+      {{ section.title }}
+      @for (field of section.fields; track field.id) {
+        <div (click)="selectField(section.id, field.id); $event.stopPropagation()" [class.selected-field]="isFieldSelected(field.id)">
+          <p>{{ field.label }} -- {{ field.type }} -- {{ field.name }}</p>
+        </div>
+      }
+    </div>
+  }
+}
