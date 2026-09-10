@@ -3,44 +3,67 @@ import { FieldTypes } from './field-types';
 export interface FieldPaletteItem {
   type: FieldTypes;
   label: string;
-  icon?: string;
+  description: string;
+  icon: string;
+  category: 'Basic' | 'Selection' | 'Advanced';
+  disabled?: boolean;
 }
 
 export const fieldPalette: FieldPaletteItem[] = [
   {
     type: 'Textbox',
     label: 'Textbox',
+    description: 'Single-line text input',
     icon: 'text',
+    category: 'Basic',
   },
   {
-    type: 'Email',
-    label: 'Email',
-    icon: 'email',
+    type: 'Textarea',
+    label: 'Textarea',
+    description: 'Multi-line text input',
+    icon: 'align-left',
+    category: 'Basic',
   },
   {
     type: 'Number',
     label: 'Number',
-    icon: 'number',
+    description: 'Numeric value input',
+    icon: 'hash',
+    category: 'Basic',
   },
   {
-    type: 'Textarea',
-    label: 'Text Area',
-    icon: 'text',
+    type: 'Email',
+    label: 'Email',
+    description: 'Email address input with format check',
+    icon: 'mail',
+    category: 'Basic',
   },
   {
-    type: 'RadioButton',
-    label: 'Radio Button',
-  },
-  {
-    type: 'Checkbox',
-    label: 'Checkbox',
+    type: 'Date',
+    label: 'Date Picker',
+    description: 'Calendar date selection',
+    icon: 'calendar',
+    category: 'Basic',
   },
   {
     type: 'Dropdown',
     label: 'Dropdown',
+    description: 'Single select menu',
+    icon: 'chevron-down',
+    category: 'Selection',
   },
   {
-    type: 'Date',
-    label: 'Date',
+    type: 'RadioButton',
+    label: 'Radio Button',
+    description: 'Single choice options',
+    icon: 'disc',
+    category: 'Selection',
+  },
+  {
+    type: 'Checkbox',
+    label: 'Checkbox',
+    description: 'Boolean toggle or multi-select options',
+    icon: 'check-square',
+    category: 'Selection',
   },
 ];

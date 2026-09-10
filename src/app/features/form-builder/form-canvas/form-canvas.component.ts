@@ -11,8 +11,9 @@ export class FormCanvasComponent implements OnInit {
   private formBuilderState = inject(FormBuilderState);
 
   ngOnInit(): void {
-    this.formBuilderState.createForm();
-    this.formBuilderState.createSection();
+    if (!this.formBuilderState.form()) {
+      this.formBuilderState.createNewForm('Sample Form', 'Dynamic form builder canvas');
+    }
   }
 
   form = this.formBuilderState.form;
@@ -29,8 +30,8 @@ export class FormCanvasComponent implements OnInit {
     return this.formBuilderState.selectedSectionId() === sectionId;
   }
 
-  isFieldSelected(fieldId: number): boolean{
+  isFieldSelected(fieldId: number): boolean {
     return this.formBuilderState.selectedFieldId() === fieldId;
   }
-
+  
 }
