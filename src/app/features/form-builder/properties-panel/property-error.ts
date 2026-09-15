@@ -11,7 +11,9 @@ export type PropertyName =
   | 'minValue'
   | 'maxValue'
   | 'pattern'
-  | 'options';
+  | 'options'
+  | 'title'
+  | 'code';
 
 export interface PropertyError {
   property: PropertyName;

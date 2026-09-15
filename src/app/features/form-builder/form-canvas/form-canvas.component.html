@@ -1,13 +1,50 @@
 <p>form canvas is here</p>
+<button (click)="openFormProperties()">
+  Form Properties
+</button>
+<button (click)="addSection()">+ Add Section</button>
 @if (form(); as currentForm) {
-  @for (section of currentForm.sections; track section.id) {
-    <div (click)="selectSection(section.id)" [class.selected]="isSectionSelected(section.id)">
-      {{ section.title }}
-      @for (field of section.fields; track field.id) {
-        <div (click)="selectField(section.id, field.id); $event.stopPropagation()" [class.selected-field]="isFieldSelected(field.id)">
-          <p>{{ field.label }} -- {{ field.type }} -- {{ field.name }}</p>
+  <div cdkDropListGroup>
+    <div>
+      <strong>{{currentForm.name}}</strong><br/>
+      <strong>{{currentForm.description}}</strong><br/>
+      <strong>{{currentForm.code}}</strong><br/>
+      <strong>{{currentForm.category}}</strong><br/>
+      <strong>{{currentForm.status}}</strong><br/>
+    </div>
+    <div cdkDropList (cdkDropListDropped)="dropSection($event)">
+      @for (section of currentForm.sections; track section.id) {
+        <div
+          cdkDrag
+          (click)="selectSection(section.id)"
+          [class.selected]="isSectionSelected(section.id)"
+        >
+          {{ section.title }}
+          <button (click)="removeSection(section.id); $event.stopPropagation()">
+            Delete Section
+          </button>
+          <div
+            cdkDropList
+            [id]="getFieldDropListId(section.id)"
+            [cdkDropListConnectedTo]="getFieldDropListIds()"
+            [cdkDropListData]="section.id"
+            (cdkDropListDropped)="dropField($event)"
+          >
+            @for (field of section.fields; track field.id) {
+              <div
+                cdkDrag
+                (click)="selectField(section.id, field.id); $event.stopPropagation()"
+                [class.selected-field]="isFieldSelected(field.id)"
+              >
+                <p>{{ field.label }} -- {{ field.type }} -- {{ field.name }}</p>
+                <button (click)="removeField(field.id); $event.stopPropagation()">
+                  Delete Field
+                </button>
+              </div>
+            }
+          </div>
         </div>
       }
     </div>
-  }
+  </div>
 }

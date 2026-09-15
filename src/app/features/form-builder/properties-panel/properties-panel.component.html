@@ -1,171 +1,248 @@
 <p>properties-panel works!</p>
 
-@if (selectedField(); as field) {
-  <label>
-    Label
-    <input [value]="field.label" (blur)="updateFieldProperty('label', $event)" />
-  </label>
+@if (activeTab() === 'field' && selectedField(); as field) {
+  <form [formGroup]="fieldForm">
+    <label>
+      Label
+      <input formControlName="label" />
+    </label>
 
-  <label>
-    Field Name
-    <input [value]="field.name" (blur)="updateFieldProperty('name', $event)" />
-  </label>
+    <label>
+      Field Name
+      <input formControlName="name" />
+      @if (fieldForm.controls.name.invalid && fieldForm.controls.name.touched) {
+        @if (fieldForm.controls.name.hasError('requiredTrimmed')) {
+          <small>field name is required</small>
+        } @else if (fieldForm.controls.name.hasError('invalidIdentifier')) {
+          <small>Invalid field name</small>
+        } @else if (fieldForm.controls.name.hasError('duplicateFieldName')) {
+          <small>Field name already exists</small>
+        }
+      }
+    </label>
 
-  <label>
-    Visibility
-    <input
-      type="checkbox"
-      [checked]="field.visibility"
-      (change)="updateFieldProperty('visibility', $event)"
-    />
-  </label>
+    <label>
+      Visibility
+      <input type="checkbox" formControlName="visibility" />
+    </label>
 
-  @if (supportsOptions(field.type)) {
-    <li>Label -- Value</li>
-    <button (click)="addOption()">+ Add Option</button>
-    @for (option of field.options ?? []; track option.id) {
-      <div>
-        <input [value]="option.label" (blur)="updateOption(option.id, 'label', $event)" />
-        <input [value]="option.value" (blur)="updateOption(option.id, 'value', $event)" />
-        <button (click)="deleteOption(option.id)">Delete</button>
+    @if (supportsOptions(field.type)) {
+      <li>Label -- Value</li>
+      <button type="button" (click)="addFieldOption()">+ Add Option</button>
+      <div formArrayName="options">
+        @for (
+          option of fieldForm.controls.options.controls;
+          track option.value.id;
+          let i = $index
+        ) {
+          <div [formGroupName]="i">
+            <input formControlName="label" />
+            <input formControlName="value" />
+            <button type="button" (click)="deleteFieldOption(option.value.id)">Delete</button>
+          </div>
+        }
       </div>
     }
-  }
-  <label>
-    Helper Description
-    <input
-      [value]="field.helperDescription ?? ''"
-      (blur)="updateFieldProperty('helperDescription', $event)"
-    />
-  </label>
-  <label>
-    Placeholder
-    <input [value]="field.placeholder ?? ''" (blur)="updateFieldProperty('placeholder', $event)" />
-  </label>
-  <div>
-    <strong>Default {{ field.default }}</strong>
-    @if (field.type === 'RadioButton') {
-      @for (option of field.options ?? []; track option.id) {
-        <label>
-          <input
-            type="radio"
-            name="default-radio"
-            [value]="option.value"
-            [checked]="field.default === option.value"
-            (change)="updateFieldProperty('default', $event)"
-          />
-
-          {{ option.label }}
-        </label>
-      }
-    } @else if (field.type === 'Dropdown') {
-      <select (change)="updateFieldProperty('default', $event)">
-        <option value="">No default</option>
-
-        @for (option of field.options ?? []; track option.id) {
-          <option [value]="option.value" [selected]="field.default === option.value">
-            {{ option.label }}
-          </option>
-        }
-      </select>
-    } @else if (field.type === 'Checkbox') {
-      <input
-        type="checkbox"
-        [checked]="field.default === true"
-        (change)="updateFieldProperty('default', $event)"
-      />
-    } @else {
-      <input
-        [type]="field.type === 'Number' ? 'number' : 'text'"
-        [value]="field.default ?? ''"
-        (blur)="updateFieldProperty('default', $event)"
-      />
-    }
-  </div>
-  <div>
-    <strong>Validation</strong>
     <label>
-      <input
-        type="checkbox"
-        [checked]="isValidationEnabled('required')"
-        (change)="toggleValidation('required', $event)"
-      />
-      Required
+      Helper Description
+      <input formControlName="helperDescription" />
     </label>
-    @if (field.type === 'Textbox' || field.type === 'Textarea') {
-      <label>
-        Min Length
-        <input
-          type="number"
-          [value]="getValidationValue('minLength')"
-          (blur)="updateValidationValue('minLength', $event)"
-        />
-        @if (getPropertyError('minLength'); as error) {
-          <small>{{ error }}</small>
-        }
-      </label>
+    <label>
+      Placeholder
+      <input formControlName="placeholder" />
+    </label>
+    <div>
+      <strong>Default</strong>
+      @if (field.type === 'RadioButton') {
+        @for (option of fieldForm.controls.options.controls; track option.value.id) {
+          <label>
+            <input
+              type="radio"
+              name="default"
+              [value]="option.value.value"
+              formControlName="default"
+            />
 
-      <label>
-        Max Length
-        <input
-          type="number"
-          [value]="getValidationValue('maxLength')"
-          (blur)="updateValidationValue('maxLength', $event)"
-        />
-        @if (getPropertyError('maxLength'); as error) {
-          <small>{{ error }}</small>
+            {{ option.value.label }}
+          </label>
         }
-      </label>
-    }
+      } @else if (field.type === 'Dropdown') {
+        <select formControlName="default">
+          <option value="">No default</option>
 
-    @if (field.type === 'Number') {
-      <label>
-        Min Value
-        <input
-          type="number"
-          [value]="getValidationValue('minValue')"
-          (blur)="updateValidationValue('minValue', $event)"
-        />
-        @if (getPropertyError('minValue'); as error) {
-          <small>{{ error }}</small>
-        }
-      </label>
-
-      <label>
-        Max Value
-        <input
-          type="number"
-          [value]="getValidationValue('maxValue')"
-          (blur)="updateValidationValue('maxValue', $event)"
-        />
-        @if (getPropertyError('maxValue'); as error) {
-          <small>{{ error }}</small>
-        }
-      </label>
-    }
-    @if (field.type === 'Email') {
+          @for (option of fieldForm.controls.options.controls; track option.value.id) {
+            <option [value]="option.value.value">
+              {{ option.value.label }}
+            </option>
+          }
+        </select>
+      } @else if (field.type === 'Checkbox') {
+        <input type="checkbox" formControlName="default" />
+      } @else {
+        <input [type]="field.type === 'Number' ? 'number' : 'text'" formControlName="default" />
+      }
+    </div>
+    <div>
+      <strong>Validation</strong>
       <label>
         <input
           type="checkbox"
-          [checked]="isValidationEnabled('email')"
-          (change)="toggleValidation('email', $event)"
+          [checked]="isValidationEnabled('required')"
+          (change)="toggleValidation('required', $event)"
         />
-        Email Format
+        Required
       </label>
-    }
-    @if (field.type === 'Textbox' || field.type === 'Textarea' || field.type === 'Email') {
-      <label>
-        Pattern
-        <input
-          type="text"
-          [value]="getPatternValidationValue()"
-          (blur)="updatePatternValidation($event)"
-          placeholder="Enter regex pattern"
-        />
-        @if (getPropertyError('pattern'); as error) {
-          <small>{{ error }}</small>
+      @if (field.type === 'Textbox' || field.type === 'Textarea') {
+        <label>
+          Min Length
+          <input
+            type="number"
+            [value]="getValidationValue('minLength')"
+            (blur)="updateValidationValue('minLength', $event)"
+          />
+          @if (getPropertyError('minLength'); as error) {
+            <small>{{ error }}</small>
+          }
+        </label>
+
+        <label>
+          Max Length
+          <input
+            type="number"
+            [value]="getValidationValue('maxLength')"
+            (blur)="updateValidationValue('maxLength', $event)"
+          />
+          @if (getPropertyError('maxLength'); as error) {
+            <small>{{ error }}</small>
+          }
+        </label>
+      }
+
+      @if (field.type === 'Number') {
+        <label>
+          Min Value
+          <input
+            type="number"
+            [value]="getValidationValue('minValue')"
+            (blur)="updateValidationValue('minValue', $event)"
+          />
+          @if (getPropertyError('minValue'); as error) {
+            <small>{{ error }}</small>
+          }
+        </label>
+
+        <label>
+          Max Value
+          <input
+            type="number"
+            [value]="getValidationValue('maxValue')"
+            (blur)="updateValidationValue('maxValue', $event)"
+          />
+          @if (getPropertyError('maxValue'); as error) {
+            <small>{{ error }}</small>
+          }
+        </label>
+      }
+      @if (field.type === 'Email') {
+        <label>
+          <input
+            type="checkbox"
+            [checked]="isValidationEnabled('email')"
+            (change)="toggleValidation('email', $event)"
+          />
+          Email Format
+        </label>
+      }
+      @if (field.type === 'Textbox' || field.type === 'Textarea' || field.type === 'Email') {
+        <label>
+          Pattern
+          <input
+            type="text"
+            [value]="getPatternValidationValue()"
+            (blur)="updatePatternValidation($event)"
+            placeholder="Enter regex pattern"
+          />
+          @if (getPropertyError('pattern'); as error) {
+            <small>{{ error }}</small>
+          }
+        </label>
+      }
+    </div>
+  </form>
+} @else if (activeTab() === 'section') {
+  <form [formGroup]="sectionForm">
+    <label>
+      Title
+      <input formControlName="title" />
+
+      @if (
+        sectionForm.controls.title.hasError('requiredTrimmed') && sectionForm.controls.title.touched
+      ) {
+        <small>Section title is required</small>
+      }
+    </label>
+    <label>
+      Description
+      <input formControlName="description" />
+    </label>
+    <label>
+      Theme
+      <input formControlName="theme" />
+    </label>
+    <label>
+      Visibility
+      <input type="checkbox" formControlName="visibility" />
+    </label>
+  </form>
+} @else if (activeTab() === 'form') {
+  <form [formGroup]="formForm">
+    <label>
+      Name
+      <input formControlName="name" />
+      @if (formForm.controls.name.hasError('requiredTrimmed') && formForm.controls.name.touched) {
+        <small>Form name is required</small>
+      }
+    </label>
+    <label>
+      Description
+      <input formControlName="description" />
+    </label>
+    <label>
+      Code
+      <input formControlName="code" />
+      @if (formForm.controls.code.invalid && formForm.controls.code.touched) {
+        @if (formForm.controls.code.hasError('requiredTrimmed')) {
+          <small>Form code is required</small>
+        } @else if (formForm.controls.code.hasError('invalidIdentifier')) {
+          <small
+            >Form code must start with a letter and contain only letters, numbers, and
+            underscores</small
+          >
         }
-      </label>
-    }
-  </div>
+      }
+    </label>
+
+    <label>
+      Category
+      <select formControlName="category">
+        <option value="">No category</option>
+
+        @for (category of categoryOptions; track category) {
+          <option [value]="category">
+            {{ category | titlecase }}
+          </option>
+        }
+      </select>
+    </label>
+    <label>
+      Status
+      <select formControlName="status">
+        @for (status of statusOptions; track status) {
+          <option [value]="status">
+            {{ status | uppercase }}
+          </option>
+        }
+      </select>
+    </label>
+  </form>
 }

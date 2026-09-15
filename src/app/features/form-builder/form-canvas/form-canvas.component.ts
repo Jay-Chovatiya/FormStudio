@@ -1,8 +1,10 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilderState } from '../../../core/services/form-builder-state';
+import { CdkDrag, CdkDropList, CdkDragDrop, CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { FormSection } from '../../../core/models/form-section';
 
 @Component({
-  imports: [],
+  imports: [CdkDrag, CdkDropList, CdkDropListGroup],
   selector: 'app-form-canvas',
   styleUrl: './form-canvas.component.scss',
   templateUrl: './form-canvas.component.html',
@@ -17,6 +19,10 @@ export class FormCanvasComponent implements OnInit {
   }
 
   form = this.formBuilderState.form;
+
+  openFormProperties(): void {
+    this.formBuilderState.selectFormSettings();
+  }
 
   selectSection(sectionId: number): void {
     this.formBuilderState.selectSection(sectionId);
@@ -33,5 +39,37 @@ export class FormCanvasComponent implements OnInit {
   isFieldSelected(fieldId: number): boolean {
     return this.formBuilderState.selectedFieldId() === fieldId;
   }
-  
+
+  getFieldDropListId(sectionId: number): string {
+    return `section-fields-${sectionId}`;
+  }
+
+  getFieldDropListIds(): string[] {
+    return this.form()?.sections.map((section) => this.getFieldDropListId(section.id)) ?? [];
+  }
+
+  addSection(): void {
+    this.formBuilderState.addSection();
+  }
+
+  removeSection(sectionId: number): void {
+    this.formBuilderState.removeSection(sectionId);
+  }
+
+  removeField(fieldId: number): void {
+    this.formBuilderState.removeField(fieldId);
+  }
+
+  dropSection(event: CdkDragDrop<FormSection[]>): void {
+    this.formBuilderState.moveSection(event.previousIndex, event.currentIndex);
+  }
+
+  dropField(event: CdkDragDrop<number>): void {
+    this.formBuilderState.moveField(
+      event.previousContainer.data,
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex,
+    );
+  }
 }

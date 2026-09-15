@@ -38,19 +38,25 @@ export class FormBuilderState {
   }
 
   selectField(sectionId: number, fieldId: number): void {
+    console.log('SELECT FIELD', {
+      sectionId,
+      fieldId
+    });
     this.selectedSectionId.set(sectionId);
     this.selectedFieldId.set(fieldId);
     this.activeTab.set('field');
   }
 
   selectFormSettings(): void {
+    this.selectedSectionId.set(null);
+    this.selectedFieldId.set(null);
     this.activeTab.set('form');
   }
 
   setActiveTab(tab: 'field' | 'section' | 'form'): void {
     this.activeTab.set(tab);
   }
-  
+
   setForm(formDefinition: FormDefinition): void {
     this.recordState();
     this.form.set(structuredClone(formDefinition));
@@ -69,8 +75,8 @@ export class FormBuilderState {
       name,
       description: description || 'Visual form created with Form Studio',
       code: 'form_' + Math.random().toString(36).substring(2, 8),
-      category: 'General',
-      status: 'Draft',
+      category: 'Registration',
+      status: 'Published',
       allowMultipleSubmissions: true,
       allowSaveAsDraft: true,
       confirmationMessage: 'Thank you! Your response has been submitted successfully.',
@@ -95,6 +101,7 @@ export class FormBuilderState {
       ...updates,
       updatedAt: new Date().toISOString(),
     });
+    console.log(this.form());
   }
 
   // Section operations
@@ -118,9 +125,10 @@ export class FormBuilderState {
     return newSection;
   }
 
-  updateSection(sectionId: number, updates: Partial<FormSection>): void {
+  updateSection(updates: Partial<FormSection>): void {
     const current = this.form();
-    if (!current) return;
+    const sectionId = this.selectedSectionId();
+    if (!current || sectionId === null) return;
     this.recordState();
     const sections = current.sections.map((s) => (s.id === sectionId ? { ...s, ...updates } : s));
     this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
@@ -225,11 +233,13 @@ export class FormBuilderState {
     });
 
     this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
+    console.log('field ',this.selectedField());
   }
 
-  removeField(sectionId: number, fieldId: number): void {
+  removeField(fieldId: number): void {
     const current = this.form();
-    if (!current) return;
+    const sectionId = this.selectedSectionId();
+    if (!current || sectionId === null) return;
     this.recordState();
     const sections = current.sections.map((s) => {
       if (s.id === sectionId) {
@@ -282,7 +292,7 @@ export class FormBuilderState {
     fromSectionId: number,
     toSectionId: number,
     previousIndex: number,
-    currentIndex: number
+    currentIndex: number,
   ): void {
     const current = this.form();
     if (!current) return;
@@ -290,7 +300,6 @@ export class FormBuilderState {
     this.recordState();
     let movedField: FormField | null = null;
 
-    // First remove from source section
     const updatedSections = current.sections.map((section) => {
       if (section.id === fromSectionId) {
         const fields = [...section.fields];
@@ -302,7 +311,6 @@ export class FormBuilderState {
 
     if (!movedField) return;
 
-    // Then insert into target section
     const finalSections = updatedSections.map((section) => {
       if (section.id === toSectionId) {
         const fields = [...section.fields];
