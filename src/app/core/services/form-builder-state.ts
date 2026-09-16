@@ -38,10 +38,6 @@ export class FormBuilderState {
   }
 
   selectField(sectionId: number, fieldId: number): void {
-    console.log('SELECT FIELD', {
-      sectionId,
-      fieldId
-    });
     this.selectedSectionId.set(sectionId);
     this.selectedFieldId.set(fieldId);
     this.activeTab.set('field');
@@ -159,30 +155,43 @@ export class FormBuilderState {
 
   // Field operations
   addFieldToSelectedSection(type: FieldTypes): boolean {
-    let sectionId = this.selectedSectionId();
     const currentForm = this.form();
 
     if (!currentForm) return false;
 
+    this.recordState();
+
+    let sectionId = this.selectedSectionId();
+    let sections = currentForm.sections;
+
     // Auto-create section if none exists
-    if (sectionId === null || !currentForm.sections.some((s) => s.id === sectionId)) {
-      if (currentForm.sections.length > 0) {
-        sectionId = currentForm.sections[0].id;
+    if (sectionId === null || !sections.some((s) => s.id === sectionId)) {
+      if (sections.length > 0) {
+        sectionId = sections[0].id;
         this.selectedSectionId.set(sectionId);
       } else {
-        const newSec = this.addSection('Section 1');
-        sectionId = newSec.id;
+        const newSection: FormSection = {
+          id: 1,
+          title: 'Section 1',
+          description: '',
+          visibility: true,
+          fields: [],
+        };
+
+        sections = [...sections, newSection];
+        sectionId = newSection.id;
+
+        this.selectedSectionId.set(sectionId);
       }
     }
 
-    const allFields = currentForm.sections.flatMap((s) => s.fields);
+    const allFields = sections.flatMap((s) => s.fields);
     const maxId = Math.max(...allFields.map((f) => f.id), 0);
     const fieldId = maxId + 1;
-    const fieldName = `${type.toLowerCase()}_${fieldId}`;
 
     const newField: FormField = {
       id: fieldId,
-      name: fieldName,
+      name: `${type.toLowerCase()}_${fieldId}`,
       type,
       label: this.getDefaultLabel(type),
       placeholder: this.getDefaultPlaceholder(type),
@@ -192,26 +201,23 @@ export class FormBuilderState {
       options: this.getDefaultOptions(type),
     };
 
-    const added = this.addFieldToSection(sectionId, newField);
-    if (added) {
-      this.selectField(sectionId, fieldId);
-    }
-    return added;
-  }
+    sections = sections.map((section) =>
+      section.id === sectionId
+        ? {
+            ...section,
+            fields: [...section.fields, newField],
+          }
+        : section,
+    );
 
-  private addFieldToSection(sectionId: number, field: FormField): boolean {
-    const current = this.form();
-    if (!current) return false;
-
-    this.recordState();
-    const sections = current.sections.map((s) => {
-      if (s.id === sectionId) {
-        return { ...s, fields: [...s.fields, field] };
-      }
-      return s;
+    this.form.set({
+      ...currentForm,
+      sections,
+      updatedAt: new Date().toISOString(),
     });
 
-    this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
+    this.selectField(sectionId, fieldId);
+
     return true;
   }
 
@@ -233,7 +239,6 @@ export class FormBuilderState {
     });
 
     this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
-    console.log('field ',this.selectedField());
   }
 
   removeField(fieldId: number): void {
@@ -326,36 +331,38 @@ export class FormBuilderState {
   // Undo / Redo helpers
   private recordState(): void {
     const current = this.form();
-    if (current) {
-      this.historyStack.push(structuredClone(current));
-      if (this.historyStack.length > 30) this.historyStack.shift();
-      this.futureStack = [];
-      this.canUndo.set(true);
-      this.canRedo.set(false);
-    }
+    if (!current) return;
+
+    this.historyStack.push(structuredClone(current));
+
+    if (this.historyStack.length > 10) this.historyStack.shift();
+
+    this.futureStack = [];
+    this.canUndo.set(true);
+    this.canRedo.set(false);
   }
 
   undo(): void {
-    if (this.historyStack.length === 0) return;
     const current = this.form();
-    if (current) {
-      this.futureStack.push(structuredClone(current));
-      this.canRedo.set(true);
-    }
+    if (!current || this.historyStack.length === 0) return;
+
+    this.futureStack.push(structuredClone(current));
+    this.canRedo.set(true);
+
     const previous = this.historyStack.pop()!;
-    this.form.set(previous);
+    this.form.set(structuredClone(previous));
     this.canUndo.set(this.historyStack.length > 0);
   }
 
   redo(): void {
-    if (this.futureStack.length === 0) return;
     const current = this.form();
-    if (current) {
-      this.historyStack.push(structuredClone(current));
-      this.canUndo.set(true);
-    }
+    if (!current || this.futureStack.length === 0) return;
+
+    this.historyStack.push(structuredClone(current));
+    this.canUndo.set(true);
+
     const next = this.futureStack.pop()!;
-    this.form.set(next);
+    this.form.set(structuredClone(next));
     this.canRedo.set(this.futureStack.length > 0);
   }
 

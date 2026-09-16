@@ -1,5 +1,3 @@
-<p>properties-panel works!</p>
-
 @if (activeTab() === 'field' && selectedField(); as field) {
   <form [formGroup]="fieldForm">
     <label>
@@ -30,16 +28,24 @@
       <li>Label -- Value</li>
       <button type="button" (click)="addFieldOption()">+ Add Option</button>
       <div formArrayName="options">
-        @for (
-          option of fieldForm.controls.options.controls;
-          track option.value.id;
-          let i = $index
-        ) {
+        @for (option of fieldForm.controls.options.controls; track option; let i = $index) {
           <div [formGroupName]="i">
             <input formControlName="label" />
+            @if (
+              option.controls['label'].hasError('requiredTrimmed') &&
+              option.controls['label'].touched
+            ) {
+              <small>label is required</small>
+            }
             <input formControlName="value" />
+            @if (option.controls['value'].invalid && option.controls['value'].touched) {
+              <small>value is required</small>
+            }
             <button type="button" (click)="deleteFieldOption(option.value.id)">Delete</button>
           </div>
+        }
+        @if (fieldForm.controls.options.hasError('duplicateOptionValue')) {
+          <small>Option values must be unique.</small>
         }
       </div>
     }
@@ -54,7 +60,7 @@
     <div>
       <strong>Default</strong>
       @if (field.type === 'RadioButton') {
-        @for (option of fieldForm.controls.options.controls; track option.value.id) {
+        @for (option of fieldForm.controls.options.controls; track option) {
           <label>
             <input
               type="radio"
@@ -70,18 +76,30 @@
         <select formControlName="default">
           <option value="">No default</option>
 
-          @for (option of fieldForm.controls.options.controls; track option.value.id) {
+          @for (option of fieldForm.controls.options.controls; track option) {
             <option [value]="option.value.value">
               {{ option.value.label }}
             </option>
           }
         </select>
       } @else if (field.type === 'Checkbox') {
-        <input type="checkbox" formControlName="default" />
+        <label>
+          <input type="checkbox" formControlName="default" />
+          Checked by default
+        </label>
       } @else {
         <input [type]="field.type === 'Number' ? 'number' : 'text'" formControlName="default" />
       }
     </div>
+    @if (fieldForm.hasError('defaultMinValue')) {
+      <small>Default value cannot be less than the minimum value.</small>
+    } @else if (fieldForm.hasError('defaultMaxValue')) {
+      <small>Default value cannot be greater than the maximum value.</small>
+    } @else if (fieldForm.hasError('defaultMinLength')) {
+      <small>Default value is shorter than the minimum length.</small>
+    } @else if (fieldForm.hasError('defaultMaxLength')) {
+      <small>Default value is longer than the maximum length.</small>
+    }
     <div>
       <strong>Validation</strong>
       <label>
@@ -206,6 +224,12 @@
     <label>
       Description
       <input formControlName="description" />
+      @if (
+        formForm.controls.description.hasError('requiredTrimmed') &&
+        formForm.controls.description.touched
+      ) {
+        <small>Description is required</small>
+      }
     </label>
     <label>
       Code
@@ -221,7 +245,6 @@
         }
       }
     </label>
-
     <label>
       Category
       <select formControlName="category">
@@ -243,6 +266,78 @@
           </option>
         }
       </select>
+    </label>
+    <label>
+      Start Date
+      <input type="datetime-local" formControlName="startDate" />
+      @if (
+        formForm.controls.startDate.hasError('pastDate') && formForm.controls.startDate.touched
+      ) {
+        <small>Start date must be in the future.</small>
+      }
+    </label>
+    <label>
+      End Date
+      <input type="datetime-local" formControlName="endDate" />
+      @if (formForm.controls.endDate.hasError('pastDate') && formForm.controls.endDate.touched) {
+        <small>End date must be in the future.</small>
+      } @else if (formForm.hasError('invalidDateRange') && formForm.controls.endDate.touched) {
+        <small>End date must be after the start date.</small>
+      }
+    </label>
+    <label>
+      Allow Multiple Submissions
+      <input type="checkbox" formControlName="allowMultipleSubmissions" />
+    </label>
+    <label>
+      Allow Save As Draft
+      <input type="checkbox" formControlName="allowSaveAsDraft" />
+    </label>
+    <label>
+      Confirmation Message
+      <input formControlName="confirmationMessage" />
+    </label>
+    <label>
+      Submit Button Text
+      <input formControlName="submitButtonText" />
+      @if (
+        formForm.controls.submitButtonText.hasError('requiredTrimmed') &&
+        formForm.controls.submitButtonText.touched
+      ) {
+        <small>Submit Button Text is required</small>
+      }
+    </label>
+    <label>
+      Cancel Button Text
+      <input formControlName="cancelButtonText" />
+      @if (
+        formForm.controls.cancelButtonText.hasError('requiredTrimmed') &&
+        formForm.controls.cancelButtonText.touched
+      ) {
+        <small>Cancel Button Text is required</small>
+      }
+    </label>
+    <label>
+      Theme
+      <input formControlName="theme" />
+    </label>
+    <label>
+      Logo URL
+      <input formControlName="logoUrl" />
+    </label>
+    <label>
+      Header Text
+      <input formControlName="headerText" />
+      @if (
+        formForm.controls.headerText.hasError('requiredTrimmed') &&
+        formForm.controls.headerText.touched
+      ) {
+        <small>Header Text is required</small>
+      }
+    </label>
+    <label>
+      Footer Text
+      <input formControlName="footerText" />
     </label>
   </form>
 }

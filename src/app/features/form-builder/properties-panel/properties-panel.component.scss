@@ -1,0 +1,231 @@
+:host {
+    display: block;
+    height: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+    color: #1f2937;
+  }
+  
+  p {
+    margin: 0;
+  }
+  
+  /* Main panel */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  /* Field / section labels */
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+  }
+  
+  /* Text inputs and selects */
+  input:not([type='checkbox']):not([type='radio']),
+  select {
+    width: 100%;
+    min-height: 38px;
+    padding: 8px 10px;
+    box-sizing: border-box;
+  
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+  
+    background: #ffffff;
+    color: #111827;
+  
+    font-size: 14px;
+    font-family: inherit;
+  
+    outline: none;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  
+  input:not([type='checkbox']):not([type='radio']):focus,
+  select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  }
+  
+  input::placeholder {
+    color: #9ca3af;
+  }
+  
+  /* Validation messages */
+  small {
+    display: block;
+    margin-top: 2px;
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  
+  /* Checkbox and radio */
+  input[type='checkbox'],
+  input[type='radio'] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #6366f1;
+  }
+  
+  /*
+    Labels that contain only checkbox/radio + text
+  */
+  label:has(input[type='checkbox']),
+  label:has(input[type='radio']) {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  
+  /* Section headings inside the panel */
+  strong {
+    display: block;
+    margin-bottom: 10px;
+  
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+  }
+  
+  /* Default and Validation sections */
+  form > div {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  
+    background: #f9fafb;
+  }
+  
+  /* Options section */
+  form > div[formArrayName='options'] {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  /* Options heading */
+  li {
+    margin: 0;
+    padding: 8px 10px;
+  
+    list-style: none;
+  
+    border-radius: 6px;
+    background: #f3f4f6;
+  
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+  }
+  
+  /* Option row */
+  div[formGroupName] {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    align-items: start;
+  
+    padding: 10px;
+  
+    border: 1px solid #e5e7eb;
+    border-radius: 7px;
+  
+    background: #ffffff;
+  }
+  
+  /* Buttons */
+  button {
+    min-height: 36px;
+    padding: 7px 12px;
+  
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+  
+    background: #ffffff;
+    color: #374151;
+  
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+  
+    cursor: pointer;
+  
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
+  }
+  
+  button:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+  }
+  
+  button:active {
+    background: #e5e7eb;
+  }
+  
+  /* Add option button */
+  form > button {
+    align-self: flex-start;
+  
+    border-color: #6366f1;
+    background: #6366f1;
+    color: #ffffff;
+  }
+  
+  form > button:hover {
+    background: #4f46e5;
+    border-color: #4f46e5;
+  }
+  
+  /* Delete option button */
+  div[formGroupName] button {
+    color: #dc2626;
+    border-color: #fecaca;
+  }
+  
+  div[formGroupName] button:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+  }
+  
+  /* Error state for normal inputs */
+  input.ng-invalid.ng-touched,
+  select.ng-invalid.ng-touched {
+    border-color: #ef4444;
+  }
+  
+  input.ng-invalid.ng-touched:focus,
+  select.ng-invalid.ng-touched:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+  
+  /* Responsive option layout */
+  @media (max-width: 500px) {
+    div[formGroupName] {
+      grid-template-columns: 1fr;
+    }
+  
+    div[formGroupName] button {
+      justify-self: start;
+    }
+  }

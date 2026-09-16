@@ -1,9 +1,305 @@
-.selected {
-  border: 2px solid blue;
-  background-color: #f0f0f0;
+:host {
+  display: block;
+  height: 100%;
+  box-sizing: border-box;
+  background: #f3f4f6;
+  color: #1f2937;
 }
 
-.selected-field {
-  border: 2px solid rgb(201, 135, 135);
-  background-color: #ffffff;
+/* =========================
+   Toolbar
+   ========================= */
+
+:host > button {
+  margin: 12px 6px 12px 0;
+}
+
+button {
+  min-height: 36px;
+  padding: 4px 12px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+
+  background: #ffffff;
+  color: #374151;
+
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+
+  margin-top: -6px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Form properties */
+:host > button:first-of-type {
+  margin-left: 16px;
+}
+
+/* Add section */
+:host > button:nth-of-type(2) {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #ffffff;
+}
+
+:host > button:nth-of-type(2):hover {
+  background: #4338ca;
+  border-color: #4338ca;
+}
+
+/* =========================
+   Form canvas
+   ========================= */
+
+[cdkDropListGroup] {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* =========================
+   Form information
+   ========================= */
+
+[cdkDropListGroup] > div:first-child {
+  margin-bottom: 20px;
+  padding: 20px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+[cdkDropListGroup] > div:first-child strong {
+  display: inline-block;
+  margin-bottom: 5px;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+[cdkDropListGroup] > div:first-child strong:first-child {
+  font-size: 20px;
+  color: #111827;
+}
+
+/* =========================
+   Sections drop area
+   ========================= */
+
+[cdkDropListGroup] > div:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* =========================
+   Section
+   ========================= */
+
+[cdkDropListGroup] > div:nth-child(2) > div[cdkDrag] {
+  padding: 16px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+/* Selected section */
+[cdkDropListGroup] > div:nth-child(2) > div.selected {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
+}
+
+/* Section title */
+[cdkDropListGroup] > div:nth-child(2) > div[cdkDrag] {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Section delete button */
+[cdkDropListGroup] > div:nth-child(2) > div[cdkDrag] > button {
+  float: right;
+
+  color: #dc2626;
+  border-color: #fecaca;
+  background: #ffffff;
+}
+
+[cdkDropListGroup] > div:nth-child(2) > div[cdkDrag] > button:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+/* =========================
+   Field drop area
+   ========================= */
+
+[cdkDropListGroup] [cdkDropList] {
+  min-height: 70px;
+  margin-top: 14px;
+  padding: 10px;
+
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+
+  background: #f8fafc;
+}
+
+/* =========================
+   Field
+   ========================= */
+
+[cdkDropListGroup] [cdkDropList] > div[cdkDrag] {
+  position: relative;
+
+  margin-bottom: 8px;
+  padding: 12px 14px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  cursor: grab;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+[cdkDropListGroup] [cdkDropList] > div[cdkDrag]:last-child {
+  margin-bottom: 0;
+}
+
+[cdkDropListGroup] [cdkDropList] > div[cdkDrag]:hover {
+  border-color: #a5b4fc;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+[cdkDropListGroup] [cdkDropList] > div[cdkDrag]:active {
+  cursor: grabbing;
+}
+
+/* Selected field */
+[cdkDropListGroup] [cdkDropList] > div.selected-field {
+  border-color: #6366f1;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Field information */
+[cdkDropListGroup] [cdkDropList] > div[cdkDrag] p {
+  display: inline-block;
+
+  margin: 0;
+  padding-right: 90px;
+
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Field delete button */
+[cdkDropListGroup] [cdkDropList] > div[cdkDrag] button {
+  float: right;
+
+  min-height: 30px;
+  padding: 5px 9px;
+
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+[cdkDropListGroup] [cdkDropList] > div[cdkDrag] button:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+/* =========================
+   CDK Drag & Drop
+   ========================= */
+
+.cdk-drag-preview {
+  box-sizing: border-box;
+
+  padding: 12px 14px;
+
+  border: 1px solid #6366f1;
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.15);
+
+  opacity: 0.95;
+}
+
+.cdk-drag-placeholder {
+  min-height: 45px;
+
+  margin-bottom: 8px;
+
+  border: 2px dashed #a5b4fc;
+  border-radius: 7px;
+
+  background: #eef2ff;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms ease;
+}
+
+@media (max-width: 700px) {
+  [cdkDropListGroup] {
+    padding: 12px;
+  }
+
+  [cdkDropListGroup] > div:first-child {
+    padding: 14px;
+  }
+
+  [cdkDropListGroup] > div:nth-child(2) > div[cdkDrag] {
+    padding: 12px;
+  }
+
+  [cdkDropListGroup] [cdkDropList] > div[cdkDrag] p {
+    display: block;
+    padding-right: 0;
+    margin-bottom: 8px;
+  }
+
+  [cdkDropListGroup] [cdkDropList] > div[cdkDrag] button {
+    float: none;
+  }
 }

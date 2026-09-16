@@ -19,6 +19,8 @@ export class FormCanvasComponent implements OnInit {
   }
 
   form = this.formBuilderState.form;
+  canUndo = this.formBuilderState.canUndo;
+  canRedo = this.formBuilderState.canRedo;
 
   openFormProperties(): void {
     this.formBuilderState.selectFormSettings();
@@ -71,5 +73,13 @@ export class FormCanvasComponent implements OnInit {
       event.previousIndex,
       event.currentIndex,
     );
+  }
+
+  undo(): void {
+    this.formBuilderState.undo();
+  }
+
+  redo(): void {
+    this.formBuilderState.redo();
   }
 }

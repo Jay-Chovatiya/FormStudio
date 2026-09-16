@@ -1,6 +1,5 @@
 import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilderState } from '../../../core/services/form-builder-state';
-import { FormField } from '../../../core/models/form-field';
 import { FieldOption } from '../../../core/models/field-option';
 import { FieldTypes } from '../../../core/models/field-types';
 import { FieldValidation } from '../../../core/models/field-validation';
@@ -11,8 +10,12 @@ import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular
 import { requiredTrimmedValidator } from '../../../shared/validators/required-trimmed.validator';
 import { identifierValidator } from '../../../shared/validators/identifier.validator';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime } from 'rxjs';
+import { debounceTime, pairwise, startWith } from 'rxjs';
 import { duplicateFieldNameValidator } from '../../../shared/validators/duplicate-field-name.validator';
+import { uniqueOptionValueValidator } from '../../../shared/validators/unique-option-value.validator';
+import { defaultValueValidator } from '../../../shared/validators/default-value.validator';
+import { futureDateValidator } from '../../../shared/validators/future-date.validator';
+import { dateRangeValidator } from '../../../shared/validators/date-range.validator';
 
 @Component({
   imports: [UpperCasePipe, TitleCasePipe, ReactiveFormsModule],
@@ -32,25 +35,79 @@ export class PropertiesPanelComponent {
 
   readonly categoryOptions = ['General', 'Employee', 'Survey', 'Registration', 'Feedback', 'Other'];
 
-  formForm = new FormGroup({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [requiredTrimmedValidator],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-    }),
-    code: new FormControl('', {
-      nonNullable: true,
-      validators: [requiredTrimmedValidator, identifierValidator],
-    }),
-    category: new FormControl('', {
-      nonNullable: true,
-    }),
-    status: new FormControl<FormStatus>('Draft', {
-      nonNullable: true,
-    }),
-  });
+  formForm = new FormGroup(
+    {
+      name: new FormControl('', {
+        nonNullable: true,
+        validators: [requiredTrimmedValidator],
+      }),
+      description: new FormControl('', {
+        nonNullable: true,
+        validators: [requiredTrimmedValidator],
+      }),
+      code: new FormControl('', {
+        nonNullable: true,
+        validators: [requiredTrimmedValidator, identifierValidator],
+      }),
+      category: new FormControl('', {
+        nonNullable: true,
+      }),
+      status: new FormControl<FormStatus>('Draft', {
+        nonNullable: true,
+      }),
+      startDate: new FormControl('', {
+        nonNullable: true,
+        validators: [futureDateValidator],
+      }),
+
+      endDate: new FormControl('', {
+        nonNullable: true,
+        validators: [futureDateValidator],
+      }),
+
+      allowMultipleSubmissions: new FormControl(false, {
+        nonNullable: true,
+      }),
+
+      allowSaveAsDraft: new FormControl(false, {
+        nonNullable: true,
+      }),
+
+      confirmationMessage: new FormControl('', {
+        nonNullable: true,
+      }),
+
+      submitButtonText: new FormControl('Submit', {
+        nonNullable: true,
+        validators: [requiredTrimmedValidator],
+      }),
+
+      cancelButtonText: new FormControl('Cancel', {
+        nonNullable: true,
+        validators: [requiredTrimmedValidator],
+      }),
+
+      theme: new FormControl('', {
+        nonNullable: true,
+      }),
+
+      logoUrl: new FormControl('', {
+        nonNullable: true,
+      }),
+
+      headerText: new FormControl('', {
+        nonNullable: true,
+        validators: [requiredTrimmedValidator],
+      }),
+
+      footerText: new FormControl('', {
+        nonNullable: true,
+      }),
+    },
+    {
+      validators: [dateRangeValidator],
+    },
+  );
 
   formEffectRef = effect(() => {
     const currentForm = this.form();
@@ -66,6 +123,17 @@ export class PropertiesPanelComponent {
         code: currentForm.code,
         category: currentForm.category,
         status: currentForm.status,
+        startDate: currentForm.startDate,
+        endDate: currentForm.endDate,
+        allowMultipleSubmissions: currentForm.allowMultipleSubmissions,
+        allowSaveAsDraft: currentForm.allowSaveAsDraft,
+        confirmationMessage: currentForm.confirmationMessage,
+        submitButtonText: currentForm.submitButtonText,
+        cancelButtonText: currentForm.cancelButtonText,
+        theme: currentForm.theme,
+        logoUrl: currentForm.logoUrl,
+        headerText: currentForm.headerText,
+        footerText: currentForm.footerText
       },
       { emitEvent: false },
     );
@@ -121,40 +189,47 @@ export class PropertiesPanelComponent {
       this.formBuilderState.updateSection(value);
     });
 
-  fieldForm = new FormGroup({
-    label: new FormControl('', {
-      nonNullable: true,
-      validators: [requiredTrimmedValidator],
-    }),
+  fieldForm = new FormGroup(
+    {
+      label: new FormControl('', {
+        nonNullable: true,
+        validators: [requiredTrimmedValidator],
+      }),
 
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [
-        requiredTrimmedValidator,
-        identifierValidator,
-        duplicateFieldNameValidator(
-          () => this.formBuilderState.form()?.sections.flatMap((section) => section.fields) ?? [],
-          () => this.selectedField()?.id ?? null,
-        ),
-      ],
-    }),
+      name: new FormControl('', {
+        nonNullable: true,
+        validators: [
+          requiredTrimmedValidator,
+          identifierValidator,
+          duplicateFieldNameValidator(
+            () => this.formBuilderState.form()?.sections.flatMap((section) => section.fields) ?? [],
+            () => this.selectedField()?.id ?? null,
+          ),
+        ],
+      }),
 
-    visibility: new FormControl(true, {
-      nonNullable: true,
-    }),
+      visibility: new FormControl(true, {
+        nonNullable: true,
+      }),
 
-    helperDescription: new FormControl('', {
-      nonNullable: true,
-    }),
+      helperDescription: new FormControl('', {
+        nonNullable: true,
+      }),
 
-    placeholder: new FormControl('', {
-      nonNullable: true,
-    }),
-    options: new FormArray<FormGroup>([]),
-    default: new FormControl<string | number | boolean>('', {
-      nonNullable: true,
-    }),
-  });
+      placeholder: new FormControl('', {
+        nonNullable: true,
+      }),
+      options: new FormArray<FormGroup>([], {
+        validators: [uniqueOptionValueValidator],
+      }),
+      default: new FormControl<string | number | boolean>('', {
+        nonNullable: true,
+      }),
+    },
+    {
+      validators: [defaultValueValidator(() => this.selectedField()?.validation ?? [])],
+    },
+  );
 
   selectedFieldRef = effect(() => {
     const fieldId = this.formBuilderState.selectedFieldId();
@@ -166,8 +241,6 @@ export class PropertiesPanelComponent {
     if (!currentField) {
       return;
     }
-
-    console.log('EFFECT FIELD', currentField.id, currentField.name, currentField);
 
     this.fieldForm.patchValue(
       {
@@ -189,35 +262,54 @@ export class PropertiesPanelComponent {
   });
 
   fieldValueChange = this.fieldForm.valueChanges
-    .pipe(debounceTime(300), takeUntilDestroyed())
-    .subscribe((value) => {
+    .pipe(
+      debounceTime(300),
+      startWith(this.fieldForm.getRawValue()),
+      pairwise(),
+      takeUntilDestroyed(),
+    )
+    .subscribe(([previousValue, currentValue]) => {
       if (this.fieldForm.invalid) {
         return;
       }
-      console.log('WHOLE FORM VALUE', value);
 
       const field = this.selectedField();
 
-      if (!field) {
-        return;
-      }
+      if (!field) return;
 
-      let defaultValue = value.default;
+      let defaultValue = currentValue.default;
       if (field.type === 'Number' && defaultValue !== '') {
         defaultValue = Number(defaultValue);
       }
+      const previousOptions = previousValue.options ?? [];
+      const currentOptions = currentValue.options ?? [];
+
+      if (field.type === 'Dropdown' || field.type === 'RadioButton') {
+        const previousDefault = previousValue.default;
+
+        if (typeof previousDefault === 'string') {
+          const previousOption = previousOptions.find((option) => option.value === previousDefault);
+
+          if (previousOption) {
+            const currentOption = currentOptions.find((option) => option.id === previousOption.id);
+
+            if (!currentOption) {
+              defaultValue = '';
+            } else if (currentOption.value !== previousOption.value) {
+              defaultValue = currentOption.value;
+            }
+          }
+        }
+      }
 
       const updatedValue = {
-        ...value,
+        ...currentValue,
+        options: currentOptions,
         default: defaultValue,
       };
 
       this.formBuilderState.updateSelectedField(updatedValue);
     });
-
-  optionsValueChanges = this.fieldForm.controls.options.valueChanges.subscribe((value) => {
-    console.log('OPTIONS VALUE', value);
-  });
 
   createOptionForm(option: FieldOption): FormGroup {
     return new FormGroup({
@@ -226,33 +318,17 @@ export class PropertiesPanelComponent {
       }),
       label: new FormControl(option.label, {
         nonNullable: true,
+        validators: [requiredTrimmedValidator],
       }),
       value: new FormControl(option.value, {
         nonNullable: true,
+        validators: [requiredTrimmedValidator],
       }),
-    });
-  }
-
-  updateFieldProperty<K extends keyof FormField>(property: K, event: Event): void {
-    const input = event.target as HTMLInputElement;
-
-    let value: string | number | boolean;
-
-    if (input.type === 'checkbox') {
-      value = input.checked;
-    } else if (input.type === 'number') {
-      value = input.value === '' ? '' : Number(input.value);
-    } else {
-      value = input.value;
-    }
-
-    this.formBuilderState.updateSelectedField({
-      [property]: value,
     });
   }
 
   supportsOptions(type: FieldTypes): boolean {
-    return type === 'Dropdown' || type === 'RadioButton' || type === 'Checkbox';
+    return type === 'Dropdown' || type === 'RadioButton';
   }
 
   getPropertyError(property: PropertyName): string | null {
@@ -304,12 +380,15 @@ export class PropertiesPanelComponent {
 
     if (index === -1) return;
 
-    // const option = options.controls.find((option) => option.value.id === optionId);
-    // if (option?.value.value === field.default) {
-    //   updates.default = '';
-    // }
+    const option = options.at(index);
+    const deletedValue = option.value.value;
 
+    const currentDefault = this.fieldForm.controls.default.value;
     options.removeAt(index);
+
+    if (currentDefault === deletedValue) {
+      this.fieldForm.controls.default.setValue('');
+    }
   }
 
   isValidationEnabled(type: 'required' | 'email'): boolean {
@@ -335,6 +414,7 @@ export class PropertiesPanelComponent {
         validation: [...validations, { type }],
       });
     }
+    this.fieldForm.updateValueAndValidity();
   }
 
   getValidationValue(type: 'minLength' | 'maxLength' | 'minValue' | 'maxValue'): number | null {
@@ -360,6 +440,7 @@ export class PropertiesPanelComponent {
       this.formBuilderState.updateSelectedField({
         validation: validations.filter((validation) => validation.type !== type),
       });
+      this.fieldForm.updateValueAndValidity();
       return;
     }
     const value = Number(inputValue);
@@ -385,6 +466,8 @@ export class PropertiesPanelComponent {
     this.formBuilderState.updateSelectedField({
       validation: finalValidations,
     });
+
+    this.fieldForm.updateValueAndValidity();
   }
 
   validateRange(

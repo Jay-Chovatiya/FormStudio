@@ -1,8 +1,9 @@
-<p>form canvas is here</p>
 <button (click)="openFormProperties()">
   Form Properties
 </button>
 <button (click)="addSection()">+ Add Section</button>
+<button (click)="undo()" [disabled]="!canUndo()">Undo</button>
+<button (click)="redo()" [disabled]="!canRedo()">Redo</button>
 @if (form(); as currentForm) {
   <div cdkDropListGroup>
     <div>
