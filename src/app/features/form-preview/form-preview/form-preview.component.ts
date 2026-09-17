@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilderState } from '../../../core/services/form-builder-state';
 import { DynamicFormComponent } from '../../form-fill/dynamic-form/dynamic-form.component';
+import { Router } from '@angular/router';
 
 @Component({
   imports: [DynamicFormComponent],
@@ -10,6 +11,11 @@ import { DynamicFormComponent } from '../../form-fill/dynamic-form/dynamic-form.
 })
 export class FormPreviewComponent {
   private readonly formBuilderState = inject(FormBuilderState);
+  private readonly router = inject(Router);
 
   readonly form = this.formBuilderState.form;
+
+  backToBuilder(): void {
+    this.router.navigate(['/form-builder']);
+  }
 }

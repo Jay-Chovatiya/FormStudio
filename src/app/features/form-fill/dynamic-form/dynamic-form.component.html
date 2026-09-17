@@ -1,85 +1,118 @@
 @if (formDefinition(); as currentForm) {
-  <form [formGroup]="form" (ngSubmit)="submit()">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="dynamic-form-body">
     @for (section of currentForm.sections; track section.id) {
-      <section>
-        <h2>{{ section.title }}</h2>
+      <section class="df-section">
+        <h2 class="df-section-title">{{ section.title }}</h2>
 
         @if (section.description) {
-          <p>{{ section.description }}</p>
+          <p class="df-section-desc">{{ section.description }}</p>
         }
-        @for (field of section.fields; track field.id) {
-          <label [for]="field.name">{{ field.label }}</label>
-          @if (field.type === 'Dropdown') {
-            <select [formControlName]="field.name">
-              @for (option of field.options ?? []; track option.id) {
-                <option [value]="option.value">{{ option.label }}</option>
-              }
-            </select>
-          } @else if (field.type === 'Checkbox') {
-            <input type="checkbox" [formControlName]="field.name" /> {{ field.placeholder }}
-          } @else if (field.type === 'Textarea') {
-            <textarea
-              [formControlName]="field.name"
-              [placeholder]="field.placeholder ?? ''"
-            ></textarea>
-          } @else if (field.type === 'RadioButton') {
-            @for (option of field.options ?? []; track option.id) {
-              <div>
-                <input
-                  type="radio"
-                  [id]="field.id + '-' + option.id"
+
+        <div class="df-fields-grid">
+          @for (field of section.fields; track field.id) {
+            <div class="df-field-group">
+              <label [for]="field.name" class="df-field-label">
+                {{ field.label }}
+                @if (isFieldRequired(field)) {
+                  <span class="required-star">*</span>
+                }
+              </label>
+
+              @if (field.type === 'Dropdown') {
+                <select [id]="field.name" class="fs-select" [formControlName]="field.name">
+                  <option value="">Select option...</option>
+                  @for (option of field.options ?? []; track option.id) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+              } @else if (field.type === 'Checkbox') {
+                <label class="fs-checkbox-label">
+                  <input type="checkbox" [id]="field.name" [formControlName]="field.name" />
+                  <span>{{ field.placeholder || field.label }}</span>
+                </label>
+              } @else if (field.type === 'Textarea') {
+                <textarea
+                  [id]="field.name"
+                  class="fs-textarea"
                   [formControlName]="field.name"
-                  [value]="option.value"
+                  [placeholder]="field.placeholder ?? ''"
+                ></textarea>
+              } @else if (field.type === 'RadioButton') {
+                <div class="df-radio-group">
+                  @for (option of field.options ?? []; track option.id) {
+                    <label class="fs-radio-label" [for]="field.id + '-' + option.id">
+                      <input
+                        type="radio"
+                        [id]="field.id + '-' + option.id"
+                        [formControlName]="field.name"
+                        [value]="option.value"
+                      />
+                      <span>{{ option.label }}</span>
+                    </label>
+                  }
+                </div>
+              } @else {
+                <input
+                  [id]="field.name"
+                  class="fs-input"
+                  [type]="getInputType(field.type)"
+                  [formControlName]="field.name"
+                  [placeholder]="field.placeholder ?? ''"
                 />
-                <label [for]="field.id + '-' + option.id">{{ option.label }}</label>
-              </div>
-            }
-          } @else {
-            <input
-              [type]="getInputType(field.type)"
-              [formControlName]="field.name"
-              [placeholder]="field.placeholder ?? ''"
-            />
-          }
+              }
 
-          @let control = getControl(field.name);
+              @if (field.helperDescription) {
+                <span class="df-helper-text">{{ field.helperDescription }}</span>
+              }
 
-          @if (control?.invalid && control?.touched) {
-            @if (control?.errors?.['required']) {
-              <p>{{ field.label }} is required.</p>
-            }
-            @if (control?.errors?.['email']) {
-              <p>{{ field.label }} must be a valid email.</p>
-            }
-            @if (control?.errors?.['minlength']) {
-              <p>
-                {{ field.label }} must be at least
-                {{ control?.errors?.['minlength']?.requiredLength }} characters.
-              </p>
-            }
-            @if (control?.errors?.['maxlength']) {
-              <p>
-                {{ field.label }} must be at most
-                {{ control?.errors?.['maxlength']?.requiredLength }} characters.
-              </p>
-            }
-            @if (control?.errors?.['min']) {
-              <p>{{ field.label }} must be at least {{ control?.errors?.['min']?.min }}.</p>
-            }
-            @if (control?.errors?.['max']) {
-              <p>{{ field.label }} must be at most {{ control?.errors?.['max']?.max }}.</p>
-            }
-            @if (control?.errors?.['pattern']) {
-              <p>{{ field.label }} has an invalid format.</p>
-            }
+              @let control = getControl(field.name);
+
+              @if (control?.invalid && control?.touched) {
+                <div class="df-errors-list">
+                  @if (control?.errors?.['required']) {
+                    <span class="fs-error-message">{{ field.label }} is required.</span>
+                  }
+                  @if (control?.errors?.['email']) {
+                    <span class="fs-error-message">{{ field.label }} must be a valid email address.</span>
+                  }
+                  @if (control?.errors?.['minlength']) {
+                    <span class="fs-error-message">
+                      {{ field.label }} must be at least
+                      {{ control?.errors?.['minlength']?.requiredLength }} characters.
+                    </span>
+                  }
+                  @if (control?.errors?.['maxlength']) {
+                    <span class="fs-error-message">
+                      {{ field.label }} must be at most
+                      {{ control?.errors?.['maxlength']?.requiredLength }} characters.
+                    </span>
+                  }
+                  @if (control?.errors?.['min']) {
+                    <span class="fs-error-message">{{ field.label }} must be at least {{ control?.errors?.['min']?.min }}.</span>
+                  }
+                  @if (control?.errors?.['max']) {
+                    <span class="fs-error-message">{{ field.label }} must be at most {{ control?.errors?.['max']?.max }}.</span>
+                  }
+                  @if (control?.errors?.['pattern']) {
+                    <span class="fs-error-message">{{ field.label }} has an invalid format.</span>
+                  }
+                </div>
+              }
+            </div>
           }
-          <br />
-        }
+        </div>
       </section>
     }
-    <button type="submit">{{ currentForm.submitButtonText ?? 'Submit' }}</button>
-    <button type="cancel">{{ currentForm.cancelButtonText ?? 'Cancel' }}</button>
+
+    <div class="df-form-actions">
+      <button type="submit" class="fs-btn fs-btn-primary">
+        {{ currentForm.submitButtonText || 'Submit' }}
+      </button>
+      <button type="button" class="fs-btn fs-btn-secondary">
+        {{ currentForm.cancelButtonText || 'Cancel' }}
+      </button>
+    </div>
   </form>
 } @else {
-  <p>No form data available.</p>
+  <p class="df-no-data">No form data available.</p>
 }

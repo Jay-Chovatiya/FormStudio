@@ -1,5 +1,65 @@
-<app-field-palette></app-field-palette>
+<div class="builder-container">
+  <header class="builder-header">
+    <div class="header-brand">
+      <div class="brand-logo" title="FormStudio Builder">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <line x1="10" y1="9" x2="8" y2="9"/>
+        </svg>
+      </div>
+      <span class="brand-title">FormStudio</span>
+      @if (form(); as currentForm) {
+        <!-- (click)="openFormProperties()" -->
+        <span class="form-title-badge" title="Click to view form properties">
+          {{ currentForm.name }}
+        </span>
+        <span class="fs-badge" [class.fs-badge-success]="currentForm.status === 'Published'" [class.fs-badge-secondary]="currentForm.status !== 'Published'">
+          {{ currentForm.status }}
+        </span>
+      }
+    </div>
 
-<app-form-canvas></app-form-canvas>
+    <div class="header-actions">
+      <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm" (click)="undo()" [disabled]="!canUndo()" title="Undo (Ctrl+Z)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7v6h6"/>
+          <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+        </svg>
+        Undo
+      </button>
 
-<app-properties-panel></app-properties-panel>
+      <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm" (click)="redo()" [disabled]="!canRedo()" title="Redo (Ctrl+Y)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 7v6h-6"/>
+          <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>
+        </svg>
+        Redo
+      </button>
+
+      <!-- <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm" (click)="openFormProperties()" title="Form Configuration">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Form Settings
+      </button> -->
+
+      <button type="button" class="fs-btn fs-btn-primary fs-btn-sm" (click)="openPreview()" title="Preview Live Form">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        Preview
+      </button>
+    </div>
+  </header>
+
+  <div class="builder-workspace" cdkDropListGroup>
+    <app-field-palette class="workspace-palette"></app-field-palette>
+    <app-form-canvas class="workspace-canvas"></app-form-canvas>
+    <app-properties-panel class="workspace-properties"></app-properties-panel>
+  </div>
+</div>

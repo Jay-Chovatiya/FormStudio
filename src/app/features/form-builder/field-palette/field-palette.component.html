@@ -1,9 +1,35 @@
-<div>
-  <h3>Fields</h3>
+<div class="palette-container">
+  <div class="palette-header">
+    <h3 class="palette-title">Field Types</h3>
+    <span class="palette-subtitle">Drag or click to add to form</span>
+  </div>
 
-  @for (field of fields; track field.type) {
-    <div (click)="selectField(field)">
-      {{ field.label }}
-    </div>
-  }
+  <div
+    cdkDropList
+    id="palette-drop-list"
+    [cdkDropListData]="fields"
+    [cdkDropListConnectedTo]="getFieldDropListIds()"
+    [cdkDropListSortingDisabled]="true"
+    class="palette-grid"
+  >
+    @for (field of fields; track field.type) {
+      <div
+        cdkDrag
+        [cdkDragData]="field"
+        class="palette-item"
+        (click)="selectField(field)"
+        role="button"
+        tabindex="0"
+      >
+        <span class="drag-grip" cdkDragHandle title="Drag to add to section">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/>
+            <circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>
+            <circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/>
+          </svg>
+        </span>
+        <span class="field-label">{{ field.label }}</span>
+      </div>
+    }
+  </div>
 </div>

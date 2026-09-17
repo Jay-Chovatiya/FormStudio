@@ -1,54 +1,156 @@
-<button (click)="openFormProperties()">
-  Form Properties
-</button>
-<button type="button" (click)="openPreview()">
-  Preview
-</button>
-<button (click)="addSection()">+ Add Section</button>
-<button (click)="undo()" [disabled]="!canUndo()">Undo</button>
-<button (click)="redo()" [disabled]="!canRedo()">Redo</button>
 @if (form(); as currentForm) {
-  <div cdkDropListGroup>
-    <div>
-      <strong>{{currentForm.name}}</strong><br/>
-      <strong>{{currentForm.description}}</strong><br/>
-      <strong>{{currentForm.code}}</strong><br/>
-      <strong>{{currentForm.category}}</strong><br/>
-      <strong>{{currentForm.status}}</strong><br/>
-    </div>
-    <div cdkDropList (cdkDropListDropped)="dropSection($event)">
-      @for (section of currentForm.sections; track section.id) {
-        <div
-          cdkDrag
-          (click)="selectSection(section.id)"
-          [class.selected]="isSectionSelected(section.id)"
-        >
-          {{ section.title }}
-          <button (click)="removeSection(section.id); $event.stopPropagation()">
-            Delete Section
-          </button>
-          <div
-            cdkDropList
-            [id]="getFieldDropListId(section.id)"
-            [cdkDropListConnectedTo]="getFieldDropListIds()"
-            [cdkDropListData]="section.id"
-            (cdkDropListDropped)="dropField($event)"
+  <div cdkDropListGroup class="canvas-workspace">
+    <div class="form-paper">
+      <!-- Form Header Info Card -->
+      <div
+        class="form-header-card"
+        (click)="openFormProperties()"
+        role="button"
+        tabindex="0"
+        title="Click to edit form settings"
+      >
+        <div class="form-header-meta">
+          <h1 class="form-title">{{ currentForm.name }}</h1>
+          <p class="form-desc">{{ currentForm.description || 'No description provided' }}</p>
+        </div>
+        <div class="form-tags">
+          <span class="fs-badge fs-badge-secondary" title="Form Code">Code: {{ currentForm.code }}</span>
+          @if (currentForm.category) {
+            <span class="fs-badge fs-badge-primary" title="Category">{{ currentForm.category }}</span>
+          }
+          <span
+            class="fs-badge"
+            [class.fs-badge-success]="currentForm.status === 'Published'"
+            [class.fs-badge-secondary]="currentForm.status !== 'Published'"
           >
-            @for (field of section.fields; track field.id) {
-              <div
-                cdkDrag
-                (click)="selectField(section.id, field.id); $event.stopPropagation()"
-                [class.selected-field]="isFieldSelected(field.id)"
-              >
-                <p>{{ field.label }} -- {{ field.type }} -- {{ field.name }}</p>
-                <button (click)="removeField(field.id); $event.stopPropagation()">
-                  Delete Field
+            {{ currentForm.status }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Sections List (CDK Drop List) -->
+      <div
+        cdkDropList
+        id="sections-drop-list"
+        [cdkDropListData]="currentForm.sections"
+        (cdkDropListDropped)="dropSection($event)"
+        class="sections-container"
+      >
+        @for (section of currentForm.sections; track section.id) {
+          <div
+            cdkDrag
+            [cdkDragData]="section"
+            (click)="selectSection(section.id)"
+            class="canvas-section"
+            [class.selected]="isSectionSelected(section.id)"
+          >
+            <div class="section-header">
+              <div class="section-drag-handle" cdkDragHandle title="Drag section to reorder">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/>
+                  <circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>
+                  <circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/>
+                </svg>
+              </div>
+
+              <div class="section-title-group">
+                <h2 class="section-title">{{ section.title }}</h2>
+                @if (section.description) {
+                  <p class="section-desc">{{ section.description }}</p>
+                }
+              </div>
+
+              <div class="section-actions">
+                <button
+                  type="button"
+                  class="fs-btn fs-btn-danger fs-btn-sm"
+                  (click)="removeSection(section.id); $event.stopPropagation()"
+                  title="Delete Section"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  Delete Section
                 </button>
               </div>
-            }
+            </div>
+
+            <!-- Fields Container (CDK Drop List for fields) -->
+            <div
+              cdkDropList
+              [id]="getFieldDropListId(section.id)"
+              [cdkDropListData]="section.id"
+              [cdkDropListConnectedTo]="getFieldDropListIds()"
+              (cdkDropListDropped)="dropField($event)"
+              class="fields-container"
+              [class.empty-container]="section.fields.length === 0"
+            >
+              @if (section.fields.length === 0) {
+                <div class="empty-drop-zone">
+                  <span>No fields in this section. Add or drop fields here.</span>
+                </div>
+              }
+
+              @for (field of section.fields; track field.id) {
+                <div
+                  cdkDrag
+                  [cdkDragData]="field"
+                  (click)="selectField(section.id, field.id); $event.stopPropagation()"
+                  class="canvas-field"
+                  [class.selected-field]="isFieldSelected(field.id)"
+                >
+                  <div class="field-drag-handle" cdkDragHandle title="Drag field to reorder">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/>
+                      <circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>
+                      <circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/>
+                    </svg>
+                  </div>
+
+                  <div class="field-details">
+                    <div class="field-meta">
+                      <span class="field-label-text">{{ field.label }}</span>
+                      @if (isFieldRequired(field)) {
+                        <span class="required-asterisk">*</span>
+                      }
+                    </div>
+                    <div class="field-sub-meta">
+                      <span class="fs-badge fs-badge-primary">{{ field.type }}</span>
+                      <code class="field-name-code">{{ field.name }}</code>
+                    </div>
+                  </div>
+
+                  <div class="field-actions">
+                    <button
+                      type="button"
+                      class="fs-btn fs-btn-ghost fs-btn-sm"
+                      (click)="removeField(field.id); $event.stopPropagation()"
+                      title="Delete Field"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
-        </div>
-      }
+        }
+      </div>
+
+      <!-- Add Section Bar -->
+      <div class="canvas-footer">
+        <button type="button" class="fs-btn fs-btn-secondary add-section-btn" (click)="addSection()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Add Section
+        </button>
+      </div>
     </div>
   </div>
 }

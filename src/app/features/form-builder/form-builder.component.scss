@@ -1,0 +1,123 @@
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--fs-bg);
+}
+
+.builder-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.builder-header {
+  height: 56px;
+  min-height: 56px;
+  background-color: var(--fs-surface);
+  border-bottom: 1px solid var(--fs-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--fs-space-md);
+  z-index: 10;
+  box-shadow: var(--fs-shadow-xs);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--fs-space-sm);
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: var(--fs-primary-light);
+    color: var(--fs-primary);
+    border-radius: var(--fs-radius-sm);
+  }
+
+  .brand-title {
+    font-size: var(--fs-font-size-base);
+    font-weight: 700;
+    color: var(--fs-text-main);
+    letter-spacing: -0.01em;
+  }
+
+  .form-title-badge {
+    font-weight: 600;
+    color: var(--fs-text-muted);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--fs-radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background-color: var(--fs-surface-alt);
+      color: var(--fs-text-main);
+    }
+
+    &::before {
+      content: "/";
+      margin-right: 0.5rem;
+      color: var(--fs-border);
+    }
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--fs-space-xs);
+}
+
+.builder-workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.workspace-palette {
+  width: 270px;
+  min-width: 270px;
+  height: 100%;
+  border-right: 1px solid var(--fs-border);
+  background-color: var(--fs-surface);
+  overflow-y: auto;
+}
+
+.workspace-canvas {
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
+  background-color: var(--fs-bg);
+}
+
+.workspace-properties {
+  width: 340px;
+  min-width: 340px;
+  height: 100%;
+  border-left: 1px solid var(--fs-border);
+  background-color: var(--fs-surface);
+  overflow-y: auto;
+}
+
+@media (max-width: 1024px) {
+  .builder-workspace {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .workspace-palette,
+  .workspace-properties {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    border: none;
+    border-bottom: 1px solid var(--fs-border);
+  }
+}

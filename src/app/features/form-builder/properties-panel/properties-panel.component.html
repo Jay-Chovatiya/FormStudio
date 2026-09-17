@@ -1,345 +1,457 @@
-@if (activeTab() === 'field' && selectedField(); as field) {
-  <form [formGroup]="fieldForm">
-    <label>
-      Label
-      <input formControlName="label" />
-    </label>
+<div class="properties-container">
+  @if (activeTab() === 'field' && selectedField(); as field) {
+    <div class="panel-header">
+      <div class="panel-header-badge">Field Settings</div>
+      <h3 class="panel-title">{{ field.label }}</h3>
+      <span class="panel-type-tag">{{ field.type }}</span>
+    </div>
 
-    <label>
-      Field Name
-      <input formControlName="name" />
-      @if (fieldForm.controls.name.invalid && fieldForm.controls.name.touched) {
-        @if (fieldForm.controls.name.hasError('requiredTrimmed')) {
-          <small>field name is required</small>
-        } @else if (fieldForm.controls.name.hasError('invalidIdentifier')) {
-          <small>Invalid field name</small>
-        } @else if (fieldForm.controls.name.hasError('duplicateFieldName')) {
-          <small>Field name already exists</small>
-        }
+    <form [formGroup]="fieldForm" class="panel-body">
+      <!-- Field Information Group -->
+      <div class="prop-group">
+        <h4 class="prop-group-title">Field Information</h4>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="prop-label">Label</label>
+          <input id="prop-label" class="fs-input" formControlName="label" placeholder="Field Label" />
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="prop-name">Field Name (Variable)</label>
+          <input id="prop-name" class="fs-input" formControlName="name" placeholder="field_name" />
+          @if (fieldForm.controls.name.invalid && fieldForm.controls.name.touched) {
+            @if (fieldForm.controls.name.hasError('requiredTrimmed')) {
+              <span class="fs-error-message">Field name is required.</span>
+            } @else if (fieldForm.controls.name.hasError('invalidIdentifier')) {
+              <span class="fs-error-message">Must start with a letter & use letters, numbers, or underscores.</span>
+            } @else if (fieldForm.controls.name.hasError('duplicateFieldName')) {
+              <span class="fs-error-message">Field name already exists.</span>
+            }
+          }
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-checkbox-label">
+            <input type="checkbox" formControlName="visibility" />
+            Visible on Form
+          </label>
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="prop-helper">Helper Description</label>
+          <input id="prop-helper" class="fs-input" formControlName="helperDescription" placeholder="Help text for users" />
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="prop-placeholder">Placeholder</label>
+          <input id="prop-placeholder" class="fs-input" formControlName="placeholder" placeholder="Input placeholder text" />
+        </div>
+      </div>
+
+      <!-- Options Group for Dropdown / Radio Button -->
+      @if (supportsOptions(field.type)) {
+        <div class="prop-group">
+          <div class="group-header-row">
+            <h4 class="prop-group-title">Field Options</h4>
+            <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm" (click)="addFieldOption()">
+              + Add Option
+            </button>
+          </div>
+
+          <div formArrayName="options" class="options-list">
+            <div class="options-header-labels">
+              <span>Label</span>
+              <span>Value</span>
+              <span></span>
+            </div>
+
+            @for (option of fieldForm.controls.options.controls; track option; let i = $index) {
+              <div [formGroupName]="i" class="option-item-row">
+                <div class="option-input-wrap">
+                  <input class="fs-input" formControlName="label" placeholder="Option Label" />
+                  @if (option.controls['label'].hasError('requiredTrimmed') && option.controls['label'].touched) {
+                    <span class="fs-error-message">Label required</span>
+                  }
+                </div>
+                <div class="option-input-wrap">
+                  <input class="fs-input" formControlName="value" placeholder="option_value" />
+                  @if (option.controls['value'].invalid && option.controls['value'].touched) {
+                    <span class="fs-error-message">Value required</span>
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="fs-btn fs-btn-danger fs-btn-sm"
+                  (click)="deleteFieldOption(option.value.id)"
+                  title="Remove Option"
+                >
+                  ✕
+                </button>
+              </div>
+            }
+
+            @if (fieldForm.controls.options.hasError('duplicateOptionValue')) {
+              <span class="fs-error-message">Option values must be unique.</span>
+            }
+          </div>
+        </div>
       }
-    </label>
 
-    <label>
-      Visibility
-      <input type="checkbox" formControlName="visibility" />
-    </label>
+      <!-- Default Value Group -->
+      <div class="prop-group">
+        <h4 class="prop-group-title">Default Value</h4>
+        <div class="form-field-item">
+          @if (field.type === 'RadioButton') {
+            <div class="radio-options-stack">
+              <label class="fs-radio-label">
+                <input type="radio" name="default" value="" formControlName="default" />
+                (None)
+              </label>
+              @for (option of fieldForm.controls.options.controls; track option) {
+                <label class="fs-radio-label">
+                  <input type="radio" name="default" [value]="option.value.value" formControlName="default" />
+                  {{ option.value.label }}
+                </label>
+              }
+            </div>
+          } @else if (field.type === 'Dropdown') {
+            <select class="fs-select" formControlName="default">
+              <option value="">No default value</option>
+              @for (option of fieldForm.controls.options.controls; track option) {
+                <option [value]="option.value.value">{{ option.value.label }}</option>
+              }
+            </select>
+          } @else if (field.type === 'Checkbox') {
+            <label class="fs-checkbox-label">
+              <input type="checkbox" formControlName="default" />
+              Checked by default
+            </label>
+          } @else if (field.type === 'Textarea') {
+            <textarea class="fs-textarea" formControlName="default" placeholder="Default multiline text..."></textarea>
+          } @else {
+            <input class="fs-input" [type]="getInputType(field.type)" formControlName="default" placeholder="Default value..." />
+          }
 
-    @if (supportsOptions(field.type)) {
-      <li>Label -- Value</li>
-      <button type="button" (click)="addFieldOption()">+ Add Option</button>
-      <div formArrayName="options">
-        @for (option of fieldForm.controls.options.controls; track option; let i = $index) {
-          <div [formGroupName]="i">
-            <input formControlName="label" />
-            @if (
-              option.controls['label'].hasError('requiredTrimmed') &&
-              option.controls['label'].touched
-            ) {
-              <small>label is required</small>
-            }
-            <input formControlName="value" />
-            @if (option.controls['value'].invalid && option.controls['value'].touched) {
-              <small>value is required</small>
-            }
-            <button type="button" (click)="deleteFieldOption(option.value.id)">Delete</button>
+          @if (fieldForm.hasError('defaultMinValue')) {
+            <span class="fs-error-message">Default value cannot be less than minimum limit.</span>
+          } @else if (fieldForm.hasError('defaultMaxValue')) {
+            <span class="fs-error-message">Default value cannot be greater than maximum limit.</span>
+          } @else if (fieldForm.hasError('defaultMinLength')) {
+            <span class="fs-error-message">Default value is shorter than minimum length.</span>
+          } @else if (fieldForm.hasError('defaultMaxLength')) {
+            <span class="fs-error-message">Default value is longer than maximum length.</span>
+          }
+        </div>
+      </div>
+
+      <!-- Validation Group -->
+      <div class="prop-group">
+        <h4 class="prop-group-title">Validation Rules</h4>
+
+        <div class="form-field-item">
+          <label class="fs-checkbox-label">
+            <input
+              type="checkbox"
+              [checked]="isValidationEnabled('required')"
+              (change)="toggleValidation('required', $event)"
+            />
+            Required Field
+          </label>
+        </div>
+
+        @if (field.type === 'Textbox' || field.type === 'Textarea') {
+          <div class="form-row-2col">
+            <div class="form-field-item">
+              <label class="fs-label" for="val-minlen">Min Length</label>
+              <input
+                id="val-minlen"
+                class="fs-input"
+                type="number"
+                [value]="getValidationValue('minLength')"
+                (blur)="updateValidationValue('minLength', $event)"
+                placeholder="e.g. 2"
+              />
+              @if (getPropertyError('minLength'); as error) {
+                <span class="fs-error-message">{{ error }}</span>
+              }
+            </div>
+
+            <div class="form-field-item">
+              <label class="fs-label" for="val-maxlen">Max Length</label>
+              <input
+                id="val-maxlen"
+                class="fs-input"
+                type="number"
+                [value]="getValidationValue('maxLength')"
+                (blur)="updateValidationValue('maxLength', $event)"
+                placeholder="e.g. 100"
+              />
+              @if (getPropertyError('maxLength'); as error) {
+                <span class="fs-error-message">{{ error }}</span>
+              }
+            </div>
           </div>
         }
-        @if (fieldForm.controls.options.hasError('duplicateOptionValue')) {
-          <small>Option values must be unique.</small>
+
+        @if (field.type === 'Number') {
+          <div class="form-row-2col">
+            <div class="form-field-item">
+              <label class="fs-label" for="val-minval">Min Value</label>
+              <input
+                id="val-minval"
+                class="fs-input"
+                type="number"
+                [value]="getValidationValue('minValue')"
+                (blur)="updateValidationValue('minValue', $event)"
+                placeholder="e.g. 0"
+              />
+              @if (getPropertyError('minValue'); as error) {
+                <span class="fs-error-message">{{ error }}</span>
+              }
+            </div>
+
+            <div class="form-field-item">
+              <label class="fs-label" for="val-maxval">Max Value</label>
+              <input
+                id="val-maxval"
+                class="fs-input"
+                type="number"
+                [value]="getValidationValue('maxValue')"
+                (blur)="updateValidationValue('maxValue', $event)"
+                placeholder="e.g. 1000"
+              />
+              @if (getPropertyError('maxValue'); as error) {
+                <span class="fs-error-message">{{ error }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        @if (field.type === 'Email') {
+          <div class="form-field-item">
+            <label class="fs-checkbox-label">
+              <input
+                type="checkbox"
+                [checked]="isValidationEnabled('email')"
+                (change)="toggleValidation('email', $event)"
+              />
+              Enforce Valid Email Format
+            </label>
+          </div>
+        }
+
+        @if (field.type === 'Textbox' || field.type === 'Textarea' || field.type === 'Email') {
+          <div class="form-field-item">
+            <label class="fs-label" for="val-pattern">Pattern (Regex)</label>
+            <input
+              id="val-pattern"
+              class="fs-input"
+              type="text"
+              [value]="getPatternValidationValue()"
+              (blur)="updatePatternValidation($event)"
+              placeholder="e.g. ^[A-Z0-9]+$"
+            />
+            @if (getPropertyError('pattern'); as error) {
+              <span class="fs-error-message">{{ error }}</span>
+            }
+          </div>
         }
       </div>
-    }
-    <label>
-      Helper Description
-      <input formControlName="helperDescription" />
-    </label>
-    <label>
-      Placeholder
-      <input formControlName="placeholder" />
-    </label>
-    <div>
-      <strong>Default</strong>
-      @if (field.type === 'RadioButton') {
-        @for (option of fieldForm.controls.options.controls; track option) {
-          <label>
-            <input
-              type="radio"
-              name="default"
-              [value]="option.value.value"
-              formControlName="default"
-            />
+    </form>
+  } @else if (activeTab() === 'section') {
+    <div class="panel-header">
+      <div class="panel-header-badge">Section Settings</div>
+      <h3 class="panel-title">Configure Section</h3>
+    </div>
 
-            {{ option.value.label }}
+    <form [formGroup]="sectionForm" class="panel-body">
+      <div class="prop-group">
+        <h4 class="prop-group-title">Section Details</h4>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="sec-title">Section Title</label>
+          <input id="sec-title" class="fs-input" formControlName="title" placeholder="Section Title" />
+          @if (sectionForm.controls.title.hasError('requiredTrimmed') && sectionForm.controls.title.touched) {
+            <span class="fs-error-message">Section title is required.</span>
+          }
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="sec-desc">Description</label>
+          <input id="sec-desc" class="fs-input" formControlName="description" placeholder="Brief section description" />
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="sec-theme">Theme / Variant</label>
+          <input id="sec-theme" class="fs-input" formControlName="theme" placeholder="e.g. default, highlighted" />
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-checkbox-label">
+            <input type="checkbox" formControlName="visibility" />
+            Visible on Form
           </label>
-        }
-      } @else if (field.type === 'Dropdown') {
-        <select formControlName="default">
-          <option value="">No default</option>
-
-          @for (option of fieldForm.controls.options.controls; track option) {
-            <option [value]="option.value.value">
-              {{ option.value.label }}
-            </option>
-          }
-        </select>
-      } @else if (field.type === 'Checkbox') {
-        <label>
-          <input type="checkbox" formControlName="default" />
-          Checked by default
-        </label>
-      } @else if (field.type === 'Textarea') {
-        <textarea formControlName="default"></textarea>
-      } @else {
-        <input [type]="getInputType(field.type)" formControlName="default" />
-      }
+        </div>
+      </div>
+    </form>
+  } @else if (activeTab() === 'form') {
+    <div class="panel-header">
+      <div class="panel-header-badge">Form Configuration</div>
+      <h3 class="panel-title">Global Settings</h3>
     </div>
-    @if (fieldForm.hasError('defaultMinValue')) {
-      <small>Default value cannot be less than the minimum value.</small>
-    } @else if (fieldForm.hasError('defaultMaxValue')) {
-      <small>Default value cannot be greater than the maximum value.</small>
-    } @else if (fieldForm.hasError('defaultMinLength')) {
-      <small>Default value is shorter than the minimum length.</small>
-    } @else if (fieldForm.hasError('defaultMaxLength')) {
-      <small>Default value is longer than the maximum length.</small>
-    }
-    <div>
-      <strong>Validation</strong>
-      <label>
-        <input
-          type="checkbox"
-          [checked]="isValidationEnabled('required')"
-          (change)="toggleValidation('required', $event)"
-        />
-        Required
-      </label>
-      @if (field.type === 'Textbox' || field.type === 'Textarea') {
-        <label>
-          Min Length
-          <input
-            type="number"
-            [value]="getValidationValue('minLength')"
-            (blur)="updateValidationValue('minLength', $event)"
-          />
-          @if (getPropertyError('minLength'); as error) {
-            <small>{{ error }}</small>
-          }
-        </label>
 
-        <label>
-          Max Length
-          <input
-            type="number"
-            [value]="getValidationValue('maxLength')"
-            (blur)="updateValidationValue('maxLength', $event)"
-          />
-          @if (getPropertyError('maxLength'); as error) {
-            <small>{{ error }}</small>
-          }
-        </label>
-      }
+    <form [formGroup]="formForm" class="panel-body">
+      <!-- Basic Information -->
+      <div class="prop-group">
+        <h4 class="prop-group-title">Basic Information</h4>
 
-      @if (field.type === 'Number') {
-        <label>
-          Min Value
-          <input
-            type="number"
-            [value]="getValidationValue('minValue')"
-            (blur)="updateValidationValue('minValue', $event)"
-          />
-          @if (getPropertyError('minValue'); as error) {
-            <small>{{ error }}</small>
+        <div class="form-field-item">
+          <label class="fs-label" for="frm-name">Form Name</label>
+          <input id="frm-name" class="fs-input" formControlName="name" placeholder="Form Title" />
+          @if (formForm.controls.name.hasError('requiredTrimmed') && formForm.controls.name.touched) {
+            <span class="fs-error-message">Form name is required.</span>
           }
-        </label>
+        </div>
 
-        <label>
-          Max Value
-          <input
-            type="number"
-            [value]="getValidationValue('maxValue')"
-            (blur)="updateValidationValue('maxValue', $event)"
-          />
-          @if (getPropertyError('maxValue'); as error) {
-            <small>{{ error }}</small>
+        <div class="form-field-item">
+          <label class="fs-label" for="frm-desc">Description</label>
+          <input id="frm-desc" class="fs-input" formControlName="description" placeholder="Form purpose description" />
+          @if (formForm.controls.description.hasError('requiredTrimmed') && formForm.controls.description.touched) {
+            <span class="fs-error-message">Description is required.</span>
           }
-        </label>
-      }
-      @if (field.type === 'Email') {
-        <label>
-          <input
-            type="checkbox"
-            [checked]="isValidationEnabled('email')"
-            (change)="toggleValidation('email', $event)"
-          />
-          Email Format
-        </label>
-      }
-      @if (field.type === 'Textbox' || field.type === 'Textarea' || field.type === 'Email') {
-        <label>
-          Pattern
-          <input
-            type="text"
-            [value]="getPatternValidationValue()"
-            (blur)="updatePatternValidation($event)"
-            placeholder="Enter regex pattern"
-          />
-          @if (getPropertyError('pattern'); as error) {
-            <small>{{ error }}</small>
+        </div>
+
+        <div class="form-row-2col">
+          <div class="form-field-item">
+            <label class="fs-label" for="frm-code">Code</label>
+            <input id="frm-code" class="fs-input" formControlName="code" placeholder="form_code" />
+            @if (formForm.controls.code.invalid && formForm.controls.code.touched) {
+              @if (formForm.controls.code.hasError('requiredTrimmed')) {
+                <span class="fs-error-message">Code required.</span>
+              } @else if (formForm.controls.code.hasError('invalidIdentifier')) {
+                <span class="fs-error-message">Invalid identifier.</span>
+              }
+            }
+          </div>
+
+          <div class="form-field-item">
+            <label class="fs-label" for="frm-category">Category</label>
+            <select id="frm-category" class="fs-select" formControlName="category">
+              <option value="">No category</option>
+              @for (category of categoryOptions; track category) {
+                <option [value]="category">{{ category | titlecase }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="frm-status">Status</label>
+          <select id="frm-status" class="fs-select" formControlName="status">
+            @for (status of statusOptions; track status) {
+              <option [value]="status">{{ status | uppercase }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Availability -->
+      <div class="prop-group">
+        <h4 class="prop-group-title">Availability Schedule</h4>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="frm-startdate">Start Date</label>
+          <input id="frm-startdate" class="fs-input" type="datetime-local" formControlName="startDate" />
+          @if (formForm.controls.startDate.hasError('pastDate') && formForm.controls.startDate.touched) {
+            <span class="fs-error-message">Start date must be in the future.</span>
           }
-        </label>
-      }
-    </div>
-  </form>
-} @else if (activeTab() === 'section') {
-  <form [formGroup]="sectionForm">
-    <label>
-      Title
-      <input formControlName="title" />
+        </div>
 
-      @if (
-        sectionForm.controls.title.hasError('requiredTrimmed') && sectionForm.controls.title.touched
-      ) {
-        <small>Section title is required</small>
-      }
-    </label>
-    <label>
-      Description
-      <input formControlName="description" />
-    </label>
-    <label>
-      Theme
-      <input formControlName="theme" />
-    </label>
-    <label>
-      Visibility
-      <input type="checkbox" formControlName="visibility" />
-    </label>
-  </form>
-} @else if (activeTab() === 'form') {
-  <form [formGroup]="formForm">
-    <label>
-      Name
-      <input formControlName="name" />
-      @if (formForm.controls.name.hasError('requiredTrimmed') && formForm.controls.name.touched) {
-        <small>Form name is required</small>
-      }
-    </label>
-    <label>
-      Description
-      <input formControlName="description" />
-      @if (
-        formForm.controls.description.hasError('requiredTrimmed') &&
-        formForm.controls.description.touched
-      ) {
-        <small>Description is required</small>
-      }
-    </label>
-    <label>
-      Code
-      <input formControlName="code" />
-      @if (formForm.controls.code.invalid && formForm.controls.code.touched) {
-        @if (formForm.controls.code.hasError('requiredTrimmed')) {
-          <small>Form code is required</small>
-        } @else if (formForm.controls.code.hasError('invalidIdentifier')) {
-          <small
-            >Form code must start with a letter and contain only letters, numbers, and
-            underscores</small
-          >
-        }
-      }
-    </label>
-    <label>
-      Category
-      <select formControlName="category">
-        <option value="">No category</option>
+        <div class="form-field-item">
+          <label class="fs-label" for="frm-enddate">End Date</label>
+          <input id="frm-enddate" class="fs-input" type="datetime-local" formControlName="endDate" />
+          @if (formForm.controls.endDate.hasError('pastDate') && formForm.controls.endDate.touched) {
+            <span class="fs-error-message">End date must be in the future.</span>
+          } @else if (formForm.hasError('invalidDateRange') && formForm.controls.endDate.touched) {
+            <span class="fs-error-message">End date must be after start date.</span>
+          }
+        </div>
+      </div>
 
-        @for (category of categoryOptions; track category) {
-          <option [value]="category">
-            {{ category | titlecase }}
-          </option>
-        }
-      </select>
-    </label>
-    <label>
-      Status
-      <select formControlName="status">
-        @for (status of statusOptions; track status) {
-          <option [value]="status">
-            {{ status | uppercase }}
-          </option>
-        }
-      </select>
-    </label>
-    <label>
-      Start Date
-      <input type="datetime-local" formControlName="startDate" />
-      @if (
-        formForm.controls.startDate.hasError('pastDate') && formForm.controls.startDate.touched
-      ) {
-        <small>Start date must be in the future.</small>
-      }
-    </label>
-    <label>
-      End Date
-      <input type="datetime-local" formControlName="endDate" />
-      @if (formForm.controls.endDate.hasError('pastDate') && formForm.controls.endDate.touched) {
-        <small>End date must be in the future.</small>
-      } @else if (formForm.hasError('invalidDateRange') && formForm.controls.endDate.touched) {
-        <small>End date must be after the start date.</small>
-      }
-    </label>
-    <label>
-      Allow Multiple Submissions
-      <input type="checkbox" formControlName="allowMultipleSubmissions" />
-    </label>
-    <label>
-      Allow Save As Draft
-      <input type="checkbox" formControlName="allowSaveAsDraft" />
-    </label>
-    <label>
-      Confirmation Message
-      <input formControlName="confirmationMessage" />
-    </label>
-    <label>
-      Submit Button Text
-      <input formControlName="submitButtonText" />
-      @if (
-        formForm.controls.submitButtonText.hasError('requiredTrimmed') &&
-        formForm.controls.submitButtonText.touched
-      ) {
-        <small>Submit Button Text is required</small>
-      }
-    </label>
-    <label>
-      Cancel Button Text
-      <input formControlName="cancelButtonText" />
-      @if (
-        formForm.controls.cancelButtonText.hasError('requiredTrimmed') &&
-        formForm.controls.cancelButtonText.touched
-      ) {
-        <small>Cancel Button Text is required</small>
-      }
-    </label>
-    <label>
-      Theme
-      <input formControlName="theme" />
-    </label>
-    <label>
-      Logo URL
-      <input formControlName="logoUrl" />
-    </label>
-    <label>
-      Header Text
-      <input formControlName="headerText" />
-      @if (
-        formForm.controls.headerText.hasError('requiredTrimmed') &&
-        formForm.controls.headerText.touched
-      ) {
-        <small>Header Text is required</small>
-      }
-    </label>
-    <label>
-      Footer Text
-      <input formControlName="footerText" />
-    </label>
-  </form>
-}
+      <!-- Submission Settings -->
+      <div class="prop-group">
+        <h4 class="prop-group-title">Submission Settings</h4>
+
+        <div class="form-field-item">
+          <label class="fs-checkbox-label">
+            <input type="checkbox" formControlName="allowMultipleSubmissions" />
+            Allow Multiple Submissions
+          </label>
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-checkbox-label">
+            <input type="checkbox" formControlName="allowSaveAsDraft" />
+            Allow Save As Draft
+          </label>
+        </div>
+      </div>
+
+      <!-- Messages & Buttons -->
+      <div class="prop-group">
+        <h4 class="prop-group-title">Messages & Action Labels</h4>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="frm-confirm">Confirmation Message</label>
+          <input id="frm-confirm" class="fs-input" formControlName="confirmationMessage" placeholder="Thank you message" />
+        </div>
+
+        <div class="form-row-2col">
+          <div class="form-field-item">
+            <label class="fs-label" for="frm-submitbtn">Submit Button</label>
+            <input id="frm-submitbtn" class="fs-input" formControlName="submitButtonText" placeholder="Submit" />
+            @if (formForm.controls.submitButtonText.hasError('requiredTrimmed') && formForm.controls.submitButtonText.touched) {
+              <span class="fs-error-message">Required.</span>
+            }
+          </div>
+
+          <div class="form-field-item">
+            <label class="fs-label" for="frm-cancelbtn">Cancel Button</label>
+            <input id="frm-cancelbtn" class="fs-input" formControlName="cancelButtonText" placeholder="Cancel" />
+            @if (formForm.controls.cancelButtonText.hasError('requiredTrimmed') && formForm.controls.cancelButtonText.touched) {
+              <span class="fs-error-message">Required.</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Appearance -->
+      <div class="prop-group">
+        <h4 class="prop-group-title">Appearance & Branding</h4>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="frm-logo">Logo URL</label>
+          <input id="frm-logo" class="fs-input" formControlName="logoUrl" placeholder="https://example.com/logo.png" />
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="frm-header">Header Text</label>
+          <input id="frm-header" class="fs-input" formControlName="headerText" placeholder="Form banner header" />
+          @if (formForm.controls.headerText.hasError('requiredTrimmed') && formForm.controls.headerText.touched) {
+            <span class="fs-error-message">Header text is required.</span>
+          }
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="frm-footer">Footer Text</label>
+          <input id="frm-footer" class="fs-input" formControlName="footerText" placeholder="Footer note" />
+        </div>
+
+        <div class="form-field-item">
+          <label class="fs-label" for="frm-theme">Theme Keyword</label>
+          <input id="frm-theme" class="fs-input" formControlName="theme" placeholder="e.g. default, dark" />
+        </div>
+      </div>
+    </form>
+  }
+</div>

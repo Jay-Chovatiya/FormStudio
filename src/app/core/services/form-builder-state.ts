@@ -153,37 +153,35 @@ export class FormBuilderState {
     this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
   }
 
-  // Field operations
   addFieldToSelectedSection(type: FieldTypes): boolean {
     const currentForm = this.form();
-
     if (!currentForm) return false;
-
-    this.recordState();
 
     let sectionId = this.selectedSectionId();
     let sections = currentForm.sections;
 
-    // Auto-create section if none exists
     if (sectionId === null || !sections.some((s) => s.id === sectionId)) {
       if (sections.length > 0) {
         sectionId = sections[0].id;
         this.selectedSectionId.set(sectionId);
       } else {
-        const newSection: FormSection = {
-          id: 1,
-          title: 'Section 1',
-          description: '',
-          visibility: true,
-          fields: [],
-        };
-
-        sections = [...sections, newSection];
+        const newSection = this.addSection('Section 1');
         sectionId = newSection.id;
-
-        this.selectedSectionId.set(sectionId);
       }
     }
+
+    return this.addFieldToSection(sectionId, type);
+  }
+
+  addFieldToSection(sectionId: number, type: FieldTypes, atIndex?: number): boolean {
+    const currentForm = this.form();
+    if (!currentForm) return false;
+
+    this.recordState();
+
+    let sections = currentForm.sections;
+    const targetSection = sections.find((s) => s.id === sectionId);
+    if (!targetSection) return false;
 
     const allFields = sections.flatMap((s) => s.fields);
     const maxId = Math.max(...allFields.map((f) => f.id), 0);
@@ -201,14 +199,15 @@ export class FormBuilderState {
       options: this.getDefaultOptions(type),
     };
 
-    sections = sections.map((section) =>
-      section.id === sectionId
-        ? {
-            ...section,
-            fields: [...section.fields, newField],
-          }
-        : section,
-    );
+    sections = sections.map((section) => {
+      if (section.id === sectionId) {
+        const fields = [...section.fields];
+        const insertIndex = atIndex !== undefined ? atIndex : fields.length;
+        fields.splice(insertIndex, 0, newField);
+        return { ...section, fields };
+      }
+      return section;
+    });
 
     this.form.set({
       ...currentForm,
@@ -217,7 +216,6 @@ export class FormBuilderState {
     });
 
     this.selectField(sectionId, fieldId);
-
     return true;
   }
 
@@ -303,9 +301,25 @@ export class FormBuilderState {
     if (!current) return;
 
     this.recordState();
-    let movedField: FormField | null = null;
 
-    const updatedSections = current.sections.map((section) => {
+    if (fromSectionId === toSectionId) {
+      const sections = current.sections.map((section) => {
+        if (section.id === fromSectionId) {
+          const fields = [...section.fields];
+          const [movedField] = fields.splice(previousIndex, 1);
+          if (movedField) {
+            fields.splice(currentIndex, 0, movedField);
+          }
+          return { ...section, fields };
+        }
+        return section;
+      });
+      this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
+      return;
+    }
+
+    let movedField: FormField | null = null;
+    const sectionsAfterRemoval = current.sections.map((section) => {
       if (section.id === fromSectionId) {
         const fields = [...section.fields];
         [movedField] = fields.splice(previousIndex, 1);
@@ -316,7 +330,7 @@ export class FormBuilderState {
 
     if (!movedField) return;
 
-    const finalSections = updatedSections.map((section) => {
+    const finalSections = sectionsAfterRemoval.map((section) => {
       if (section.id === toSectionId) {
         const fields = [...section.fields];
         fields.splice(currentIndex, 0, movedField!);

@@ -21,7 +21,7 @@ import { FormDefinition } from '../../../core/models/form-definition';
   templateUrl: './dynamic-form.component.html',
 })
 export class DynamicFormComponent {
-   readonly formDefinition = input<FormDefinition | null>(null);
+  readonly formDefinition = input<FormDefinition | null>(null);
 
   form = new FormGroup({});
 
@@ -42,9 +42,6 @@ export class DynamicFormComponent {
         );
       });
     });
-
-    console.log(this.form.controls);
-    console.log(this.form.value);
   }
 
   createValidators(validations: FieldValidation[]): ValidatorFn[] {
@@ -98,9 +95,12 @@ export class DynamicFormComponent {
     }
   }
 
+  isFieldRequired(field: FormField): boolean {
+    return field.validation?.some((v) => v.type === 'required') ?? false;
+  }
+
   submit() {
     this.form.markAllAsTouched();
-    console.log('validation ', this.form.valid);
     if (this.form.invalid) return;
 
     const formDefinition = this.formDefinition();
@@ -119,22 +119,20 @@ export class DynamicFormComponent {
       responses: responses,
     };
 
-    console.log(payload);
-
-    console.log(this.form.value);
+    console.log('Submitted payload:', payload);
   }
 
   getResponseValue(field: FormField): string | number | boolean | null {
     const value = this.form.get(field.name)?.value;
-  
+
     if (value === null || value === undefined || value === '') {
       return '';
     }
-  
+
     switch (field.type) {
       case 'Number':
         return Number(value);
-  
+
       default:
         return value;
     }
