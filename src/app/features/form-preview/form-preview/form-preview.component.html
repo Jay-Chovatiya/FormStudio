@@ -1,0 +1,15 @@
+@if (form(); as currentForm) {
+  <div class="form-preview">
+    <h1>{{ currentForm.name }}</h1>
+
+    @if (currentForm.description) {
+      <p>{{ currentForm.description }}</p>
+    }
+
+    <app-dynamic-form
+      [formDefinition]="currentForm"
+    />
+  </div>
+} @else {
+  <p>No form data available.</p>
+}

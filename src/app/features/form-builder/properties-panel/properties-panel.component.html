@@ -87,8 +87,10 @@
           <input type="checkbox" formControlName="default" />
           Checked by default
         </label>
+      } @else if (field.type === 'Textarea') {
+        <textarea formControlName="default"></textarea>
       } @else {
-        <input [type]="field.type === 'Number' ? 'number' : 'text'" formControlName="default" />
+        <input [type]="getInputType(field.type)" formControlName="default" />
       }
     </div>
     @if (fieldForm.hasError('defaultMinValue')) {

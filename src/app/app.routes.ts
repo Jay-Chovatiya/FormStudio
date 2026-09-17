@@ -13,4 +13,10 @@ export const routes: Routes = [
     component: FormBuilderComponent,
     title: 'Form Builder',
   },
+  {
+    path: 'forms/:id/preview',
+    loadComponent: () =>
+      import('./features/form-preview/form-preview/form-preview.component')
+        .then(m => m.FormPreviewComponent),
+  },
 ];

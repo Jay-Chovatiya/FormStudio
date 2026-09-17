@@ -1,6 +1,9 @@
 <button (click)="openFormProperties()">
   Form Properties
 </button>
+<button type="button" (click)="openPreview()">
+  Preview
+</button>
 <button (click)="addSection()">+ Add Section</button>
 <button (click)="undo()" [disabled]="!canUndo()">Undo</button>
 <button (click)="redo()" [disabled]="!canRedo()">Redo</button>

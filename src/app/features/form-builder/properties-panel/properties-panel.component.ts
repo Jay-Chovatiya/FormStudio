@@ -331,6 +331,23 @@ export class PropertiesPanelComponent {
     return type === 'Dropdown' || type === 'RadioButton';
   }
 
+  getInputType(fieldType: FieldTypes): string {
+    switch (fieldType) {
+      case 'Textbox':
+        return 'text';
+      case 'Email':
+        return 'email';
+      case 'Number':
+        return 'number';
+      case 'Date':
+        return 'date';
+      case 'DateTime':
+        return 'datetime-local';
+      default:
+        return 'text';
+    }
+  }
+
   getPropertyError(property: PropertyName): string | null {
     return this.propertyErrors().find((error) => error.property === property)?.message ?? null;
   }

@@ -1,4 +1,4 @@
-import { Component} from '@angular/core';
+import { Component, input } from '@angular/core';
 import { FormField } from '../../../core/models/form-field';
 import {
   FormGroup,
@@ -12,6 +12,7 @@ import { FieldValidation } from '../../../core/models/field-validation';
 import { FieldTypes } from '../../../core/models/field-types';
 import { FormResponse } from '../../../core/models/form-response';
 import { FormSubmission } from '../../../core/models/form-submission';
+import { FormDefinition } from '../../../core/models/form-definition';
 
 @Component({
   imports: [ReactiveFormsModule],
@@ -20,82 +21,26 @@ import { FormSubmission } from '../../../core/models/form-submission';
   templateUrl: './dynamic-form.component.html',
 })
 export class DynamicFormComponent {
-  fields: FormField[] = [
-    {
-      id: 1,
-      label: 'User Name',
-      name: 'name',
-      type: 'Textbox',
-      visibility: true,
-      default: 'Jay',
-      validation: [{ type: 'required' }, { type: 'minLength', value: 3 }],
-    },
-    {
-      id: 2,
-      label: 'Email',
-      name: 'email',
-      type: 'Email',
-      visibility: true,
-      default: 'cah@dfd',
-      placeholder: 'Enter your email',
-      validation: [{ type: 'required' }, { type: 'email' }],
-    },
-    {
-      id: 3,
-      label: 'Mobile Number',
-      name: 'mobileNumber',
-      type: 'Number',
-      visibility: true,
-      placeholder: '0123456789',
-      default: '4564561230',
-      validation: [
-        { type: 'required' },
-        { type: 'maxLength', value: 10 },
-        { type: 'minLength', value: 10 },
-      ],
-    },
-    {
-      id: 4,
-      name: 'gender',
-      label: 'Gender',
-      type: 'Dropdown',
-      visibility: true,
-      options: [
-        { id: 1,label: 'Male', value: 'M' },
-        { id: 2,label: 'Female', value: 'F' },
-        { id: 3,label: 'Other', value: 'O' },
-      ],
-    },
-    {
-      id: 5,
-      name: 'agreeTerms',
-      label: 'Accept Terms',
-      type: 'Checkbox',
-      visibility: true,
-      default: false,
-    },
-    {
-      id: 6,
-      name: 'genderRadio',
-      label: 'Gender',
-      type: 'RadioButton',
-      visibility: true,
-      options: [
-        { id: 1, label: 'Male', value: 'M' },
-        { id: 2, label: 'Female', value: 'F' },
-        { id: 3, label: 'Other', value: 'O' },
-      ],
-    },
-  ];
+   readonly formDefinition = input<FormDefinition | null>(null);
 
   form = new FormGroup({});
-  createForm(fields: FormField[]) {
-    fields.forEach((field) => {
-      console.log(field.name + ' : ' + field.default);
-      this.form.addControl(
-        field.name,
-        new FormControl(field.default ?? '', this.createValidators(field.validation ?? [])),
-      );
+
+  ngOnInit(): void {
+    const formDefinition = this.formDefinition();
+
+    if (!formDefinition) return;
+
+    this.createForm(formDefinition);
+  }
+
+  createForm(formDefinition: FormDefinition) {
+    formDefinition.sections.forEach((section) => {
+      section.fields.forEach((field) => {
+        this.form.addControl(
+          field.name,
+          new FormControl(field.default ?? '', this.createValidators(field.validation ?? [])),
+        );
+      });
     });
 
     console.log(this.form.controls);
@@ -132,10 +77,6 @@ export class DynamicFormComponent {
     return validators;
   }
 
-  ngOnInit(): void {
-    this.createForm(this.fields);
-  }
-
   getControl(fieldName: string): AbstractControl | null {
     return this.form.get(fieldName);
   }
@@ -148,6 +89,10 @@ export class DynamicFormComponent {
         return 'email';
       case 'Number':
         return 'number';
+      case 'Date':
+        return 'date';
+      case 'DateTime':
+        return 'datetime-local';
       default:
         return 'text';
     }
@@ -156,14 +101,18 @@ export class DynamicFormComponent {
   submit() {
     this.form.markAllAsTouched();
     console.log('validation ', this.form.valid);
-    if (this.form.invalid) {
-      return;
-    }
+    if (this.form.invalid) return;
 
-    const responses: FormResponse[] = this.fields.map((field) => ({
-      fieldId: field.id,
-      value: this.form.get(field.name)?.value,
-    }));
+    const formDefinition = this.formDefinition();
+
+    if (!formDefinition) return;
+
+    const responses: FormResponse[] = formDefinition.sections
+      .flatMap((section) => section.fields)
+      .map((field) => ({
+        fieldId: field.id,
+        value: this.getResponseValue(field),
+      }));
 
     const payload: FormSubmission = {
       formId: 10,
@@ -173,5 +122,21 @@ export class DynamicFormComponent {
     console.log(payload);
 
     console.log(this.form.value);
+  }
+
+  getResponseValue(field: FormField): string | number | boolean | null {
+    const value = this.form.get(field.name)?.value;
+  
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
+  
+    switch (field.type) {
+      case 'Number':
+        return Number(value);
+  
+      default:
+        return value;
+    }
   }
 }

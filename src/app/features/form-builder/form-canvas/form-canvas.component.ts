@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilderState } from '../../../core/services/form-builder-state';
 import { CdkDrag, CdkDropList, CdkDragDrop, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { FormSection } from '../../../core/models/form-section';
+import { Router } from '@angular/router';
 
 @Component({
   imports: [CdkDrag, CdkDropList, CdkDropListGroup],
@@ -11,6 +12,7 @@ import { FormSection } from '../../../core/models/form-section';
 })
 export class FormCanvasComponent implements OnInit {
   private formBuilderState = inject(FormBuilderState);
+  private readonly router = inject(Router);
 
   ngOnInit(): void {
     if (!this.formBuilderState.form()) {
@@ -81,5 +83,13 @@ export class FormCanvasComponent implements OnInit {
 
   redo(): void {
     this.formBuilderState.redo();
+  }
+
+  openPreview(){
+    const currentForm = this.form();
+
+    if (!currentForm) return;
+  
+    this.router.navigate(['/forms', currentForm.id, 'preview']);
   }
 }

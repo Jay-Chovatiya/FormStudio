@@ -46,6 +46,13 @@ export const fieldPalette: FieldPaletteItem[] = [
     category: 'Basic',
   },
   {
+    type: 'DateTime',
+    label: 'Date time Picker',
+    description: 'Calendar date selection',
+    icon: 'calendar',
+    category: 'Basic',
+  },
+  {
     type: 'Dropdown',
     label: 'Dropdown',
     description: 'Single select menu',
