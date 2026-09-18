@@ -6,7 +6,7 @@ namespace FormStudio.Domain.Entities
     public class FormSubmissionEntity
     {
         public int Id { get; set; }
-        public int FormDefinitionId { get; set; }
+        public int FormId { get; set; }
         public FormDefinitionEntity? FormDefinition { get; set; }
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
 
