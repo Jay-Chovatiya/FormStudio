@@ -42,3 +42,7 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+backend/FormStudio.Api/bin/*
+backend/FormStudio.Application/bin/*
+backend/FormStudio.Infrastructure/bin/*
+backend/FormStudio.Domain/obj/*
