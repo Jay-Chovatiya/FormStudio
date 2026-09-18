@@ -1,0 +1,16 @@
+D:\Anguler\FormStudio\backend\FormStudio.Application\bin\Debug\net9.0\FormStudio.Application.deps.json
+D:\Anguler\FormStudio\backend\FormStudio.Application\bin\Debug\net9.0\FormStudio.Application.dll
+D:\Anguler\FormStudio\backend\FormStudio.Application\bin\Debug\net9.0\FormStudio.Application.pdb
+D:\Anguler\FormStudio\backend\FormStudio.Application\bin\Debug\net9.0\FormStudio.Domain.dll
+D:\Anguler\FormStudio\backend\FormStudio.Application\bin\Debug\net9.0\FormStudio.Domain.pdb
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\FormStudio.Application.csproj.AssemblyReference.cache
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\FormStudio.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\FormStudio.Application.AssemblyInfoInputs.cache
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\FormStudio.Application.AssemblyInfo.cs
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\FormStudio.Application.csproj.CoreCompileInputs.cache
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\FormStudio.Application.sourcelink.json
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\FormStud.661BCBF2.Up2Date
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\FormStudio.Application.dll
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\refint\FormStudio.Application.dll
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\FormStudio.Application.pdb
+D:\Anguler\FormStudio\backend\FormStudio.Application\obj\Debug\net9.0\ref\FormStudio.Application.dll
