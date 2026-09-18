@@ -194,6 +194,8 @@ export class FormBuilderState {
       label: this.getDefaultLabel(type),
       placeholder: this.getDefaultPlaceholder(type),
       helperDescription: '',
+      default: '',
+      // icon: '',
       visibility: true,
       validation: type === 'Email' ? [{ type: 'email' }] : [],
       options: this.getDefaultOptions(type),

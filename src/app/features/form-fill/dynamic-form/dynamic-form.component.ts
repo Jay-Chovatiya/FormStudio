@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { FormField } from '../../../core/models/form-field';
 import {
   FormGroup,
@@ -13,6 +13,7 @@ import { FieldTypes } from '../../../core/models/field-types';
 import { FormResponse } from '../../../core/models/form-response';
 import { FormSubmission } from '../../../core/models/form-submission';
 import { FormDefinition } from '../../../core/models/form-definition';
+import { MockBackendService } from '../../../core/services/mock-backend.service';
 
 @Component({
   imports: [ReactiveFormsModule],
@@ -22,6 +23,8 @@ import { FormDefinition } from '../../../core/models/form-definition';
 })
 export class DynamicFormComponent {
   readonly formDefinition = input<FormDefinition | null>(null);
+  private readonly mockBackendService = inject(MockBackendService);
+  submitted = signal(false);
 
   form = new FormGroup({});
 
@@ -34,6 +37,7 @@ export class DynamicFormComponent {
   }
 
   createForm(formDefinition: FormDefinition) {
+    console.log('FORM : ', formDefinition);
     formDefinition.sections.forEach((section) => {
       section.fields.forEach((field) => {
         this.form.addControl(
@@ -115,18 +119,20 @@ export class DynamicFormComponent {
       }));
 
     const payload: FormSubmission = {
-      formId: 10,
+      formId: formDefinition.id,
       responses: responses,
     };
 
     console.log('Submitted payload:', payload);
+    this.mockBackendService.saveSubmission(payload);
+    this.submitted.set(true);
   }
 
   getResponseValue(field: FormField): string | number | boolean | null {
     const value = this.form.get(field.name)?.value;
 
-    if (value === null || value === undefined || value === '') {
-      return '';
+    if (value === null || value === undefined || value === '' || Number.isNaN(value)) {
+      return null;
     }
 
     switch (field.type) {

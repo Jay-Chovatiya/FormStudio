@@ -33,10 +33,6 @@ export class FormBuilderComponent {
     this.formBuilderState.redo();
   }
 
-  // openFormProperties(): void {
-  //   this.formBuilderState.selectFormSettings();
-  // }
-
   openPreview(): void {
     const currentForm = this.form();
     if (currentForm) {

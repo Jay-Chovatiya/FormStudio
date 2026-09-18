@@ -1,118 +1,132 @@
 @if (formDefinition(); as currentForm) {
-  <form [formGroup]="form" (ngSubmit)="submit()" class="dynamic-form-body">
-    @for (section of currentForm.sections; track section.id) {
-      <section class="df-section">
-        <h2 class="df-section-title">{{ section.title }}</h2>
+  @if (submitted()){
+    <h2>{{currentForm.confirmationMessage || 'Form submitted successfully.'}}</h2>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="dynamic-form-body">
+      @for (section of currentForm.sections; track section.id) {
+        <section class="df-section">
+          <h2 class="df-section-title">{{ section.title }}</h2>
 
-        @if (section.description) {
-          <p class="df-section-desc">{{ section.description }}</p>
-        }
-
-        <div class="df-fields-grid">
-          @for (field of section.fields; track field.id) {
-            <div class="df-field-group">
-              <label [for]="field.name" class="df-field-label">
-                {{ field.label }}
-                @if (isFieldRequired(field)) {
-                  <span class="required-star">*</span>
-                }
-              </label>
-
-              @if (field.type === 'Dropdown') {
-                <select [id]="field.name" class="fs-select" [formControlName]="field.name">
-                  <option value="">Select option...</option>
-                  @for (option of field.options ?? []; track option.id) {
-                    <option [value]="option.value">{{ option.label }}</option>
-                  }
-                </select>
-              } @else if (field.type === 'Checkbox') {
-                <label class="fs-checkbox-label">
-                  <input type="checkbox" [id]="field.name" [formControlName]="field.name" />
-                  <span>{{ field.placeholder || field.label }}</span>
-                </label>
-              } @else if (field.type === 'Textarea') {
-                <textarea
-                  [id]="field.name"
-                  class="fs-textarea"
-                  [formControlName]="field.name"
-                  [placeholder]="field.placeholder ?? ''"
-                ></textarea>
-              } @else if (field.type === 'RadioButton') {
-                <div class="df-radio-group">
-                  @for (option of field.options ?? []; track option.id) {
-                    <label class="fs-radio-label" [for]="field.id + '-' + option.id">
-                      <input
-                        type="radio"
-                        [id]="field.id + '-' + option.id"
-                        [formControlName]="field.name"
-                        [value]="option.value"
-                      />
-                      <span>{{ option.label }}</span>
-                    </label>
-                  }
-                </div>
-              } @else {
-                <input
-                  [id]="field.name"
-                  class="fs-input"
-                  [type]="getInputType(field.type)"
-                  [formControlName]="field.name"
-                  [placeholder]="field.placeholder ?? ''"
-                />
-              }
-
-              @if (field.helperDescription) {
-                <span class="df-helper-text">{{ field.helperDescription }}</span>
-              }
-
-              @let control = getControl(field.name);
-
-              @if (control?.invalid && control?.touched) {
-                <div class="df-errors-list">
-                  @if (control?.errors?.['required']) {
-                    <span class="fs-error-message">{{ field.label }} is required.</span>
-                  }
-                  @if (control?.errors?.['email']) {
-                    <span class="fs-error-message">{{ field.label }} must be a valid email address.</span>
-                  }
-                  @if (control?.errors?.['minlength']) {
-                    <span class="fs-error-message">
-                      {{ field.label }} must be at least
-                      {{ control?.errors?.['minlength']?.requiredLength }} characters.
-                    </span>
-                  }
-                  @if (control?.errors?.['maxlength']) {
-                    <span class="fs-error-message">
-                      {{ field.label }} must be at most
-                      {{ control?.errors?.['maxlength']?.requiredLength }} characters.
-                    </span>
-                  }
-                  @if (control?.errors?.['min']) {
-                    <span class="fs-error-message">{{ field.label }} must be at least {{ control?.errors?.['min']?.min }}.</span>
-                  }
-                  @if (control?.errors?.['max']) {
-                    <span class="fs-error-message">{{ field.label }} must be at most {{ control?.errors?.['max']?.max }}.</span>
-                  }
-                  @if (control?.errors?.['pattern']) {
-                    <span class="fs-error-message">{{ field.label }} has an invalid format.</span>
-                  }
-                </div>
-              }
-            </div>
+          @if (section.description) {
+            <p class="df-section-desc">{{ section.description }}</p>
           }
-        </div>
-      </section>
-    }
 
-    <div class="df-form-actions">
-      <button type="submit" class="fs-btn fs-btn-primary">
-        {{ currentForm.submitButtonText || 'Submit' }}
-      </button>
-      <button type="button" class="fs-btn fs-btn-secondary">
-        {{ currentForm.cancelButtonText || 'Cancel' }}
-      </button>
-    </div>
-  </form>
+          <div class="df-fields-grid">
+            @for (field of section.fields; track field.id) {
+              <div class="df-field-group">
+                @if (field.type !== 'Checkbox') {
+                  <label [for]="field.name" class="df-field-label">
+                    {{ field.label }}
+                    @if (isFieldRequired(field)) {
+                      <span class="required-star">*</span>
+                    }
+                  </label>
+                }
+
+                @if (field.type === 'Dropdown') {
+                  <select [id]="field.name" class="fs-select" [formControlName]="field.name">
+                    <option value="">Select option...</option>
+                    @for (option of field.options ?? []; track option.id) {
+                      <option [value]="option.value">{{ option.label }}</option>
+                    }
+                  </select>
+                } @else if (field.type === 'Checkbox') {
+                  <label class="fs-checkbox-label">
+                    <input type="checkbox" [id]="field.name" [formControlName]="field.name" />
+                    <span>{{ field.placeholder || field.label }}</span>
+                  </label>
+                } @else if (field.type === 'Textarea') {
+                  <textarea
+                    [id]="field.name"
+                    class="fs-textarea"
+                    [formControlName]="field.name"
+                    [placeholder]="field.placeholder ?? ''"
+                  ></textarea>
+                } @else if (field.type === 'RadioButton') {
+                  <div class="df-radio-group">
+                    @for (option of field.options ?? []; track option.id) {
+                      <label class="fs-radio-label" [for]="field.id + '-' + option.id">
+                        <input
+                          type="radio"
+                          [id]="field.id + '-' + option.id"
+                          [formControlName]="field.name"
+                          [value]="option.value"
+                        />
+                        <span>{{ option.label }}</span>
+                      </label>
+                    }
+                  </div>
+                } @else {
+                  <input
+                    [id]="field.name"
+                    class="fs-input"
+                    [type]="getInputType(field.type)"
+                    [formControlName]="field.name"
+                    [placeholder]="field.placeholder ?? ''"
+                  />
+                }
+
+                @if (field.helperDescription) {
+                  <span class="df-helper-text">{{ field.helperDescription }}</span>
+                }
+
+                @let control = getControl(field.name);
+
+                @if (control?.invalid && control?.touched) {
+                  <div class="df-errors-list">
+                    @if (control?.errors?.['required']) {
+                      <span class="fs-error-message">{{ field.label }} is required.</span>
+                    }
+                    @if (control?.errors?.['email']) {
+                      <span class="fs-error-message"
+                        >{{ field.label }} must be a valid email address.</span
+                      >
+                    }
+                    @if (control?.errors?.['minlength']) {
+                      <span class="fs-error-message">
+                        {{ field.label }} must be at least
+                        {{ control?.errors?.['minlength']?.requiredLength }} characters.
+                      </span>
+                    }
+                    @if (control?.errors?.['maxlength']) {
+                      <span class="fs-error-message">
+                        {{ field.label }} must be at most
+                        {{ control?.errors?.['maxlength']?.requiredLength }} characters.
+                      </span>
+                    }
+                    @if (control?.errors?.['min']) {
+                      <span class="fs-error-message"
+                        >{{ field.label }} must be at least
+                        {{ control?.errors?.['min']?.min }}.</span
+                      >
+                    }
+                    @if (control?.errors?.['max']) {
+                      <span class="fs-error-message"
+                        >{{ field.label }} must be at most
+                        {{ control?.errors?.['max']?.max }}.</span
+                      >
+                    }
+                    @if (control?.errors?.['pattern']) {
+                      <span class="fs-error-message">{{ field.label }} has an invalid format.</span>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <div class="df-form-actions">
+        <button type="submit" class="fs-btn fs-btn-primary">
+          {{ currentForm.submitButtonText || 'Submit' }}
+        </button>
+        <button type="button" class="fs-btn fs-btn-secondary">
+          {{ currentForm.cancelButtonText || 'Cancel' }}
+        </button>
+      </div>
+    </form>
+  }
 } @else {
   <p class="df-no-data">No form data available.</p>
 }
