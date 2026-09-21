@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using FormStudio.Application.DTOs;
 using FormStudio.Application.Interfaces.Repositories;
 using FormStudio.Application.Interfaces.Services;
@@ -17,51 +18,47 @@ namespace FormStudio.Application.Services
 
         public async Task<IEnumerable<FormDefinitionDto>> GetFormsAsync()
         {
-            var entities = await _unitOfWork.Forms.GetAllAsync();
-            return entities.Select(e => e.ToDto());
+            return await GetFormListWithDetailsAsync(f => true);
         }
 
         public async Task<FormDefinitionDto?> GetFormByIdAsync(int id)
         {
-            var entity = await _unitOfWork.Forms.GetWithDetailsByIdAsync(id);
-            return entity?.ToDto();
+            return await GetFormWithDetailsAsync(f => f.Id == id);
         }
 
         public async Task<FormDefinitionDto?> GetFormByCodeAsync(string code)
         {
-            var entity = await _unitOfWork.Forms.GetWithDetailsByCodeAsync(code);
-            return entity?.ToDto();
+            return await GetFormWithDetailsAsync(f => f.Code == code);
         }
 
         public async Task<FormDefinitionDto> CreateFormAsync(FormDefinitionDto dto)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            var entity = dto.ToEntity();
+            FormDefinitionEntity entity = dto.ToEntity();
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
 
-            await _unitOfWork.Forms.AddAsync(entity);
+            await _unitOfWork.Repository<FormDefinitionEntity>().AddAsync(entity);
             await _unitOfWork.CompleteAsync();
 
-            var createdEntity = await _unitOfWork.Forms.GetWithDetailsByIdAsync(entity.Id);
-            return (createdEntity ?? entity).ToDto();
+            return entity.ToDto();
         }
 
         public async Task<FormDefinitionDto?> UpdateFormAsync(int id, FormDefinitionDto dto)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            var existingForm = await _unitOfWork.Forms.GetWithDetailsByIdAsync(id);
+            FormDefinitionEntity? existingForm = await GetFormEntityWithDetailsAsync(f => f.Id == id);
             if (existingForm == null) return null;
 
             dto.Id = id;
-            var updatedFormEntity = dto.ToEntity();
+            FormDefinitionEntity updatedFormEntity = dto.ToEntity();
 
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                await _unitOfWork.Forms.SynchronizeFormHierarchyAsync(existingForm, updatedFormEntity);
+                SynchronizeFormHierarchy(existingForm, updatedFormEntity);
                 await _unitOfWork.CompleteAsync();
                 await _unitOfWork.CommitTransactionAsync();
             }
@@ -71,53 +68,59 @@ namespace FormStudio.Application.Services
                 throw;
             }
 
-            var refreshed = await _unitOfWork.Forms.GetWithDetailsByIdAsync(id);
-            return refreshed?.ToDto();
+            return await GetFormWithDetailsAsync(f => f.Id == id);
         }
 
         public async Task<bool> DeleteFormAsync(int id)
         {
-            var entity = await _unitOfWork.Forms.GetByIdAsync(id);
+            FormDefinitionEntity? entity = await _unitOfWork.Repository<FormDefinitionEntity>().GetByIdAsync(id);
             if (entity == null) return false;
 
-            _unitOfWork.Forms.Delete(entity);
+            _unitOfWork.Repository<FormDefinitionEntity>().Remove(entity);
             await _unitOfWork.CompleteAsync();
             return true;
         }
 
-        public async Task<FormDefinitionDto?> PublishFormAsync(int id)
+        private static readonly HashSet<string> AllowedFormStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
-            var form = await _unitOfWork.Forms.GetWithDetailsByIdAsync(id);
+            "Draft", "Published", "Unpublished", "Archived"
+        };
+
+        public async Task<FormDefinitionDto?> UpdateFormStatusAsync(int id, string status)
+        {
+            if (string.IsNullOrWhiteSpace(status) || !AllowedFormStatuses.Contains(status))
+            {
+                throw new ArgumentException($"Invalid status '{status}'. Allowed statuses are: Draft, Published, Unpublished, Archived.");
+            }
+
+            FormDefinitionEntity? form = await _unitOfWork.Repository<FormDefinitionEntity>().GetByIdAsync(id);
             if (form == null) return null;
 
-            form.Status = "Published";
+            form.Status = status;
             form.UpdatedAt = DateTime.UtcNow;
-            _unitOfWork.Forms.Update(form);
+            _unitOfWork.Repository<FormDefinitionEntity>().Update(form);
             await _unitOfWork.CompleteAsync();
 
-            return form.ToDto();
+            return await GetFormWithDetailsAsync(f => f.Id == id);
+        }
+
+        public async Task<FormDefinitionDto?> PublishFormAsync(int id)
+        {
+            return await UpdateFormStatusAsync(id, "Published");
         }
 
         public async Task<FormDefinitionDto?> UnpublishFormAsync(int id)
         {
-            var form = await _unitOfWork.Forms.GetWithDetailsByIdAsync(id);
-            if (form == null) return null;
-
-            form.Status = "Unpublished";
-            form.UpdatedAt = DateTime.UtcNow;
-            _unitOfWork.Forms.Update(form);
-            await _unitOfWork.CompleteAsync();
-
-            return form.ToDto();
+            return await UpdateFormStatusAsync(id, "Unpublished");
         }
 
         public async Task<FormDefinitionDto?> DuplicateFormAsync(int id)
         {
-            var sourceForm = await _unitOfWork.Forms.GetWithDetailsByIdAsync(id);
+            FormDefinitionEntity? sourceForm = await GetFormEntityWithDetailsAsync(f => f.Id == id);
             if (sourceForm == null) return null;
 
-            var randomSuffix = Random.Shared.Next(100, 999);
-            var duplicatedForm = new FormDefinitionEntity
+            int randomSuffix = Random.Shared.Next(100, 999);
+            FormDefinitionEntity duplicatedForm = new FormDefinitionEntity
             {
                 Name = $"{sourceForm.Name} (Copy)",
                 Code = $"{sourceForm.Code}-copy-{randomSuffix}",
@@ -170,11 +173,331 @@ namespace FormStudio.Application.Services
                 }).ToList()
             };
 
-            await _unitOfWork.Forms.AddAsync(duplicatedForm);
+            await _unitOfWork.Repository<FormDefinitionEntity>().AddAsync(duplicatedForm);
             await _unitOfWork.CompleteAsync();
 
-            var result = await _unitOfWork.Forms.GetWithDetailsByIdAsync(duplicatedForm.Id);
-            return (result ?? duplicatedForm).ToDto();
+            return duplicatedForm.ToDto();
+        }
+
+        private Task<FormDefinitionDto?> GetFormWithDetailsAsync(Expression<Func<FormDefinitionEntity, bool>> predicate)
+        {
+            return _unitOfWork.Repository<FormDefinitionEntity>().GetFirstOrDefaultAsync(
+                predicate,
+                form => new FormDefinitionDto
+                {
+                    Id = form.Id,
+                    Name = form.Name,
+                    Code = form.Code,
+                    Description = form.Description ?? string.Empty,
+                    Category = form.Category,
+                    Status = form.Status,
+                    StartDate = form.StartDate.HasValue ? form.StartDate.Value.ToString("yyyy-MM-dd") : null,
+                    EndDate = form.EndDate.HasValue ? form.EndDate.Value.ToString("yyyy-MM-dd") : null,
+                    AllowMultipleSubmissions = form.AllowMultipleSubmissions,
+                    AllowSaveAsDraft = form.AllowSaveAsDraft,
+                    ConfirmationMessage = form.ConfirmationMessage,
+                    SubmitButtonText = form.SubmitButtonText,
+                    CancelButtonText = form.CancelButtonText,
+                    Theme = form.Theme,
+                    LogoUrl = form.LogoUrl,
+                    HeaderText = form.HeaderText,
+                    FooterText = form.FooterText,
+                    CreatedAt = form.CreatedAt.ToString("o"),
+                    UpdatedAt = form.UpdatedAt.ToString("o"),
+                    Sections = form.Sections.OrderBy(section => section.DisplayOrder).Select(section => new FormSectionDto
+                    {
+                        Id = section.Id,
+                        Title = section.Title,
+                        Description = section.Description,
+                        Theme = section.Theme,
+                        Visibility = section.Visibility,
+                        Fields = section.Fields.OrderBy(field => field.DisplayOrder).Select(field => new FormFieldDto
+                        {
+                            Id = field.Id,
+                            Name = field.Name,
+                            Type = field.Type,
+                            Label = field.Label,
+                            HelperDescription = field.HelperDescription,
+                            Visibility = field.Visibility,
+                            Placeholder = field.Placeholder,
+                            Default = field.DefaultValue,
+                            Icon = field.Icon,
+                            Options = field.Options.OrderBy(option => option.DisplayOrder).Select(option => new FieldOptionDto
+                            {
+                                Id = option.Id,
+                                Label = option.Label,
+                                Value = option.Value
+                            }).ToList(),
+                            Validations = field.Validations.Select(validation => new FieldValidationDto
+                            {
+                                Type = validation.Type,
+                                Value = validation.Value
+                            }).ToList()
+                        }).ToList()
+                    }).ToList()
+                }
+            );
+        }
+
+        private Task<List<FormDefinitionDto>> GetFormListWithDetailsAsync(Expression<Func<FormDefinitionEntity, bool>> predicate)
+        {
+            return _unitOfWork.Repository<FormDefinitionEntity>().GetListAsync(
+                predicate,
+                form => new FormDefinitionDto
+                {
+                    Id = form.Id,
+                    Name = form.Name,
+                    Code = form.Code,
+                    Description = form.Description ?? string.Empty,
+                    Category = form.Category,
+                    Status = form.Status,
+                    StartDate = form.StartDate.HasValue ? form.StartDate.Value.ToString("yyyy-MM-dd") : null,
+                    EndDate = form.EndDate.HasValue ? form.EndDate.Value.ToString("yyyy-MM-dd") : null,
+                    AllowMultipleSubmissions = form.AllowMultipleSubmissions,
+                    AllowSaveAsDraft = form.AllowSaveAsDraft,
+                    ConfirmationMessage = form.ConfirmationMessage,
+                    SubmitButtonText = form.SubmitButtonText,
+                    CancelButtonText = form.CancelButtonText,
+                    Theme = form.Theme,
+                    LogoUrl = form.LogoUrl,
+                    HeaderText = form.HeaderText,
+                    FooterText = form.FooterText,
+                    CreatedAt = form.CreatedAt.ToString("o"),
+                    UpdatedAt = form.UpdatedAt.ToString("o"),
+                    Sections = form.Sections.OrderBy(section => section.DisplayOrder).Select(section => new FormSectionDto
+                    {
+                        Id = section.Id,
+                        Title = section.Title,
+                        Description = section.Description,
+                        Theme = section.Theme,
+                        Visibility = section.Visibility,
+                        Fields = section.Fields.OrderBy(field => field.DisplayOrder).Select(field => new FormFieldDto
+                        {
+                            Id = field.Id,
+                            Name = field.Name,
+                            Type = field.Type,
+                            Label = field.Label,
+                            HelperDescription = field.HelperDescription,
+                            Visibility = field.Visibility,
+                            Placeholder = field.Placeholder,
+                            Default = field.DefaultValue,
+                            Icon = field.Icon,
+                            Options = field.Options.OrderBy(option => option.DisplayOrder).Select(option => new FieldOptionDto
+                            {
+                                Id = option.Id,
+                                Label = option.Label,
+                                Value = option.Value
+                            }).ToList(),
+                            Validations = field.Validations.Select(validation => new FieldValidationDto
+                            {
+                                Type = validation.Type,
+                                Value = validation.Value
+                            }).ToList()
+                        }).ToList()
+                    }).ToList()
+                }
+            );
+        }
+
+        private Task<FormDefinitionEntity?> GetFormEntityWithDetailsAsync(Expression<Func<FormDefinitionEntity, bool>> predicate)
+        {
+            return _unitOfWork.Repository<FormDefinitionEntity>().GetFirstOrDefaultAsync(
+                predicate,
+                form => new FormDefinitionEntity
+                {
+                    Id = form.Id,
+                    Name = form.Name,
+                    Code = form.Code,
+                    Description = form.Description,
+                    Category = form.Category,
+                    Status = form.Status,
+                    StartDate = form.StartDate,
+                    EndDate = form.EndDate,
+                    AllowMultipleSubmissions = form.AllowMultipleSubmissions,
+                    AllowSaveAsDraft = form.AllowSaveAsDraft,
+                    ConfirmationMessage = form.ConfirmationMessage,
+                    SubmitButtonText = form.SubmitButtonText,
+                    CancelButtonText = form.CancelButtonText,
+                    Theme = form.Theme,
+                    LogoUrl = form.LogoUrl,
+                    HeaderText = form.HeaderText,
+                    FooterText = form.FooterText,
+                    CreatedAt = form.CreatedAt,
+                    UpdatedAt = form.UpdatedAt,
+                    Sections = form.Sections.OrderBy(section => section.DisplayOrder).Select(section => new FormSectionEntity
+                    {
+                        Id = section.Id,
+                        FormDefinitionId = section.FormDefinitionId,
+                        Title = section.Title,
+                        Description = section.Description,
+                        Theme = section.Theme,
+                        Visibility = section.Visibility,
+                        DisplayOrder = section.DisplayOrder,
+                        Fields = section.Fields.OrderBy(field => field.DisplayOrder).Select(field => new FormFieldEntity
+                        {
+                            Id = field.Id,
+                            FormSectionId = field.FormSectionId,
+                            Name = field.Name,
+                            Type = field.Type,
+                            Label = field.Label,
+                            HelperDescription = field.HelperDescription,
+                            Visibility = field.Visibility,
+                            Placeholder = field.Placeholder,
+                            DefaultValue = field.DefaultValue,
+                            Icon = field.Icon,
+                            DisplayOrder = field.DisplayOrder,
+                            Options = field.Options.OrderBy(option => option.DisplayOrder).Select(option => new FieldOptionEntity
+                            {
+                                Id = option.Id,
+                                FormFieldId = option.FormFieldId,
+                                Label = option.Label,
+                                Value = option.Value,
+                                DisplayOrder = option.DisplayOrder
+                            }).ToList(),
+                            Validations = field.Validations.Select(validation => new FieldValidationEntity
+                            {
+                                Id = validation.Id,
+                                FormFieldId = validation.FormFieldId,
+                                Type = validation.Type,
+                                Value = validation.Value
+                            }).ToList()
+                        }).ToList()
+                    }).ToList()
+                }
+            );
+        }
+
+        private void SynchronizeFormHierarchy(FormDefinitionEntity existingForm, FormDefinitionEntity updatedForm)
+        {
+            existingForm.Name = updatedForm.Name;
+            existingForm.Code = updatedForm.Code;
+            existingForm.Description = updatedForm.Description;
+            existingForm.Category = updatedForm.Category;
+            existingForm.Status = updatedForm.Status;
+            existingForm.StartDate = updatedForm.StartDate;
+            existingForm.EndDate = updatedForm.EndDate;
+            existingForm.AllowMultipleSubmissions = updatedForm.AllowMultipleSubmissions;
+            existingForm.AllowSaveAsDraft = updatedForm.AllowSaveAsDraft;
+            existingForm.ConfirmationMessage = updatedForm.ConfirmationMessage;
+            existingForm.SubmitButtonText = updatedForm.SubmitButtonText;
+            existingForm.CancelButtonText = updatedForm.CancelButtonText;
+            existingForm.Theme = updatedForm.Theme;
+            existingForm.LogoUrl = updatedForm.LogoUrl;
+            existingForm.HeaderText = updatedForm.HeaderText;
+            existingForm.FooterText = updatedForm.FooterText;
+            existingForm.UpdatedAt = DateTime.UtcNow;
+
+            HashSet<int> updatedSectionIds = updatedForm.Sections.Where(s => s.Id > 0).Select(s => s.Id).ToHashSet();
+            List<FormSectionEntity> removedSections = existingForm.Sections.Where(s => !updatedSectionIds.Contains(s.Id)).ToList();
+
+            if (removedSections.Any())
+            {
+                _unitOfWork.Repository<FormSectionEntity>().RemoveRange(removedSections);
+            }
+
+            foreach (FormSectionEntity updatedSec in updatedForm.Sections)
+            {
+                FormSectionEntity? existingSec = existingForm.Sections.FirstOrDefault(s => s.Id > 0 && s.Id == updatedSec.Id);
+                if (existingSec != null)
+                {
+                    existingSec.Title = updatedSec.Title;
+                    existingSec.Description = updatedSec.Description;
+                    existingSec.Theme = updatedSec.Theme;
+                    existingSec.Visibility = updatedSec.Visibility;
+                    existingSec.DisplayOrder = updatedSec.DisplayOrder;
+
+                    SynchronizeFields(existingSec, updatedSec.Fields.ToList());
+                }
+                else
+                {
+                    existingForm.Sections.Add(updatedSec);
+                }
+            }
+        }
+
+        private void SynchronizeFields(FormSectionEntity existingSec, List<FormFieldEntity> updatedFields)
+        {
+            HashSet<int> updatedFieldIds = updatedFields.Where(f => f.Id > 0).Select(f => f.Id).ToHashSet();
+            List<FormFieldEntity> removedFields = existingSec.Fields.Where(f => !updatedFieldIds.Contains(f.Id)).ToList();
+
+            if (removedFields.Any())
+            {
+                _unitOfWork.Repository<FormFieldEntity>().RemoveRange(removedFields);
+            }
+
+            foreach (FormFieldEntity updatedField in updatedFields)
+            {
+                FormFieldEntity? existingField = existingSec.Fields.FirstOrDefault(f => f.Id > 0 && f.Id == updatedField.Id);
+                if (existingField != null)
+                {
+                    existingField.Name = updatedField.Name;
+                    existingField.Type = updatedField.Type;
+                    existingField.Label = updatedField.Label;
+                    existingField.HelperDescription = updatedField.HelperDescription;
+                    existingField.Visibility = updatedField.Visibility;
+                    existingField.Placeholder = updatedField.Placeholder;
+                    existingField.DefaultValue = updatedField.DefaultValue;
+                    existingField.Icon = updatedField.Icon;
+                    existingField.DisplayOrder = updatedField.DisplayOrder;
+
+                    SynchronizeOptions(existingField, updatedField.Options.ToList());
+                    SynchronizeValidations(existingField, updatedField.Validations.ToList());
+                }
+                else
+                {
+                    existingSec.Fields.Add(updatedField);
+                }
+            }
+        }
+
+        private void SynchronizeOptions(FormFieldEntity existingField, List<FieldOptionEntity> updatedOptions)
+        {
+            HashSet<int> updatedOptionIds = updatedOptions.Where(o => o.Id > 0).Select(o => o.Id).ToHashSet();
+            List<FieldOptionEntity> removedOptions = existingField.Options.Where(o => !updatedOptionIds.Contains(o.Id)).ToList();
+
+            if (removedOptions.Any())
+            {
+                _unitOfWork.Repository<FieldOptionEntity>().RemoveRange(removedOptions);
+            }
+
+            foreach (FieldOptionEntity updatedOpt in updatedOptions)
+            {
+                FieldOptionEntity? existingOpt = existingField.Options.FirstOrDefault(o => o.Id > 0 && o.Id == updatedOpt.Id);
+                if (existingOpt != null)
+                {
+                    existingOpt.Label = updatedOpt.Label;
+                    existingOpt.Value = updatedOpt.Value;
+                    existingOpt.DisplayOrder = updatedOpt.DisplayOrder;
+                }
+                else
+                {
+                    existingField.Options.Add(updatedOpt);
+                }
+            }
+        }
+
+        private void SynchronizeValidations(FormFieldEntity existingField, List<FieldValidationEntity> updatedValidations)
+        {
+            HashSet<string> updatedValidationTypes = updatedValidations.Select(v => v.Type).ToHashSet();
+            List<FieldValidationEntity> removedValidations = existingField.Validations.Where(v => !updatedValidationTypes.Contains(v.Type)).ToList();
+
+            if (removedValidations.Any())
+            {
+                _unitOfWork.Repository<FieldValidationEntity>().RemoveRange(removedValidations);
+            }
+
+            foreach (FieldValidationEntity updatedVal in updatedValidations)
+            {
+                FieldValidationEntity? existingVal = existingField.Validations.FirstOrDefault(v => v.Type == updatedVal.Type);
+                if (existingVal != null)
+                {
+                    existingVal.Value = updatedVal.Value;
+                }
+                else
+                {
+                    existingField.Validations.Add(updatedVal);
+                }
+            }
         }
     }
 }

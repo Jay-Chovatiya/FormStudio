@@ -8,7 +8,22 @@ namespace FormStudio.Application.Interfaces.Repositories
         Task<IReadOnlyList<T>> GetAllAsync();
         Task<IReadOnlyList<T>> FindAsync(Expression<Func<T, bool>> predicate);
         Task AddAsync(T entity);
+        Task AddRangeAsync(IEnumerable<T> entities);
         void Update(T entity);
-        void Delete(T entity);
+        void UpdateRange(IEnumerable<T> entities);
+        void Remove(T entity);
+        void RemoveRange(IEnumerable<T> entities);
+        Task<bool> ExistAsync(Expression<Func<T, bool>> expression);
+        Task<TResult?> GetFirstOrDefaultAsync<TResult>(
+            Expression<Func<T, bool>> expression,
+            Expression<Func<T, TResult>> selector);
+        Task<TResult?> GetFirstOrDefaultAsync<TResult>(
+            Expression<Func<T, bool>> expression,
+            Expression<Func<T, TResult>> selector,
+            Expression<Func<T, object>> orderBy);
+        Task<List<T>> GetListAsync(Expression<Func<T, bool>> expression);
+        Task<List<TResult>> GetListAsync<TResult>(
+            Expression<Func<T, bool>> expression,
+            Expression<Func<T, TResult>> selector);
     }
 }

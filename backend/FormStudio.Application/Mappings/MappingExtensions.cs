@@ -10,7 +10,7 @@ namespace FormStudio.Application.Mappings
 
         static MappingExtensions()
         {
-            var config = new MapperConfiguration(cfg =>
+            MapperConfiguration config = new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile<MappingProfile>();
             });

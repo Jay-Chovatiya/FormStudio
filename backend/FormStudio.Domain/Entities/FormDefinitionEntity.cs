@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace FormStudio.Domain.Entities
 {
     public class FormDefinitionEntity

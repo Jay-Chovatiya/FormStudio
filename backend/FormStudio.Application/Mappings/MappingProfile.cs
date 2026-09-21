@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Text.Json;
 using AutoMapper;
 using FormStudio.Application.DTOs;
@@ -65,7 +63,7 @@ namespace FormStudio.Application.Mappings
         }
 
         private static DateTime? ParseDate(string? d) =>
-            DateTime.TryParse(d, out var dt) ? dt.ToUniversalTime() : null;
+            DateTime.TryParse(d, out DateTime dt) ? dt.ToUniversalTime() : null;
 
         private static object? DeserializeJson(string? json)
         {
@@ -83,7 +81,7 @@ namespace FormStudio.Application.Mappings
         private static object? ParseValidationValue(string? val)
         {
             if (string.IsNullOrEmpty(val)) return null;
-            if (double.TryParse(val, out var num)) return num;
+            if (double.TryParse(val, out double num)) return num;
             return val;
         }
     }

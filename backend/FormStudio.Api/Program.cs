@@ -1,41 +1,83 @@
-var builder = WebApplication.CreateBuilder(args);
+using FormStudio.Api.Middleware;
+using FormStudio.Application.Interfaces.Repositories;
+using FormStudio.Application.Interfaces.Services;
+using FormStudio.Application.Mappings;
+using FormStudio.Application.Services;
+using FormStudio.Infrastructure.Data;
+using FormStudio.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-var app = builder.Build();
+// 1. Add Controllers
+builder.Services.AddControllers();
 
-// Configure the HTTP request pipeline.
+// 2. Configure PostgreSQL DbContext
+string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<FormStudioDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+// 3. Register AutoMapper
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+
+// 4. Register Infrastructure & Generic Repository + Unit of Work
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// 5. Register Application Services
+builder.Services.AddScoped<IFormService, FormService>();
+builder.Services.AddScoped<ISubmissionService, SubmissionService>();
+
+// 6. Configure CORS for Angular Frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// 7. Configure Swagger / OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+WebApplication app = builder.Build();
+
+// 8. Apply Database Migrations & Seed Sample Data on Startup
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    IServiceProvider services = scope.ServiceProvider;
+    try
+    {
+        FormStudioDbContext context = services.GetRequiredService<FormStudioDbContext>();
+        await context.Database.MigrateAsync();
+        await DbInitializer.InitializeAsync(context);
+    }
+    catch (Exception ex)
+    {
+        ILogger<Program> logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while initializing or seeding the database.");
+    }
+}
+
+// 9. Configure HTTP Request Pipeline & Global Middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseCors("AllowAngularApp");
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

@@ -1,6 +1,148 @@
-@FormStudio.Api_HostAddress = http://localhost:5134
+@HostAddress = http://localhost:5000
 
-GET {{FormStudio.Api_HostAddress}}/weatherforecast/
+### 1. Get All Forms
+GET {{HostAddress}}/api/forms
+Accept: application/json
+
+###
+
+### 2. Get Form by ID
+GET {{HostAddress}}/api/forms/1
+Accept: application/json
+
+###
+
+### 3. Get Form by Unique Code
+GET {{HostAddress}}/api/forms/code/emp-feedback-2026
+Accept: application/json
+
+###
+
+### 4. Create New Form Definition
+POST {{HostAddress}}/api/forms
+Content-Type: application/json
+
+{
+  "name": "Project Onboarding Feedback",
+  "code": "proj-onboard-2026",
+  "description": "Feedback form for newly onboarded team members.",
+  "category": "Human Resources",
+  "status": "Draft",
+  "allowMultipleSubmissions": false,
+  "allowSaveAsDraft": true,
+  "submitButtonText": "Submit Response",
+  "cancelButtonText": "Clear Form",
+  "sections": [
+    {
+      "title": "Onboarding Experience",
+      "description": "Please share your initial project setup feedback.",
+      "visibility": true,
+      "displayOrder": 0,
+      "fields": [
+        {
+          "name": "userName",
+          "label": "Full Name",
+          "type": "Textbox",
+          "placeholder": "e.g. Alice Smith",
+          "visibility": true,
+          "displayOrder": 0,
+          "validations": [
+            { "type": "required" }
+          ]
+        },
+        {
+          "name": "setupEase",
+          "label": "How smooth was your dev environment setup?",
+          "type": "RadioButton",
+          "visibility": true,
+          "displayOrder": 1,
+          "validations": [
+            { "type": "required" }
+          ],
+          "options": [
+            { "label": "Very Smooth", "value": "very_smooth", "displayOrder": 0 },
+            { "label": "Moderate", "value": "moderate", "displayOrder": 1 },
+            { "label": "Challenging", "value": "challenging", "displayOrder": 2 }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+###
+
+### 5. Update Form Status to 'Published'
+PATCH {{HostAddress}}/api/forms/1/status/Published
+Accept: application/json
+
+###
+
+### 6. Update Form Status to 'Archived'
+PATCH {{HostAddress}}/api/forms/1/status/Archived
+Accept: application/json
+
+###
+
+### 7. Publish Form (Convenience Endpoint)
+POST {{HostAddress}}/api/forms/1/publish
+Accept: application/json
+
+###
+
+### 8. Unpublish Form (Convenience Endpoint)
+POST {{HostAddress}}/api/forms/1/unpublish
+Accept: application/json
+
+###
+
+### 9. Duplicate Form
+POST {{HostAddress}}/api/forms/1/duplicate
+Accept: application/json
+
+###
+
+### 10. Get Submissions for Form ID 1
+GET {{HostAddress}}/api/forms/1/submissions
+Accept: application/json
+
+###
+
+### 11. Create a Form Submission for Form ID 1
+POST {{HostAddress}}/api/forms/1/submissions
+Content-Type: application/json
+
+{
+  "responses": [
+    {
+      "fieldId": 1,
+      "value": "Mark Taylor"
+    },
+    {
+      "fieldId": 2,
+      "value": "mark.taylor@company.com"
+    },
+    {
+      "fieldId": 3,
+      "value": "Engineering"
+    },
+    {
+      "fieldId": 4,
+      "value": "very_satisfied"
+    }
+  ]
+}
+
+###
+
+### 12. Delete a Form Submission
+DELETE {{HostAddress}}/api/forms/1/submissions/1
+Accept: application/json
+
+###
+
+### 13. Delete Form Definition
+DELETE {{HostAddress}}/api/forms/3
 Accept: application/json
 
 ###

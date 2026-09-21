@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using FormStudio.Application.DTOs;
 using FormStudio.Application.Interfaces.Repositories;
 using FormStudio.Application.Interfaces.Services;
 using FormStudio.Application.Mappings;
+using FormStudio.Domain.Entities;
 
 namespace FormStudio.Application.Services
 {
@@ -20,11 +17,11 @@ namespace FormStudio.Application.Services
 
         public async Task<IEnumerable<FormSubmissionDto>> GetSubmissionsAsync(int formId)
         {
-            var submissions = await _unitOfWork.Submissions.FindAsync(s => s.FormId == formId);
-            var responses = await _unitOfWork.Responses.GetAllAsync();
+            List<FormSubmissionEntity> submissions = await _unitOfWork.Repository<FormSubmissionEntity>().GetListAsync(s => s.FormId == formId);
+            IReadOnlyList<FormResponseEntity> responses = await _unitOfWork.Repository<FormResponseEntity>().GetAllAsync();
 
-            var submissionList = submissions.OrderByDescending(s => s.SubmittedAt).ToList();
-            foreach (var sub in submissionList)
+            List<FormSubmissionEntity> submissionList = submissions.OrderByDescending(s => s.SubmittedAt).ToList();
+            foreach (FormSubmissionEntity sub in submissionList)
             {
                 sub.Responses = responses.Where(r => r.FormSubmissionId == sub.Id).ToList();
             }
@@ -37,10 +34,10 @@ namespace FormStudio.Application.Services
             if (submissionDto == null) throw new ArgumentNullException(nameof(submissionDto));
 
             submissionDto.FormId = formId;
-            var entity = submissionDto.ToEntity();
+            FormSubmissionEntity entity = submissionDto.ToEntity();
             entity.SubmittedAt = DateTime.UtcNow;
 
-            await _unitOfWork.Submissions.AddAsync(entity);
+            await _unitOfWork.Repository<FormSubmissionEntity>().AddAsync(entity);
             await _unitOfWork.CompleteAsync();
 
             return entity.ToDto();
@@ -48,16 +45,13 @@ namespace FormStudio.Application.Services
 
         public async Task<bool> DeleteSubmissionAsync(int formId, int submissionId)
         {
-            var submission = await _unitOfWork.Submissions.GetByIdAsync(submissionId);
+            FormSubmissionEntity? submission = await _unitOfWork.Repository<FormSubmissionEntity>().GetByIdAsync(submissionId);
             if (submission == null || submission.FormId != formId) return false;
 
-            var responses = await _unitOfWork.Responses.FindAsync(r => r.FormSubmissionId == submissionId);
-            foreach (var response in responses)
-            {
-                _unitOfWork.Responses.Delete(response);
-            }
+            List<FormResponseEntity> responses = await _unitOfWork.Repository<FormResponseEntity>().GetListAsync(r => r.FormSubmissionId == submissionId);
+            _unitOfWork.Repository<FormResponseEntity>().RemoveRange(responses);
 
-            _unitOfWork.Submissions.Delete(submission);
+            _unitOfWork.Repository<FormSubmissionEntity>().Remove(submission);
             await _unitOfWork.CompleteAsync();
             return true;
         }
