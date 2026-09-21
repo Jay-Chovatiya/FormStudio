@@ -34,6 +34,7 @@ namespace FormStudio.Infrastructure.Data
             modelBuilder.Entity<FormDefinitionEntity>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Code).IsRequired().HasMaxLength(100);
                 entity.HasIndex(e => e.Code).IsUnique();
@@ -44,6 +45,7 @@ namespace FormStudio.Infrastructure.Data
             modelBuilder.Entity<FormSectionEntity>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
                 entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
                 entity.HasOne(e => e.FormDefinition)
                     .WithMany(f => f.Sections)
@@ -55,6 +57,7 @@ namespace FormStudio.Infrastructure.Data
             modelBuilder.Entity<FormFieldEntity>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Label).IsRequired().HasMaxLength(200);
@@ -68,6 +71,7 @@ namespace FormStudio.Infrastructure.Data
             modelBuilder.Entity<FieldOptionEntity>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
                 entity.Property(e => e.Label).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Value).IsRequired().HasMaxLength(200);
                 entity.HasOne(e => e.FormField)
@@ -80,6 +84,7 @@ namespace FormStudio.Infrastructure.Data
             modelBuilder.Entity<FieldValidationEntity>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
                 entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
                 entity.HasOne(e => e.FormField)
                     .WithMany(f => f.Validations)

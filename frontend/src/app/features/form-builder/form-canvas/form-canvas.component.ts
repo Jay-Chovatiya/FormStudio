@@ -119,6 +119,6 @@ export class FormCanvasComponent implements OnInit {
   }
 
   isFieldRequired(field: FormField): boolean {
-    return field.validation?.some((v) => v.type === 'required') ?? false;
+    return field.validations?.some((v) => v.type === 'required') ?? false;
   }
 }

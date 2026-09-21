@@ -42,7 +42,7 @@ export class DynamicFormComponent {
       section.fields.forEach((field) => {
         this.form.addControl(
           field.name,
-          new FormControl(field.default ?? '', this.createValidators(field.validation ?? [])),
+          new FormControl(field.default ?? '', this.createValidators(field.validations ?? [])),
         );
       });
     });
@@ -100,7 +100,7 @@ export class DynamicFormComponent {
   }
 
   isFieldRequired(field: FormField): boolean {
-    return field.validation?.some((v) => v.type === 'required') ?? false;
+    return field.validations?.some((v) => v.type === 'required') ?? false;
   }
 
   submit() {

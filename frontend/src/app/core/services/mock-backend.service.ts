@@ -44,7 +44,7 @@ export class MockBackendService {
                   placeholder: 'e.g. John Doe',
                   helperDescription: 'Optional: Leave blank if you wish to respond anonymously',
                   visibility: true,
-                  validation: [{ type: 'minLength', value: 2 }],
+                  validations: [{ type: 'minLength', value: 2 }],
                 },
                 {
                   id: 12,
@@ -53,7 +53,7 @@ export class MockBackendService {
                   type: 'Email',
                   placeholder: 'john.doe@company.com',
                   visibility: true,
-                  validation: [{ type: 'required' }, { type: 'email' }],
+                  validations: [{ type: 'required' }, { type: 'email' }],
                 },
                 {
                   id: 13,
@@ -61,7 +61,7 @@ export class MockBackendService {
                   label: 'Department',
                   type: 'Dropdown',
                   visibility: true,
-                  validation: [{ type: 'required' }],
+                  validations: [{ type: 'required' }],
                   options: [
                     { id: 1, label: 'Engineering', value: 'Engineering' },
                     { id: 2, label: 'Human Resources', value: 'HR' },
@@ -83,7 +83,7 @@ export class MockBackendService {
                   label: 'Overall Job Satisfaction',
                   type: 'RadioButton',
                   visibility: true,
-                  validation: [{ type: 'required' }],
+                  validations: [{ type: 'required' }],
                   options: [
                     { id: 1, label: 'Very Satisfied', value: 'very_satisfied' },
                     { id: 2, label: 'Satisfied', value: 'satisfied' },
@@ -112,7 +112,7 @@ export class MockBackendService {
                   placeholder: 'Share any ideas on how we can improve our culture and productivity...',
                   helperDescription: 'Maximum 1000 characters',
                   visibility: true,
-                  validation: [{ type: 'maxLength', value: 1000 }],
+                  validations: [{ type: 'maxLength', value: 1000 }],
                 },
                 {
                   id: 17,
@@ -150,7 +150,7 @@ export class MockBackendService {
                   label: 'Support Response Speed',
                   type: 'RadioButton',
                   visibility: true,
-                  validation: [{ type: 'required' }],
+                  validations: [{ type: 'required' }],
                   options: [
                     { id: 1, label: 'Excellent (< 1 hour)', value: 'excellent' },
                     { id: 2, label: 'Good (Same day)', value: 'good' },
@@ -165,7 +165,7 @@ export class MockBackendService {
                   type: 'Number',
                   placeholder: 'Enter 1 to 10',
                   visibility: true,
-                  validation: [{ type: 'required' }, { type: 'minValue', value: 1 }, { type: 'maxValue', value: 10 }],
+                  validations: [{ type: 'required' }, { type: 'minValue', value: 1 }, { type: 'maxValue', value: 10 }],
                 },
               ],
             },

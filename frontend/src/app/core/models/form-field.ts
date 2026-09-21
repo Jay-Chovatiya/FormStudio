@@ -12,6 +12,6 @@ export interface FormField {
   placeholder?: string;
   default?: string | number | boolean;
   icon?: string;
-  validation?: FieldValidation[];
+  validations?: FieldValidation[];
   options?: FieldOption[];
 }

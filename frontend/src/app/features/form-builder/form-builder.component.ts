@@ -57,6 +57,11 @@ export class FormBuilderComponent implements OnInit {
       });
   }
 
+  isEditMode(): boolean {
+    const currentForm = this.form();
+    return !!(currentForm && currentForm.id && typeof currentForm.id === 'number' && currentForm.id < 1000000000);
+  }
+
   saveForm(): void {
     const currentForm = this.form();
     if (!currentForm) return;

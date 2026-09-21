@@ -49,8 +49,14 @@
         Preview
       </button>
 
-      <button type="button" class="fs-btn fs-btn-primary fs-btn-sm" (click)="saveForm()" [disabled]="saving()" title="Save Form Changes">
-        💾 {{ saving() ? 'Saving...' : 'Save Form' }}
+      <button
+        type="button"
+        class="fs-btn fs-btn-primary fs-btn-sm"
+        (click)="saveForm()"
+        [disabled]="saving()"
+        [title]="isEditMode() ? 'Update Form in Database' : 'Create Form in Database'"
+      >
+        💾 {{ saving() ? (isEditMode() ? 'Updating...' : 'Creating...') : (isEditMode() ? 'Update Form' : 'Create Form') }}
       </button>
     </div>
   </header>

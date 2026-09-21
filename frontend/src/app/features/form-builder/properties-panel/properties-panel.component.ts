@@ -1,5 +1,6 @@
 import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilderState } from '../../../core/services/form-builder-state';
+import { FormField } from '../../../core/models/form-field';
 import { FieldOption } from '../../../core/models/field-option';
 import { FieldTypes } from '../../../core/models/field-types';
 import { FieldValidation } from '../../../core/models/field-validation';
@@ -9,8 +10,6 @@ import { UpperCasePipe, TitleCasePipe } from '@angular/common';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { requiredTrimmedValidator } from '../../../shared/validators/required-trimmed.validator';
 import { identifierValidator } from '../../../shared/validators/identifier.validator';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime, pairwise, startWith } from 'rxjs';
 import { duplicateFieldNameValidator } from '../../../shared/validators/duplicate-field-name.validator';
 import { uniqueOptionValueValidator } from '../../../shared/validators/unique-option-value.validator';
 import { defaultValueValidator } from '../../../shared/validators/default-value.validator';
@@ -109,44 +108,44 @@ export class PropertiesPanelComponent {
     },
   );
 
-  formEffectRef = effect(() => {
-    const currentForm = this.form();
+  readonly currentValidations = signal<FieldValidation[]>([]);
 
-    if (!currentForm) {
+  formEffectRef = effect(() => {
+    const activeTab = this.activeTab();
+    if (activeTab !== 'form') {
       return;
     }
 
-    this.formForm.patchValue(
-      {
-        name: currentForm.name,
-        description: currentForm.description,
-        code: currentForm.code,
-        category: currentForm.category,
-        status: currentForm.status,
-        startDate: currentForm.startDate,
-        endDate: currentForm.endDate,
-        allowMultipleSubmissions: currentForm.allowMultipleSubmissions,
-        allowSaveAsDraft: currentForm.allowSaveAsDraft,
-        confirmationMessage: currentForm.confirmationMessage,
-        submitButtonText: currentForm.submitButtonText,
-        cancelButtonText: currentForm.cancelButtonText,
-        theme: currentForm.theme,
-        logoUrl: currentForm.logoUrl,
-        headerText: currentForm.headerText,
-        footerText: currentForm.footerText
-      },
-      { emitEvent: false },
-    );
-  });
+    untracked(() => {
+      const currentForm = this.form();
 
-  formValueChanges = this.formForm.valueChanges
-    .pipe(debounceTime(300), takeUntilDestroyed())
-    .subscribe((value) => {
-      if (this.formForm.invalid) {
+      if (!currentForm) {
         return;
       }
-      this.formBuilderState.updateFormMetadata(value);
+
+      this.formForm.patchValue(
+        {
+          name: currentForm.name,
+          description: currentForm.description,
+          code: currentForm.code,
+          category: currentForm.category,
+          status: currentForm.status,
+          startDate: currentForm.startDate,
+          endDate: currentForm.endDate,
+          allowMultipleSubmissions: currentForm.allowMultipleSubmissions,
+          allowSaveAsDraft: currentForm.allowSaveAsDraft,
+          confirmationMessage: currentForm.confirmationMessage,
+          submitButtonText: currentForm.submitButtonText,
+          cancelButtonText: currentForm.cancelButtonText,
+          theme: currentForm.theme,
+          logoUrl: currentForm.logoUrl,
+          headerText: currentForm.headerText,
+          footerText: currentForm.footerText
+        },
+        { emitEvent: false },
+      );
     });
+  });
 
   sectionForm = new FormGroup({
     title: new FormControl('', {
@@ -165,29 +164,27 @@ export class PropertiesPanelComponent {
   });
 
   sectionEfectRef = effect(() => {
-    const currentSection = this.formBuilderState.selectedSection();
-    if (!currentSection) {
+    const sectionId = this.formBuilderState.selectedSectionId();
+    if (sectionId === null) {
       return;
     }
-    this.sectionForm.patchValue(
-      {
-        title: currentSection.title,
-        description: currentSection.description,
-        visibility: currentSection.visibility,
-        theme: currentSection.theme,
-      },
-      { emitEvent: false },
-    );
-  });
 
-  sectionValueChanges = this.sectionForm.valueChanges
-    .pipe(debounceTime(300), takeUntilDestroyed())
-    .subscribe((value) => {
-      if (this.sectionForm.invalid) {
+    untracked(() => {
+      const currentSection = this.formBuilderState.selectedSection();
+      if (!currentSection) {
         return;
       }
-      this.formBuilderState.updateSection(value);
+      this.sectionForm.patchValue(
+        {
+          title: currentSection.title,
+          description: currentSection.description,
+          visibility: currentSection.visibility,
+          theme: currentSection.theme,
+        },
+        { emitEvent: false },
+      );
     });
+  });
 
   fieldForm = new FormGroup(
     {
@@ -227,7 +224,7 @@ export class PropertiesPanelComponent {
       }),
     },
     {
-      validators: [defaultValueValidator(() => this.selectedField()?.validation ?? [])],
+      validators: [defaultValueValidator(() => this.currentValidations())],
     },
   );
 
@@ -237,79 +234,78 @@ export class PropertiesPanelComponent {
       return;
     }
 
-    const currentField = untracked(() => this.formBuilderState.selectedField());
-    if (!currentField) {
-      return;
-    }
-
-    this.fieldForm.patchValue(
-      {
-        label: currentField.label,
-        name: currentField.name,
-        helperDescription: currentField.helperDescription,
-        placeholder: currentField.placeholder,
-        visibility: currentField.visibility,
-        default: currentField.default,
-      },
-      { emitEvent: false },
-    );
-
-    const options = this.fieldForm.controls.options;
-    options.clear({ emitEvent: false });
-    for (const option of currentField.options ?? []) {
-      options.push(this.createOptionForm(option), { emitEvent: false });
-    }
-  });
-
-  fieldValueChange = this.fieldForm.valueChanges
-    .pipe(
-      debounceTime(300),
-      startWith(this.fieldForm.getRawValue()),
-      pairwise(),
-      takeUntilDestroyed(),
-    )
-    .subscribe(([previousValue, currentValue]) => {
-      if (this.fieldForm.invalid) {
+    untracked(() => {
+      const currentField = this.formBuilderState.selectedField();
+      if (!currentField) {
         return;
       }
 
-      const field = this.selectedField();
+      this.fieldForm.patchValue(
+        {
+          label: currentField.label,
+          name: currentField.name,
+          helperDescription: currentField.helperDescription,
+          placeholder: currentField.placeholder,
+          visibility: currentField.visibility,
+          default: currentField.default,
+        },
+        { emitEvent: false },
+      );
 
-      if (!field) return;
-
-      let defaultValue = currentValue.default;
-      if (field.type === 'Number' && defaultValue !== '') {
-        defaultValue = Number(defaultValue);
-      }
-      const previousOptions = previousValue.options ?? [];
-      const currentOptions = currentValue.options ?? [];
-
-      if (field.type === 'Dropdown' || field.type === 'RadioButton') {
-        const previousDefault = previousValue.default;
-
-        if (typeof previousDefault === 'string') {
-          const previousOption = previousOptions.find((option) => option.value === previousDefault);
-
-          if (previousOption) {
-            const currentOption = currentOptions.find((option) => option.id === previousOption.id);
-
-            if (!currentOption) {
-              defaultValue = '';
-            } else if (currentOption.value !== previousOption.value) {
-              defaultValue = currentOption.value;
-            }
-          }
-        }
+      const options = this.fieldForm.controls.options;
+      options.clear({ emitEvent: false });
+      for (const option of currentField.options ?? []) {
+        options.push(this.createOptionForm(option), { emitEvent: false });
       }
 
-      const updatedValue = {
-        ...currentValue,
-        options: currentOptions,
-        default: defaultValue,
-      };
-
-      this.formBuilderState.updateSelectedField(updatedValue);
+      this.currentValidations.set(currentField.validations ? [...currentField.validations] : []);
     });
+  });
+
+  applyFormChanges(): void {
+    this.formForm.markAllAsTouched();
+    if (this.formForm.invalid) {
+      return;
+    }
+    const value = this.formForm.getRawValue();
+    this.formBuilderState.updateFormMetadata(value);
+  }
+
+  applySectionChanges(): void {
+    this.sectionForm.markAllAsTouched();
+    if (this.sectionForm.invalid) {
+      return;
+    }
+    const value = this.sectionForm.getRawValue();
+    this.formBuilderState.updateSection(value);
+  }
+
+  applyFieldChanges(): void {
+    this.fieldForm.markAllAsTouched();
+    if (this.fieldForm.invalid) {
+      return;
+    }
+
+    const field = this.selectedField();
+    if (!field) return;
+
+    const currentValue = this.fieldForm.getRawValue();
+    let defaultValue = currentValue.default;
+    if (field.type === 'Number' && defaultValue !== '') {
+      defaultValue = Number(defaultValue);
+    }
+
+    const currentOptions: FieldOption[] = (currentValue.options ?? []) as FieldOption[];
+
+    const updatedValue: Partial<FormField> = {
+      ...currentValue,
+      options: currentOptions,
+      default: defaultValue,
+      validations: this.currentValidations(),
+    };
+
+    this.formBuilderState.updateSelectedField(updatedValue);
+  }
 
   createOptionForm(option: FieldOption): FormGroup {
     return new FormGroup({
@@ -409,35 +405,25 @@ export class PropertiesPanelComponent {
   }
 
   isValidationEnabled(type: 'required' | 'email'): boolean {
-    const field = this.selectedField();
-    if (!field) return false;
-    const validations = field.validation ?? [];
+    const validations = this.currentValidations();
+    
     return validations.some((validation) => validation.type === type);
   }
 
   toggleValidation(type: 'required' | 'email', event: Event): void {
-    const field = this.selectedField();
-    if (!field) return;
-
     const isChecked = (event.target as HTMLInputElement).checked;
-    const validations = field.validation ?? [];
+    const validations = this.currentValidations();
 
     if (!isChecked) {
-      this.formBuilderState.updateSelectedField({
-        validation: validations.filter((validation) => validation.type !== type),
-      });
+      this.currentValidations.set(validations.filter((validation) => validation.type !== type));
     } else if (!this.isValidationEnabled(type)) {
-      this.formBuilderState.updateSelectedField({
-        validation: [...validations, { type }],
-      });
+      this.currentValidations.set([...validations, { type }]);
     }
     this.fieldForm.updateValueAndValidity();
   }
 
   getValidationValue(type: 'minLength' | 'maxLength' | 'minValue' | 'maxValue'): number | null {
-    const field = this.selectedField();
-    if (!field) return null;
-    const validations = field.validation ?? [];
+    const validations = this.currentValidations();
     const validation = validations.find((validation) => validation.type === type);
     if (!validation || !this.hasNumericValue(validation)) return null;
 
@@ -448,15 +434,11 @@ export class PropertiesPanelComponent {
     type: 'minLength' | 'maxLength' | 'minValue' | 'maxValue',
     event: Event,
   ): void {
-    const field = this.selectedField();
-    if (!field) return;
-    const validations = field.validation ?? [];
+    const validations = this.currentValidations();
     const inputValue = (event.target as HTMLInputElement).value;
     if (inputValue === '') {
       this.clearRangeErrors(type);
-      this.formBuilderState.updateSelectedField({
-        validation: validations.filter((validation) => validation.type !== type),
-      });
+      this.currentValidations.set(validations.filter((validation) => validation.type !== type));
       this.fieldForm.updateValueAndValidity();
       return;
     }
@@ -480,10 +462,7 @@ export class PropertiesPanelComponent {
     }
     this.clearRangeErrors(type);
 
-    this.formBuilderState.updateSelectedField({
-      validation: finalValidations,
-    });
-
+    this.currentValidations.set(finalValidations);
     this.fieldForm.updateValueAndValidity();
   }
 
@@ -520,9 +499,7 @@ export class PropertiesPanelComponent {
   }
 
   getPatternValidationValue(): string | null {
-    const field = this.selectedField();
-    if (!field) return null;
-    const validations = field.validation ?? [];
+    const validations = this.currentValidations();
     const validation = validations.find((validation) => validation.type === 'pattern');
     if (!validation || validation.type !== 'pattern') return null;
 
@@ -530,16 +507,13 @@ export class PropertiesPanelComponent {
   }
 
   updatePatternValidation(event: Event): void {
-    const field = this.selectedField();
-    if (!field) return;
-    const validations = field.validation ?? [];
+    const validations = this.currentValidations();
     const value = (event.target as HTMLInputElement).value;
     this.clearPropertyError('pattern');
 
     if (value === '') {
-      this.formBuilderState.updateSelectedField({
-        validation: validations.filter((validation) => validation.type !== 'pattern'),
-      });
+      this.currentValidations.set(validations.filter((validation) => validation.type !== 'pattern'));
+      this.fieldForm.updateValueAndValidity();
       return;
     }
     if (!this.isValidPattern(value)) {
@@ -561,9 +535,8 @@ export class PropertiesPanelComponent {
     });
     const finalValidations = isUpdated ? newValidations : [...newValidations, newValidation];
 
-    this.formBuilderState.updateSelectedField({
-      validation: finalValidations,
-    });
+    this.currentValidations.set(finalValidations);
+    this.fieldForm.updateValueAndValidity();
   }
 
   isValidPattern(pattern: string): boolean {

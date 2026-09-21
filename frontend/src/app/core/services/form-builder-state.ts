@@ -72,7 +72,7 @@ export class FormBuilderState {
       description: description || 'Visual form created with Form Studio',
       code: 'form_' + Math.random().toString(36).substring(2, 8),
       category: 'Registration',
-      status: 'Published',
+      status: 'Draft',
       allowMultipleSubmissions: true,
       allowSaveAsDraft: true,
       confirmationMessage: 'Thank you! Your response has been submitted successfully.',
@@ -197,7 +197,7 @@ export class FormBuilderState {
       default: '',
       // icon: '',
       visibility: true,
-      validation: type === 'Email' ? [{ type: 'email' }] : [],
+      validations: type === 'Email' ? [{ type: 'email' }] : [],
       options: this.getDefaultOptions(type),
     };
 
