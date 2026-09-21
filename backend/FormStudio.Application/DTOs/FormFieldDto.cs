@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace FormStudio.Application.DTOs
 {
     public class FormFieldDto
@@ -11,7 +13,17 @@ namespace FormStudio.Application.DTOs
         public string? Placeholder { get; set; }
         public object? Default { get; set; }
         public string? Icon { get; set; }
+
+        [JsonPropertyName("validation")]
         public List<FieldValidationDto>? Validations { get; set; }
+
+        [JsonPropertyName("validations")]
+        public List<FieldValidationDto>? ValidationsPlural
+        {
+            get => Validations;
+            set => Validations = value ?? Validations;
+        }
+
         public List<FieldOptionDto>? Options { get; set; }
     }
 }

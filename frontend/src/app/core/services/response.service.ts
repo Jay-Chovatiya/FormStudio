@@ -4,32 +4,34 @@ import { Observable, of } from 'rxjs';
 import { FormSubmission } from '../models/form-submission';
 import { FormDefinition } from '../models/form-definition';
 import { MockBackendService } from './mock-backend.service';
+import { environment } from '../../../environment/environment';
 
 @Service()
 export class ResponseService {
   private http = inject(HttpClient);
   private mockBackend = inject(MockBackendService);
-  private useMock = true;
+  private baseUrl = environment.formsEndpoint;
+  private useMock = environment.useMock;
 
   getSubmissions(formId: number): Observable<FormSubmission[]> {
     if (this.useMock) {
       return of(this.mockBackend.getSubmissions(formId));
     }
-    return this.http.get<FormSubmission[]>(`/api/forms/${formId}/submissions`);
+    return this.http.get<FormSubmission[]>(`${this.baseUrl}/${formId}/submissions`);
   }
 
   submitForm(formId: number, submission: FormSubmission): Observable<FormSubmission> {
     if (this.useMock) {
       return of(this.mockBackend.saveSubmission({ ...submission, formId }));
     }
-    return this.http.post<FormSubmission>(`/api/forms/${formId}/submissions`, submission);
+    return this.http.post<FormSubmission>(`${this.baseUrl}/${formId}/submissions`, submission);
   }
 
   deleteSubmission(formId: number, submissionId: string | number): Observable<boolean> {
     if (this.useMock) {
       return of(this.mockBackend.deleteSubmission(submissionId));
     }
-    return this.http.delete<boolean>(`/api/forms/${formId}/submissions/${submissionId}`);
+    return this.http.delete<boolean>(`${this.baseUrl}/${formId}/submissions/${submissionId}`);
   }
 
   exportToCsv(form: FormDefinition, submissions: FormSubmission[]): void {

@@ -1,6 +1,9 @@
 <div class="builder-container">
   <header class="builder-header">
     <div class="header-brand">
+      <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm" (click)="backToList()" title="Back to Form Library">
+        ← Forms List
+      </button>
       <div class="brand-logo" title="FormStudio Builder">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
@@ -12,7 +15,6 @@
       </div>
       <span class="brand-title">FormStudio</span>
       @if (form(); as currentForm) {
-        <!-- (click)="openFormProperties()" -->
         <span class="form-title-badge" title="Click to view form properties">
           {{ currentForm.name }}
         </span>
@@ -39,12 +41,16 @@
         Redo
       </button>
 
-      <button type="button" class="fs-btn fs-btn-primary fs-btn-sm" (click)="openPreview()" title="Preview Live Form">
+      <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm" (click)="openPreview()" title="Preview Live Form">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
           <circle cx="12" cy="12" r="3"/>
         </svg>
         Preview
+      </button>
+
+      <button type="button" class="fs-btn fs-btn-primary fs-btn-sm" (click)="saveForm()" [disabled]="saving()" title="Save Form Changes">
+        💾 {{ saving() ? 'Saving...' : 'Save Form' }}
       </button>
     </div>
   </header>

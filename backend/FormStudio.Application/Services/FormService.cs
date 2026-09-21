@@ -387,7 +387,8 @@ namespace FormStudio.Application.Services
             existingForm.FooterText = updatedForm.FooterText;
             existingForm.UpdatedAt = DateTime.UtcNow;
 
-            HashSet<int> updatedSectionIds = updatedForm.Sections.Where(s => s.Id > 0).Select(s => s.Id).ToHashSet();
+            HashSet<int> existingSectionIds = existingForm.Sections.Select(s => s.Id).ToHashSet();
+            HashSet<int> updatedSectionIds = updatedForm.Sections.Where(s => existingSectionIds.Contains(s.Id)).Select(s => s.Id).ToHashSet();
             List<FormSectionEntity> removedSections = existingForm.Sections.Where(s => !updatedSectionIds.Contains(s.Id)).ToList();
 
             if (removedSections.Any())
@@ -406,7 +407,7 @@ namespace FormStudio.Application.Services
                     existingSec.Visibility = updatedSec.Visibility;
                     existingSec.DisplayOrder = updatedSec.DisplayOrder;
 
-                    SynchronizeFields(existingSec, updatedSec.Fields.ToList());
+                    SynchronizeFields(existingSec, updatedSec.Fields?.ToList() ?? new List<FormFieldEntity>());
                 }
                 else
                 {
@@ -417,7 +418,8 @@ namespace FormStudio.Application.Services
 
         private void SynchronizeFields(FormSectionEntity existingSec, List<FormFieldEntity> updatedFields)
         {
-            HashSet<int> updatedFieldIds = updatedFields.Where(f => f.Id > 0).Select(f => f.Id).ToHashSet();
+            HashSet<int> existingFieldIds = existingSec.Fields.Select(f => f.Id).ToHashSet();
+            HashSet<int> updatedFieldIds = updatedFields.Where(f => existingFieldIds.Contains(f.Id)).Select(f => f.Id).ToHashSet();
             List<FormFieldEntity> removedFields = existingSec.Fields.Where(f => !updatedFieldIds.Contains(f.Id)).ToList();
 
             if (removedFields.Any())
@@ -440,8 +442,8 @@ namespace FormStudio.Application.Services
                     existingField.Icon = updatedField.Icon;
                     existingField.DisplayOrder = updatedField.DisplayOrder;
 
-                    SynchronizeOptions(existingField, updatedField.Options.ToList());
-                    SynchronizeValidations(existingField, updatedField.Validations.ToList());
+                    SynchronizeOptions(existingField, updatedField.Options?.ToList() ?? new List<FieldOptionEntity>());
+                    SynchronizeValidations(existingField, updatedField.Validations?.ToList() ?? new List<FieldValidationEntity>());
                 }
                 else
                 {
@@ -452,7 +454,8 @@ namespace FormStudio.Application.Services
 
         private void SynchronizeOptions(FormFieldEntity existingField, List<FieldOptionEntity> updatedOptions)
         {
-            HashSet<int> updatedOptionIds = updatedOptions.Where(o => o.Id > 0).Select(o => o.Id).ToHashSet();
+            HashSet<int> existingOptionIds = existingField.Options.Select(o => o.Id).ToHashSet();
+            HashSet<int> updatedOptionIds = updatedOptions.Where(o => existingOptionIds.Contains(o.Id)).Select(o => o.Id).ToHashSet();
             List<FieldOptionEntity> removedOptions = existingField.Options.Where(o => !updatedOptionIds.Contains(o.Id)).ToList();
 
             if (removedOptions.Any())
@@ -471,6 +474,7 @@ namespace FormStudio.Application.Services
                 }
                 else
                 {
+                    updatedOpt.Id = 0;
                     existingField.Options.Add(updatedOpt);
                 }
             }
@@ -495,6 +499,7 @@ namespace FormStudio.Application.Services
                 }
                 else
                 {
+                    updatedVal.Id = 0;
                     existingField.Validations.Add(updatedVal);
                 }
             }

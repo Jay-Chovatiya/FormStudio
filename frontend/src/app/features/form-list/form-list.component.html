@@ -1,0 +1,145 @@
+<div class="form-list-container">
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="logo-icon">✨</div>
+      <div class="brand-text">
+        <h1>FormStudio</h1>
+        <span class="subtitle">Dynamic Form Builder & Management</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="onCreateForm()">
+        <span class="btn-icon">+</span> Create New Form
+      </button>
+    </div>
+  </header>
+
+  <!-- Filter & Controls Bar -->
+  <div class="controls-bar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        placeholder="Search forms by name, code, or category..." 
+        [ngModel]="searchTerm()" 
+        (ngModelChange)="searchTerm.set($event)"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label>Status Filter:</label>
+      <select [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)">
+        <option value="ALL">All Statuses</option>
+        <option value="DRAFT">Draft</option>
+        <option value="PUBLISHED">Published</option>
+        <option value="UNPUBLISHED">Unpublished</option>
+        <option value="ARCHIVED">Archived</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  @if (loading()) {
+    <div class="state-card loading-state">
+      <div class="spinner"></div>
+      <p>Connecting to backend API (http://localhost:5000)... Loading forms...</p>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="state-card error-state">
+      <div class="error-icon">⚠️</div>
+      <h3>Backend Connection Error</h3>
+      <p>{{ error() }}</p>
+      <button class="btn btn-secondary" (click)="loadForms()">Retry Connection</button>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && !error() && filteredForms().length === 0) {
+    <div class="state-card empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>No Forms Found</h3>
+      <p>No form definitions match your search criteria. Create your first dynamic form to get started!</p>
+      <button class="btn btn-primary" (click)="onCreateForm()">Create Form Now</button>
+    </div>
+  }
+
+  <!-- Forms Grid -->
+  @if (!loading() && !error() && filteredForms().length > 0) {
+    <div class="forms-grid">
+      @for (form of filteredForms(); track form.id || form.code) {
+        <div class="form-card" (click)="onEditForm(form)">
+          <div class="card-header">
+            <div class="title-section">
+              <h3 class="form-title">{{ form.name }}</h3>
+              <span class="form-code">#{{ form.code }}</span>
+            </div>
+            
+            <div class="status-selector" (click)="$event.stopPropagation()">
+              <select 
+                [ngModel]="form.status" 
+                (ngModelChange)="onStatusChange(form, $event)"
+                [ngClass]="getStatusBadgeClass(form.status)"
+              >
+                @for (st of allowedStatuses; track st) {
+                  <option [value]="st">{{ st }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <p class="form-description">
+            {{ form.description || 'No description provided.' }}
+          </p>
+
+          <div class="card-metadata">
+            <span class="meta-tag category" *ngIf="form.category">
+              📁 {{ form.category }}
+            </span>
+            <span class="meta-tag sections">
+              🧩 {{ form.sections ? form.sections.length : 0 }} Sections
+            </span>
+            <span class="meta-tag fields">
+              📝 {{ getTotalFields(form) }} Fields
+            </span>
+          </div>
+
+          <div class="card-footer">
+            <div class="timestamps" *ngIf="form.updatedAt">
+              <span>Updated: {{ form.updatedAt | date:'mediumDate' }}</span>
+            </div>
+            
+            <div class="card-actions">
+              <button 
+                class="btn-icon-action preview" 
+                title="Preview / Fill Form" 
+                (click)="onPreviewForm(form, $event)"
+              >
+                👁️ Preview
+              </button>
+              
+              <button 
+                class="btn-icon-action duplicate" 
+                title="Duplicate Form" 
+                (click)="onDuplicate(form, $event)"
+              >
+                📄 Duplicate
+              </button>
+
+              <button 
+                class="btn-icon-action delete" 
+                title="Delete Form" 
+                (click)="onDelete(form, $event)"
+              >
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
