@@ -29,28 +29,31 @@ export class FormCanvasComponent implements OnInit {
     this.formBuilderState.selectFormSettings();
   }
 
-  selectSection(sectionId: number): void {
+  selectSection(sectionId: string | number): void {
     this.formBuilderState.selectSection(sectionId);
   }
 
-  selectField(sectionId: number, fieldId: number): void {
+  selectField(sectionId: string | number, fieldId: string | number): void {
     this.formBuilderState.selectField(sectionId, fieldId);
   }
 
-  isSectionSelected(sectionId: number): boolean {
-    return this.formBuilderState.selectedSectionId() === sectionId;
+  isSectionSelected(sectionId: string | number): boolean {
+    const selected = this.formBuilderState.selectedSectionId();
+    return selected === sectionId || (selected !== null && String(selected) === String(sectionId));
   }
 
-  isFieldSelected(fieldId: number): boolean {
-    return this.formBuilderState.selectedFieldId() === fieldId;
+  isFieldSelected(fieldId: string | number): boolean {
+    const selected = this.formBuilderState.selectedFieldId();
+    return selected === fieldId || (selected !== null && String(selected) === String(fieldId));
   }
 
-  getFieldDropListId(sectionId: number): string {
+  getFieldDropListId(sectionId: string | number): string {
     return `section-fields-${sectionId}`;
   }
 
   getFieldDropListIds(): string[] {
-    const sectionIds = this.form()?.sections.map((section) => this.getFieldDropListId(section.id)) ?? [];
+    const sectionIds =
+      this.form()?.sections.map((section) => this.getFieldDropListId(section.guid || section.id)) ?? [];
     return ['palette-drop-list', ...sectionIds];
   }
 
@@ -58,11 +61,11 @@ export class FormCanvasComponent implements OnInit {
     this.formBuilderState.addSection();
   }
 
-  removeSection(sectionId: number): void {
+  removeSection(sectionId: string | number): void {
     this.formBuilderState.removeSection(sectionId);
   }
 
-  removeField(fieldId: number): void {
+  removeField(fieldId: string | number): void {
     this.formBuilderState.removeField(fieldId);
   }
 

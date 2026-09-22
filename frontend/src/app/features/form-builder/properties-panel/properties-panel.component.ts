@@ -6,6 +6,7 @@ import { FieldTypes } from '../../../core/models/field-types';
 import { FieldValidation } from '../../../core/models/field-validation';
 import { PropertyError, PropertyName } from './property-error';
 import { FormStatus } from '../../../core/models/form-status';
+import { generateGuid } from '../../../core/utils/guid';
 import { UpperCasePipe, TitleCasePipe } from '@angular/common';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { requiredTrimmedValidator } from '../../../shared/validators/required-trimmed.validator';
@@ -200,7 +201,7 @@ export class PropertiesPanelComponent {
           identifierValidator,
           duplicateFieldNameValidator(
             () => this.formBuilderState.form()?.sections.flatMap((section) => section.fields) ?? [],
-            () => this.selectedField()?.id ?? null,
+            () => this.selectedField()?.guid ?? (this.selectedField()?.id ?? null),
           ),
         ],
       }),
@@ -312,6 +313,12 @@ export class PropertiesPanelComponent {
       id: new FormControl(option.id, {
         nonNullable: true,
       }),
+      guid: new FormControl(
+        option.guid || (option.id !== undefined && option.id !== null ? String(option.id) : generateGuid()),
+        {
+          nonNullable: true,
+        },
+      ),
       label: new FormControl(option.label, {
         nonNullable: true,
         validators: [requiredTrimmedValidator],
@@ -377,19 +384,25 @@ export class PropertiesPanelComponent {
 
   addFieldOption(): void {
     const options = this.fieldForm.controls.options;
-    const optionId = Math.max(...options.controls.map((option) => option.value.id), 0) + 1;
+    const guid = generateGuid();
     const newOption: FieldOption = {
-      id: optionId,
+      id: 0,
+      guid: guid,
       label: 'New Option',
-      value: `option_${optionId}`,
+      value: `option_${guid.substring(0, 8)}`,
     };
 
     options.push(this.createOptionForm(newOption));
   }
 
-  deleteFieldOption(optionId: number): void {
+  deleteFieldOption(optionIdentifier: number | string): void {
     const options = this.fieldForm.controls.options;
-    const index = options.controls.findIndex((option) => option.value.id === optionId);
+    const index = options.controls.findIndex(
+      (option) =>
+        option.value.id === optionIdentifier ||
+        option.value.guid === optionIdentifier ||
+        String(option.value.id) === String(optionIdentifier),
+    );
 
     if (index === -1) return;
 

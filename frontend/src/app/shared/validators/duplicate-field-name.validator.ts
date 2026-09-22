@@ -3,7 +3,7 @@ import { FormField } from '../../core/models/form-field';
 
 export function duplicateFieldNameValidator(
   getFields: () => FormField[],
-  getCurrentFieldId: () => number | null,
+  getCurrentFieldIdentifier: () => string | number | null,
 ): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
@@ -11,10 +11,13 @@ export function duplicateFieldNameValidator(
       return null;
     }
     const fields = getFields();
-    const currentFieldId = getCurrentFieldId();
-    const isDuplicatePresent = fields.some(
-      (field) => field.id !== currentFieldId && field.name === value,
-    );
+    const currentIdentifier = getCurrentFieldIdentifier();
+    const isDuplicatePresent = fields.some((field) => {
+      const isCurrent =
+        currentIdentifier !== null &&
+        (field.guid === currentIdentifier || field.id === currentIdentifier || String(field.id) === String(currentIdentifier));
+      return !isCurrent && field.name === value;
+    });
     return isDuplicatePresent ? { duplicateFieldName: true } : null;
   };
 }

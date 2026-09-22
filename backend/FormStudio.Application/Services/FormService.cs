@@ -4,6 +4,7 @@ using FormStudio.Application.Interfaces.Repositories;
 using FormStudio.Application.Interfaces.Services;
 using FormStudio.Application.Mappings;
 using FormStudio.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormStudio.Application.Services
 {
@@ -301,70 +302,15 @@ namespace FormStudio.Application.Services
 
         private Task<FormDefinitionEntity?> GetFormEntityWithDetailsAsync(Expression<Func<FormDefinitionEntity, bool>> predicate)
         {
-            return _unitOfWork.Repository<FormDefinitionEntity>().GetFirstOrDefaultAsync(
-                predicate,
-                form => new FormDefinitionEntity
-                {
-                    Id = form.Id,
-                    Name = form.Name,
-                    Code = form.Code,
-                    Description = form.Description,
-                    Category = form.Category,
-                    Status = form.Status,
-                    StartDate = form.StartDate,
-                    EndDate = form.EndDate,
-                    AllowMultipleSubmissions = form.AllowMultipleSubmissions,
-                    AllowSaveAsDraft = form.AllowSaveAsDraft,
-                    ConfirmationMessage = form.ConfirmationMessage,
-                    SubmitButtonText = form.SubmitButtonText,
-                    CancelButtonText = form.CancelButtonText,
-                    Theme = form.Theme,
-                    LogoUrl = form.LogoUrl,
-                    HeaderText = form.HeaderText,
-                    FooterText = form.FooterText,
-                    CreatedAt = form.CreatedAt,
-                    UpdatedAt = form.UpdatedAt,
-                    Sections = form.Sections.OrderBy(section => section.DisplayOrder).Select(section => new FormSectionEntity
-                    {
-                        Id = section.Id,
-                        FormDefinitionId = section.FormDefinitionId,
-                        Title = section.Title,
-                        Description = section.Description,
-                        Theme = section.Theme,
-                        Visibility = section.Visibility,
-                        DisplayOrder = section.DisplayOrder,
-                        Fields = section.Fields.OrderBy(field => field.DisplayOrder).Select(field => new FormFieldEntity
-                        {
-                            Id = field.Id,
-                            FormSectionId = field.FormSectionId,
-                            Name = field.Name,
-                            Type = field.Type,
-                            Label = field.Label,
-                            HelperDescription = field.HelperDescription,
-                            Visibility = field.Visibility,
-                            Placeholder = field.Placeholder,
-                            DefaultValue = field.DefaultValue,
-                            Icon = field.Icon,
-                            DisplayOrder = field.DisplayOrder,
-                            Options = field.Options.OrderBy(option => option.DisplayOrder).Select(option => new FieldOptionEntity
-                            {
-                                Id = option.Id,
-                                FormFieldId = option.FormFieldId,
-                                Label = option.Label,
-                                Value = option.Value,
-                                DisplayOrder = option.DisplayOrder
-                            }).ToList(),
-                            Validations = field.Validations.Select(validation => new FieldValidationEntity
-                            {
-                                Id = validation.Id,
-                                FormFieldId = validation.FormFieldId,
-                                Type = validation.Type,
-                                Value = validation.Value
-                            }).ToList()
-                        }).ToList()
-                    }).ToList()
-                }
-            );
+            return _unitOfWork.Repository<FormDefinitionEntity>()
+                .Query()
+                .Include(f => f.Sections)
+                    .ThenInclude(s => s.Fields)
+                        .ThenInclude(field => field.Options)
+                .Include(f => f.Sections)
+                    .ThenInclude(s => s.Fields)
+                        .ThenInclude(field => field.Validations)
+                .FirstOrDefaultAsync(predicate);
         }
 
         private void SynchronizeFormHierarchy(FormDefinitionEntity existingForm, FormDefinitionEntity updatedForm)
@@ -474,7 +420,6 @@ namespace FormStudio.Application.Services
                 }
                 else
                 {
-                    updatedOpt.Id = 0;
                     existingField.Options.Add(updatedOpt);
                 }
             }
@@ -499,7 +444,6 @@ namespace FormStudio.Application.Services
                 }
                 else
                 {
-                    updatedVal.Id = 0;
                     existingField.Validations.Add(updatedVal);
                 }
             }

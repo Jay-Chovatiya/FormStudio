@@ -36,13 +36,13 @@
         (cdkDropListDropped)="dropSection($event)"
         class="sections-container"
       >
-        @for (section of currentForm.sections; track section.id) {
+        @for (section of currentForm.sections; track (section.guid || section.id)) {
           <div
             cdkDrag
             [cdkDragData]="section"
-            (click)="selectSection(section.id)"
+            (click)="selectSection(section.guid || section.id)"
             class="canvas-section"
-            [class.selected]="isSectionSelected(section.id)"
+            [class.selected]="isSectionSelected(section.guid || section.id)"
           >
             <div class="section-header">
               <div class="section-drag-handle" cdkDragHandle title="Drag section to reorder">
@@ -64,7 +64,7 @@
                 <button
                   type="button"
                   class="fs-btn fs-btn-danger fs-btn-sm"
-                  (click)="removeSection(section.id); $event.stopPropagation()"
+                  (click)="removeSection(section.guid || section.id); $event.stopPropagation()"
                   title="Delete Section"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -79,8 +79,8 @@
             <!-- Fields Container (CDK Drop List for fields) -->
             <div
               cdkDropList
-              [id]="getFieldDropListId(section.id)"
-              [cdkDropListData]="section.id"
+              [id]="getFieldDropListId(section.guid || section.id)"
+              [cdkDropListData]="section.guid || section.id"
               [cdkDropListConnectedTo]="getFieldDropListIds()"
               (cdkDropListDropped)="dropField($event)"
               class="fields-container"
@@ -92,13 +92,13 @@
                 </div>
               }
 
-              @for (field of section.fields; track field.id) {
+              @for (field of section.fields; track (field.guid || field.id)) {
                 <div
                   cdkDrag
                   [cdkDragData]="field"
-                  (click)="selectField(section.id, field.id); $event.stopPropagation()"
+                  (click)="selectField(section.guid || section.id, field.guid || field.id); $event.stopPropagation()"
                   class="canvas-field"
-                  [class.selected-field]="isFieldSelected(field.id)"
+                  [class.selected-field]="isFieldSelected(field.guid || field.id)"
                 >
                   <div class="field-drag-handle" cdkDragHandle title="Drag field to reorder">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -125,7 +125,7 @@
                     <button
                       type="button"
                       class="fs-btn fs-btn-ghost fs-btn-sm"
-                      (click)="removeField(field.id); $event.stopPropagation()"
+                      (click)="removeField(field.guid || field.id); $event.stopPropagation()"
                       title="Delete Field"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

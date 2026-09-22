@@ -3,12 +3,14 @@ import { FormDefinition } from '../models/form-definition';
 import { FormSection } from '../models/form-section';
 import { FormField } from '../models/form-field';
 import { FieldTypes } from '../models/field-types';
+import { FieldOption } from '../models/field-option';
+import { generateGuid, normalizeFormGuids } from '../utils/guid';
 
 @Service()
 export class FormBuilderState {
   readonly form = signal<FormDefinition | null>(null);
-  readonly selectedSectionId = signal<number | null>(null);
-  readonly selectedFieldId = signal<number | null>(null);
+  readonly selectedSectionId = signal<string | number | null>(null);
+  readonly selectedFieldId = signal<string | number | null>(null);
   readonly activeTab = signal<'field' | 'section' | 'form'>('form');
 
   private historyStack: FormDefinition[] = [];
@@ -21,23 +23,31 @@ export class FormBuilderState {
     const currentForm = this.form();
     const sectionId = this.selectedSectionId();
     if (!currentForm || sectionId === null) return null;
-    return currentForm.sections.find((s) => s.id === sectionId) ?? null;
+    return (
+      currentForm.sections.find(
+        (s) => s.guid === sectionId || s.id === sectionId || (s.id && String(s.id) === String(sectionId)),
+      ) ?? null
+    );
   });
 
   readonly selectedField = computed<FormField | null>(() => {
     const section = this.selectedSection();
     const fieldId = this.selectedFieldId();
     if (!section || fieldId === null) return null;
-    return section.fields.find((f) => f.id === fieldId) ?? null;
+    return (
+      section.fields.find(
+        (f) => f.guid === fieldId || f.id === fieldId || (f.id && String(f.id) === String(fieldId)),
+      ) ?? null
+    );
   });
 
-  selectSection(sectionId: number): void {
+  selectSection(sectionId: string | number): void {
     this.selectedSectionId.set(sectionId);
     this.selectedFieldId.set(null);
     this.activeTab.set('section');
   }
 
-  selectField(sectionId: number, fieldId: number): void {
+  selectField(sectionId: string | number, fieldId: string | number): void {
     this.selectedSectionId.set(sectionId);
     this.selectedFieldId.set(fieldId);
     this.activeTab.set('field');
@@ -55,9 +65,10 @@ export class FormBuilderState {
 
   setForm(formDefinition: FormDefinition): void {
     this.recordState();
-    this.form.set(structuredClone(formDefinition));
-    if (formDefinition.sections.length > 0) {
-      this.selectedSectionId.set(formDefinition.sections[0].id);
+    const normalized = normalizeFormGuids(formDefinition);
+    this.form.set(normalized);
+    if (normalized.sections.length > 0) {
+      this.selectedSectionId.set(normalized.sections[0].id);
     } else {
       this.selectedSectionId.set(null);
     }
@@ -103,9 +114,9 @@ export class FormBuilderState {
   // Section operations
   addSection(title: string = 'New Section', description: string = ''): FormSection {
     const current = this.form();
-    const maxId = current?.sections ? Math.max(...current.sections.map((s) => s.id), 0) : 0;
     const newSection: FormSection = {
-      id: maxId + 1,
+      id: 0,
+      guid: generateGuid(),
       title,
       description,
       visibility: true,
@@ -117,7 +128,7 @@ export class FormBuilderState {
       const sections = [...current.sections, newSection];
       this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
     }
-    this.selectSection(newSection.id);
+    this.selectSection(newSection.guid!);
     return newSection;
   }
 
@@ -126,18 +137,24 @@ export class FormBuilderState {
     const sectionId = this.selectedSectionId();
     if (!current || sectionId === null) return;
     this.recordState();
-    const sections = current.sections.map((s) => (s.id === sectionId ? { ...s, ...updates } : s));
+    const sections = current.sections.map((s) =>
+      s.guid === sectionId || s.id === sectionId || (s.id && String(s.id) === String(sectionId))
+        ? { ...s, ...updates }
+        : s,
+    );
     this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
   }
 
-  removeSection(sectionId: number): void {
+  removeSection(sectionId: string | number): void {
     const current = this.form();
     if (!current) return;
     this.recordState();
-    const sections = current.sections.filter((s) => s.id !== sectionId);
+    const sections = current.sections.filter(
+      (s) => s.guid !== sectionId && s.id !== sectionId && (!s.id || String(s.id) !== String(sectionId)),
+    );
     this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
-    if (this.selectedSectionId() === sectionId) {
-      const remainingId = sections.length > 0 ? sections[0].id : null;
+    if (this.selectedSectionId() === sectionId || String(this.selectedSectionId()) === String(sectionId)) {
+      const remainingId = sections.length > 0 ? sections[0].guid || sections[0].id : null;
       this.selectedSectionId.set(remainingId);
       this.selectedFieldId.set(null);
     }
@@ -160,36 +177,41 @@ export class FormBuilderState {
     let sectionId = this.selectedSectionId();
     let sections = currentForm.sections;
 
-    if (sectionId === null || !sections.some((s) => s.id === sectionId)) {
+    if (
+      sectionId === null ||
+      !sections.some(
+        (s) => s.guid === sectionId || s.id === sectionId || (s.id && String(s.id) === String(sectionId)),
+      )
+    ) {
       if (sections.length > 0) {
-        sectionId = sections[0].id;
+        sectionId = sections[0].guid || sections[0].id;
         this.selectedSectionId.set(sectionId);
       } else {
         const newSection = this.addSection('Section 1');
-        sectionId = newSection.id;
+        sectionId = newSection.guid!;
       }
     }
 
     return this.addFieldToSection(sectionId, type);
   }
 
-  addFieldToSection(sectionId: number, type: FieldTypes, atIndex?: number): boolean {
+  addFieldToSection(sectionId: string | number, type: FieldTypes, atIndex?: number): boolean {
     const currentForm = this.form();
     if (!currentForm) return false;
 
     this.recordState();
 
     let sections = currentForm.sections;
-    const targetSection = sections.find((s) => s.id === sectionId);
+    const targetSection = sections.find(
+      (s) => s.guid === sectionId || s.id === sectionId || (s.id && String(s.id) === String(sectionId)),
+    );
     if (!targetSection) return false;
 
-    const allFields = sections.flatMap((s) => s.fields);
-    const maxId = Math.max(...allFields.map((f) => f.id), 0);
-    const fieldId = maxId + 1;
-
+    const guid = generateGuid();
     const newField: FormField = {
-      id: fieldId,
-      name: `${type.toLowerCase()}_${fieldId}`,
+      id: 0,
+      guid,
+      name: `${type.toLowerCase()}_${guid.substring(0, 8)}`,
       type,
       label: this.getDefaultLabel(type),
       placeholder: this.getDefaultPlaceholder(type),
@@ -202,7 +224,11 @@ export class FormBuilderState {
     };
 
     sections = sections.map((section) => {
-      if (section.id === sectionId) {
+      if (
+        section.guid === sectionId ||
+        section.id === sectionId ||
+        (section.id && String(section.id) === String(sectionId))
+      ) {
         const fields = [...section.fields];
         const insertIndex = atIndex !== undefined ? atIndex : fields.length;
         fields.splice(insertIndex, 0, newField);
@@ -217,7 +243,7 @@ export class FormBuilderState {
       updatedAt: new Date().toISOString(),
     });
 
-    this.selectField(sectionId, fieldId);
+    this.selectField(sectionId, guid);
     return true;
   }
 
@@ -229,10 +255,18 @@ export class FormBuilderState {
 
     this.recordState();
     const sections = current.sections.map((s) => {
-      if (s.id === sectionId) {
+      if (
+        s.guid === sectionId ||
+        s.id === sectionId ||
+        (s.id && String(s.id) === String(sectionId))
+      ) {
         return {
           ...s,
-          fields: s.fields.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)),
+          fields: s.fields.map((f) =>
+            f.guid === fieldId || f.id === fieldId || (f.id && String(f.id) === String(fieldId))
+              ? { ...f, ...updates }
+              : f,
+          ),
         };
       }
       return s;
@@ -241,47 +275,69 @@ export class FormBuilderState {
     this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
   }
 
-  removeField(fieldId: number): void {
+  removeField(fieldId: string | number): void {
     const current = this.form();
     const sectionId = this.selectedSectionId();
     if (!current || sectionId === null) return;
     this.recordState();
     const sections = current.sections.map((s) => {
-      if (s.id === sectionId) {
-        return { ...s, fields: s.fields.filter((f) => f.id !== fieldId) };
+      if (
+        s.guid === sectionId ||
+        s.id === sectionId ||
+        (s.id && String(s.id) === String(sectionId))
+      ) {
+        return {
+          ...s,
+          fields: s.fields.filter(
+            (f) =>
+              f.guid !== fieldId &&
+              f.id !== fieldId &&
+              (!f.id || String(f.id) !== String(fieldId)),
+          ),
+        };
       }
       return s;
     });
 
     this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
-    if (this.selectedFieldId() === fieldId) {
+    if (this.selectedFieldId() === fieldId || String(this.selectedFieldId()) === String(fieldId)) {
       this.selectedFieldId.set(null);
       this.activeTab.set('section');
     }
   }
 
-  duplicateField(sectionId: number, fieldId: number): void {
+  duplicateField(sectionId: string | number, fieldId: string | number): void {
     const current = this.form();
     if (!current) return;
-    const section = current.sections.find((s) => s.id === sectionId);
-    const field = section?.fields.find((f) => f.id === fieldId);
+    const section = current.sections.find(
+      (s) => s.guid === sectionId || s.id === sectionId || (s.id && String(s.id) === String(sectionId)),
+    );
+    const field = section?.fields.find(
+      (f) => f.guid === fieldId || f.id === fieldId || (f.id && String(f.id) === String(fieldId)),
+    );
     if (!field) return;
 
-    const allFields = current.sections.flatMap((s) => s.fields);
-    const maxId = Math.max(...allFields.map((f) => f.id), 0);
-    const newFieldId = maxId + 1;
-
+    const newGuid = generateGuid();
     const clonedField: FormField = {
       ...structuredClone(field),
-      id: newFieldId,
+      id: 0,
+      guid: newGuid,
       name: `${field.name}_copy`,
       label: `${field.label} (Copy)`,
+      options: field.options?.map((opt) => ({ ...opt, id: 0, guid: generateGuid() })),
+      validations: field.validations ? structuredClone(field.validations) : [],
     };
 
     this.recordState();
     const sections = current.sections.map((s) => {
-      if (s.id === sectionId) {
-        const index = s.fields.findIndex((f) => f.id === fieldId);
+      if (
+        s.guid === sectionId ||
+        s.id === sectionId ||
+        (s.id && String(s.id) === String(sectionId))
+      ) {
+        const index = s.fields.findIndex(
+          (f) => f.guid === fieldId || f.id === fieldId || (f.id && String(f.id) === String(fieldId)),
+        );
         const fields = [...s.fields];
         fields.splice(index + 1, 0, clonedField);
         return { ...s, fields };
@@ -290,12 +346,12 @@ export class FormBuilderState {
     });
 
     this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
-    this.selectField(sectionId, newFieldId);
+    this.selectField(sectionId, newGuid);
   }
 
   moveField(
-    fromSectionId: number,
-    toSectionId: number,
+    fromSectionId: string | number,
+    toSectionId: string | number,
     previousIndex: number,
     currentIndex: number,
   ): void {
@@ -304,9 +360,14 @@ export class FormBuilderState {
 
     this.recordState();
 
+    const matchesFrom = (s: FormSection) =>
+      s.guid === fromSectionId || s.id === fromSectionId || (s.id && String(s.id) === String(fromSectionId));
+    const matchesTo = (s: FormSection) =>
+      s.guid === toSectionId || s.id === toSectionId || (s.id && String(s.id) === String(toSectionId));
+
     if (fromSectionId === toSectionId) {
       const sections = current.sections.map((section) => {
-        if (section.id === fromSectionId) {
+        if (matchesFrom(section)) {
           const fields = [...section.fields];
           const [movedField] = fields.splice(previousIndex, 1);
           if (movedField) {
@@ -322,7 +383,7 @@ export class FormBuilderState {
 
     let movedField: FormField | null = null;
     const sectionsAfterRemoval = current.sections.map((section) => {
-      if (section.id === fromSectionId) {
+      if (matchesFrom(section)) {
         const fields = [...section.fields];
         [movedField] = fields.splice(previousIndex, 1);
         return { ...section, fields };
@@ -333,7 +394,7 @@ export class FormBuilderState {
     if (!movedField) return;
 
     const finalSections = sectionsAfterRemoval.map((section) => {
-      if (section.id === toSectionId) {
+      if (matchesTo(section)) {
         const fields = [...section.fields];
         fields.splice(currentIndex, 0, movedField!);
         return { ...section, fields };
@@ -409,12 +470,12 @@ export class FormBuilderState {
     }
   }
 
-  private getDefaultOptions(type: FieldTypes) {
+  private getDefaultOptions(type: FieldTypes): FieldOption[] | undefined {
     if (type === 'Dropdown' || type === 'RadioButton' || type === 'Checkbox') {
       return [
-        { id: 1, label: 'Option 1', value: 'option_1' },
-        { id: 2, label: 'Option 2', value: 'option_2' },
-        { id: 3, label: 'Option 3', value: 'option_3' },
+        { id: 0, guid: generateGuid(), label: 'Option 1', value: 'option_1' },
+        { id: 0, guid: generateGuid(), label: 'Option 2', value: 'option_2' },
+        { id: 0, guid: generateGuid(), label: 'Option 3', value: 'option_3' },
       ];
     }
     return undefined;

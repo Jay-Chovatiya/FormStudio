@@ -4,6 +4,7 @@ import { FieldValidation } from './field-validation';
 
 export interface FormField {
   id: number;
+  guid?: string;
   name: string;
   type: FieldTypes;
   label: string;

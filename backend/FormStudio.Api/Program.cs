@@ -64,6 +64,8 @@ using (IServiceScope scope = app.Services.CreateScope())
 }
 
 // 9. Configure HTTP Request Pipeline & Global Middleware
+app.UseCors("AllowAngularApp");
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -73,8 +75,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors("AllowAngularApp");
 
 app.UseAuthorization();
 

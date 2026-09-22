@@ -16,6 +16,11 @@ namespace FormStudio.Infrastructure.Repositories
             _dbSet = _context.Set<T>();
         }
 
+        public IQueryable<T> Query()
+        {
+            return _dbSet.AsQueryable();
+        }
+
         public async Task<T?> GetByIdAsync(int id)
         {
             return await _dbSet.FindAsync(id);
