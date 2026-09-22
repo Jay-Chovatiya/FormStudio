@@ -75,6 +75,7 @@
             @for (option of fieldForm.controls.options.controls; track option; let i = $index) {
               <div [formGroupName]="i" class="option-item-row">
                 <div class="option-input-wrap">
+                  <!-- (blur)="applyFieldChanges()" -->
                   <input class="fs-input" formControlName="label" placeholder="Option Label" />
                   @if (option.controls['label'].hasError('requiredTrimmed') && option.controls['label'].touched) {
                     <span class="fs-error-message">Label required</span>
@@ -125,7 +126,7 @@
             <select class="fs-select" formControlName="default">
               <option value="">No default value</option>
               @for (option of fieldForm.controls.options.controls; track option) {
-                <option [value]="option.value.value">{{ option.value.label }}</option>
+                <option [value]="option.get('value')?.value">{{ option.get('label')?.value }}</option>
               }
             </select>
           } @else if (field.type === 'Checkbox') {
@@ -296,8 +297,45 @@
         </div>
 
         <div class="form-field-item">
-          <label class="fs-label" for="sec-theme">Theme / Variant</label>
-          <input id="sec-theme" class="fs-input" formControlName="theme" placeholder="e.g. default, highlighted" />
+          <label class="fs-label" for="sec-theme">Theme / Background Color</label>
+          <div class="color-picker-control">
+            <input
+              type="color"
+              class="color-swatch-input"
+              [value]="sectionForm.controls.theme.value || '#ffffff'"
+              (input)="onSectionColorPickerChange($event)"
+              title="Choose color"
+            />
+            <input
+              id="sec-theme"
+              class="fs-input color-text-input"
+              formControlName="theme"
+              placeholder="#ffffff or color name"
+              (input)="applySectionChanges()"
+            />
+            @if (sectionForm.controls.theme.value) {
+              <button
+                type="button"
+                class="fs-btn fs-btn-ghost fs-btn-sm clear-color-btn"
+                (click)="setSectionTheme('')"
+                title="Reset to default color"
+              >
+                ✕
+              </button>
+            }
+          </div>
+          <div class="color-swatches-row">
+            @for (color of presetColors; track color) {
+              <button
+                type="button"
+                class="color-preset-chip"
+                [style.backgroundColor]="color"
+                [class.active]="sectionForm.controls.theme.value === color"
+                (click)="setSectionTheme(color)"
+                [title]="color"
+              ></button>
+            }
+          </div>
         </div>
 
         <div class="form-field-item">
@@ -382,7 +420,14 @@
 
         <div class="form-field-item">
           <label class="fs-label" for="frm-startdate">Start Date</label>
-          <input id="frm-startdate" class="fs-input" type="datetime-local" formControlName="startDate" />
+          <input
+            id="frm-startdate"
+            class="fs-input"
+            type="datetime-local"
+            formControlName="startDate"
+            (change)="applyFormChanges()"
+            (blur)="applyFormChanges()"
+          />
           @if (formForm.controls.startDate.hasError('pastDate') && formForm.controls.startDate.touched) {
             <span class="fs-error-message">Start date must be in the future.</span>
           }
@@ -390,7 +435,14 @@
 
         <div class="form-field-item">
           <label class="fs-label" for="frm-enddate">End Date</label>
-          <input id="frm-enddate" class="fs-input" type="datetime-local" formControlName="endDate" />
+          <input
+            id="frm-enddate"
+            class="fs-input"
+            type="datetime-local"
+            formControlName="endDate"
+            (change)="applyFormChanges()"
+            (blur)="applyFormChanges()"
+          />
           @if (formForm.controls.endDate.hasError('pastDate') && formForm.controls.endDate.touched) {
             <span class="fs-error-message">End date must be in the future.</span>
           } @else if (formForm.hasError('invalidDateRange') && formForm.controls.endDate.touched) {
@@ -469,8 +521,45 @@
         </div>
 
         <div class="form-field-item">
-          <label class="fs-label" for="frm-theme">Theme Keyword</label>
-          <input id="frm-theme" class="fs-input" formControlName="theme" placeholder="e.g. default, dark" />
+          <label class="fs-label" for="frm-theme">Theme / Background Color</label>
+          <div class="color-picker-control">
+            <input
+              type="color"
+              class="color-swatch-input"
+              [value]="formForm.controls.theme.value || '#ffffff'"
+              (input)="onFormColorPickerChange($event)"
+              title="Choose color"
+            />
+            <input
+              id="frm-theme"
+              class="fs-input color-text-input"
+              formControlName="theme"
+              placeholder="#ffffff or color name"
+              (input)="applyFormChanges()"
+            />
+            @if (formForm.controls.theme.value) {
+              <button
+                type="button"
+                class="fs-btn fs-btn-ghost fs-btn-sm clear-color-btn"
+                (click)="setFormTheme('')"
+                title="Reset to default color"
+              >
+                ✕
+              </button>
+            }
+          </div>
+          <div class="color-swatches-row">
+            @for (color of presetColors; track color) {
+              <button
+                type="button"
+                class="color-preset-chip"
+                [style.backgroundColor]="color"
+                [class.active]="formForm.controls.theme.value === color"
+                (click)="setFormTheme(color)"
+                [title]="color"
+              ></button>
+            }
+          </div>
         </div>
       </div>
     </form>

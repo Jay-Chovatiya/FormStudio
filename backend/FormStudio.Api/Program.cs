@@ -55,6 +55,7 @@ using (IServiceScope scope = app.Services.CreateScope())
         FormStudioDbContext context = services.GetRequiredService<FormStudioDbContext>();
         await context.Database.MigrateAsync();
         await DbInitializer.InitializeAsync(context);
+        await DbInitializer.CleanupCorruptedDefaultValuesAsync(context);
     }
     catch (Exception ex)
     {
@@ -74,7 +75,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthorization();
 

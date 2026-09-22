@@ -5,7 +5,7 @@ export const futureDateValidator: ValidatorFn = (
 ): ValidationErrors | null => {
   const value = control.value;
 
-  if (!value) {
+  if (!value || control.pristine) {
     return null;
   }
 

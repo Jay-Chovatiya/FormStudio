@@ -37,9 +37,10 @@ export class DynamicFormComponent {
   }
 
   createForm(formDefinition: FormDefinition) {
-    console.log('FORM : ', formDefinition);
     formDefinition.sections.forEach((section) => {
+      if (!section.visibility) return;
       section.fields.forEach((field) => {
+        if (!field.visibility) return;
         this.form.addControl(
           field.name,
           new FormControl(field.default ?? '', this.createValidators(field.validations ?? [])),

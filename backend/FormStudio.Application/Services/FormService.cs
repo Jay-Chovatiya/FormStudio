@@ -40,6 +40,32 @@ namespace FormStudio.Application.Services
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
 
+            if (entity.Sections != null)
+            {
+                int sIdx = 0;
+                foreach (FormSectionEntity sec in entity.Sections)
+                {
+                    sec.DisplayOrder = sIdx++;
+                    if (sec.Fields != null)
+                    {
+                        int fIdx = 0;
+                        foreach (FormFieldEntity f in sec.Fields)
+                        {
+                            f.DisplayOrder = fIdx++;
+                            f.DefaultValue = MappingProfile.CleanQuotes(f.DefaultValue);
+                            if (f.Options != null)
+                            {
+                                int oIdx = 0;
+                                foreach (FieldOptionEntity opt in f.Options)
+                                {
+                                    opt.DisplayOrder = oIdx++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             await _unitOfWork.Repository<FormDefinitionEntity>().AddAsync(entity);
             await _unitOfWork.CompleteAsync();
 
@@ -192,8 +218,8 @@ namespace FormStudio.Application.Services
                     Description = form.Description ?? string.Empty,
                     Category = form.Category,
                     Status = form.Status,
-                    StartDate = form.StartDate.HasValue ? form.StartDate.Value.ToString("yyyy-MM-dd") : null,
-                    EndDate = form.EndDate.HasValue ? form.EndDate.Value.ToString("yyyy-MM-dd") : null,
+                    StartDate = form.StartDate.HasValue ? form.StartDate.Value.ToString("yyyy-MM-ddTHH:mm") : null,
+                    EndDate = form.EndDate.HasValue ? form.EndDate.Value.ToString("yyyy-MM-ddTHH:mm") : null,
                     AllowMultipleSubmissions = form.AllowMultipleSubmissions,
                     AllowSaveAsDraft = form.AllowSaveAsDraft,
                     ConfirmationMessage = form.ConfirmationMessage,
@@ -212,6 +238,7 @@ namespace FormStudio.Application.Services
                         Description = section.Description,
                         Theme = section.Theme,
                         Visibility = section.Visibility,
+                        DisplayOrder = section.DisplayOrder,
                         Fields = section.Fields.OrderBy(field => field.DisplayOrder).Select(field => new FormFieldDto
                         {
                             Id = field.Id,
@@ -221,13 +248,15 @@ namespace FormStudio.Application.Services
                             HelperDescription = field.HelperDescription,
                             Visibility = field.Visibility,
                             Placeholder = field.Placeholder,
-                            Default = field.DefaultValue,
+                            Default = MappingProfile.ParseDefaultValue(field.DefaultValue),
                             Icon = field.Icon,
+                            DisplayOrder = field.DisplayOrder,
                             Options = field.Options.OrderBy(option => option.DisplayOrder).Select(option => new FieldOptionDto
                             {
                                 Id = option.Id,
                                 Label = option.Label,
-                                Value = option.Value
+                                Value = option.Value,
+                                DisplayOrder = option.DisplayOrder
                             }).ToList(),
                             Validations = field.Validations.Select(validation => new FieldValidationDto
                             {
@@ -252,8 +281,8 @@ namespace FormStudio.Application.Services
                     Description = form.Description ?? string.Empty,
                     Category = form.Category,
                     Status = form.Status,
-                    StartDate = form.StartDate.HasValue ? form.StartDate.Value.ToString("yyyy-MM-dd") : null,
-                    EndDate = form.EndDate.HasValue ? form.EndDate.Value.ToString("yyyy-MM-dd") : null,
+                    StartDate = form.StartDate.HasValue ? form.StartDate.Value.ToString("yyyy-MM-ddTHH:mm") : null,
+                    EndDate = form.EndDate.HasValue ? form.EndDate.Value.ToString("yyyy-MM-ddTHH:mm") : null,
                     AllowMultipleSubmissions = form.AllowMultipleSubmissions,
                     AllowSaveAsDraft = form.AllowSaveAsDraft,
                     ConfirmationMessage = form.ConfirmationMessage,
@@ -272,6 +301,7 @@ namespace FormStudio.Application.Services
                         Description = section.Description,
                         Theme = section.Theme,
                         Visibility = section.Visibility,
+                        DisplayOrder = section.DisplayOrder,
                         Fields = section.Fields.OrderBy(field => field.DisplayOrder).Select(field => new FormFieldDto
                         {
                             Id = field.Id,
@@ -281,13 +311,15 @@ namespace FormStudio.Application.Services
                             HelperDescription = field.HelperDescription,
                             Visibility = field.Visibility,
                             Placeholder = field.Placeholder,
-                            Default = field.DefaultValue,
+                            Default = MappingProfile.ParseDefaultValue(field.DefaultValue),
                             Icon = field.Icon,
+                            DisplayOrder = field.DisplayOrder,
                             Options = field.Options.OrderBy(option => option.DisplayOrder).Select(option => new FieldOptionDto
                             {
                                 Id = option.Id,
                                 Label = option.Label,
-                                Value = option.Value
+                                Value = option.Value,
+                                DisplayOrder = option.DisplayOrder
                             }).ToList(),
                             Validations = field.Validations.Select(validation => new FieldValidationDto
                             {
@@ -384,7 +416,7 @@ namespace FormStudio.Application.Services
                     existingField.HelperDescription = updatedField.HelperDescription;
                     existingField.Visibility = updatedField.Visibility;
                     existingField.Placeholder = updatedField.Placeholder;
-                    existingField.DefaultValue = updatedField.DefaultValue;
+                    existingField.DefaultValue = MappingProfile.CleanQuotes(updatedField.DefaultValue);
                     existingField.Icon = updatedField.Icon;
                     existingField.DisplayOrder = updatedField.DisplayOrder;
 
@@ -393,6 +425,7 @@ namespace FormStudio.Application.Services
                 }
                 else
                 {
+                    updatedField.DefaultValue = MappingProfile.CleanQuotes(updatedField.DefaultValue);
                     existingSec.Fields.Add(updatedField);
                 }
             }

@@ -12,7 +12,7 @@
 
   <main class="preview-content">
     @if (form(); as currentForm) {
-      <div class="form-preview-card">
+      <div class="form-preview-card" [style.backgroundColor]="currentForm.theme || null">
         @if (currentForm.logoUrl) {
           <div class="preview-logo-wrapper">
             <img [src]="currentForm.logoUrl" alt="Form Logo" class="preview-logo" />

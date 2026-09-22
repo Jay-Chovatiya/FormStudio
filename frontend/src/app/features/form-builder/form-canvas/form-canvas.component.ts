@@ -83,10 +83,7 @@ export class FormCanvasComponent implements OnInit {
     }
 
     // Check if dragged from field palette
-    if (
-      event.previousContainer.id === 'palette-drop-list' ||
-      (event.item.data?.type && !event.item.data?.id)
-    ) {
+    if (event.previousContainer.id === 'palette-drop-list') {
       const fieldType = event.item.data.type;
       const targetSectionId = event.container.data;
       this.formBuilderState.addFieldToSection(targetSectionId, fieldType, event.currentIndex);

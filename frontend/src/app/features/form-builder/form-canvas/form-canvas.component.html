@@ -1,6 +1,6 @@
 @if (form(); as currentForm) {
   <div cdkDropListGroup class="canvas-workspace">
-    <div class="form-paper">
+    <div class="form-paper" [style.backgroundColor]="currentForm.theme || null">
       <!-- Form Header Info Card -->
       <div
         class="form-header-card"
@@ -43,6 +43,8 @@
             (click)="selectSection(section.guid || section.id)"
             class="canvas-section"
             [class.selected]="isSectionSelected(section.guid || section.id)"
+            [class.section-hidden]="!section.visibility"
+            [style.backgroundColor]="section.theme || null"
           >
             <div class="section-header">
               <div class="section-drag-handle" cdkDragHandle title="Drag section to reorder">
@@ -54,7 +56,12 @@
               </div>
 
               <div class="section-title-group">
-                <h2 class="section-title">{{ section.title }}</h2>
+                <div class="section-title-row">
+                  <h2 class="section-title">{{ section.title }}</h2>
+                  @if (!section.visibility) {
+                    <span class="fs-badge fs-badge-secondary" title="This section is hidden on form">Hidden</span>
+                  }
+                </div>
                 @if (section.description) {
                   <p class="section-desc">{{ section.description }}</p>
                 }
@@ -99,6 +106,7 @@
                   (click)="selectField(section.guid || section.id, field.guid || field.id); $event.stopPropagation()"
                   class="canvas-field"
                   [class.selected-field]="isFieldSelected(field.guid || field.id)"
+                  [class.field-hidden]="!field.visibility"
                 >
                   <div class="field-drag-handle" cdkDragHandle title="Drag field to reorder">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -113,6 +121,9 @@
                       <span class="field-label-text">{{ field.label }}</span>
                       @if (isFieldRequired(field)) {
                         <span class="required-asterisk">*</span>
+                      }
+                      @if (!field.visibility) {
+                        <span class="fs-badge fs-badge-secondary" style="font-size: 10px; padding: 1px 5px;" title="This field is hidden on form">Hidden</span>
                       }
                     </div>
                     <div class="field-sub-meta">

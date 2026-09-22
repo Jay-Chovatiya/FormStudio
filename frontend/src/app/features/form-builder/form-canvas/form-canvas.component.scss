@@ -71,6 +71,11 @@
     box-shadow: var(--fs-shadow-md);
   }
 
+  &.section-hidden {
+    opacity: 0.65;
+    border-style: dashed;
+  }
+
   .section-header {
     display: flex;
     align-items: center;
@@ -94,6 +99,12 @@
 
     .section-title-group {
       flex: 1;
+
+      .section-title-row {
+        display: flex;
+        align-items: center;
+        gap: var(--fs-space-xs);
+      }
 
       .section-title {
         font-size: var(--fs-font-size-base);
@@ -147,6 +158,11 @@
   &.selected-field {
     border: 2px solid var(--fs-primary);
     background-color: var(--fs-primary-light);
+  }
+
+  &.field-hidden {
+    opacity: 0.6;
+    border-style: dashed;
   }
 
   .field-drag-handle {

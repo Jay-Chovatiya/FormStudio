@@ -2,26 +2,28 @@
   @if (submitted()){
     <h2>{{currentForm.confirmationMessage || 'Form submitted successfully.'}}</h2>
   } @else {
-    <form [formGroup]="form" (ngSubmit)="submit()" class="dynamic-form-body">
-      @for (section of currentForm.sections; track section.id) {
-        <section class="df-section">
-          <h2 class="df-section-title">{{ section.title }}</h2>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="dynamic-form-body" [style.backgroundColor]="currentForm.theme || null">
+      @for (section of currentForm.sections; track (section.guid || section.id)) {
+        @if (section.visibility) {
+          <section class="df-section" [style.backgroundColor]="section.theme || null">
+            <h2 class="df-section-title">{{ section.title }}</h2>
 
-          @if (section.description) {
-            <p class="df-section-desc">{{ section.description }}</p>
-          }
+            @if (section.description) {
+              <p class="df-section-desc">{{ section.description }}</p>
+            }
 
-          <div class="df-fields-grid">
-            @for (field of section.fields; track field.id) {
-              <div class="df-field-group">
-                @if (field.type !== 'Checkbox') {
-                  <label [for]="field.name" class="df-field-label">
-                    {{ field.label }}
-                    @if (isFieldRequired(field)) {
-                      <span class="required-star">*</span>
+            <div class="df-fields-grid">
+              @for (field of section.fields; track (field.guid || field.id)) {
+                @if (field.visibility) {
+                  <div class="df-field-group">
+                    @if (field.type !== 'Checkbox') {
+                      <label [for]="field.name" class="df-field-label">
+                        {{ field.label }}
+                        @if (isFieldRequired(field)) {
+                          <span class="required-star">*</span>
+                        }
+                      </label>
                     }
-                  </label>
-                }
 
                 @if (field.type === 'Dropdown') {
                   <select [id]="field.name" class="fs-select" [formControlName]="field.name">
@@ -113,9 +115,11 @@
                 }
               </div>
             }
-          </div>
-        </section>
-      }
+          }
+        </div>
+      </section>
+    }
+  }
 
       <div class="df-form-actions">
         <button type="submit" class="fs-btn fs-btn-primary">

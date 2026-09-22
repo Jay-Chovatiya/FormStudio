@@ -7,5 +7,6 @@ export interface FormSection {
   description?: string;
   theme?: string;
   visibility: boolean;
+  displayOrder?: number;
   fields: FormField[];
 }

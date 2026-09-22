@@ -13,6 +13,7 @@ namespace FormStudio.Application.DTOs
         public string? Placeholder { get; set; }
         public object? Default { get; set; }
         public string? Icon { get; set; }
+        public int DisplayOrder { get; set; }
 
         [JsonPropertyName("validations")]
         public List<FieldValidationDto>? Validations { get; set; }

@@ -7,6 +7,7 @@ namespace FormStudio.Application.DTOs
         public string? Description { get; set; }
         public string? Theme { get; set; }
         public bool Visibility { get; set; } = true;
+        public int DisplayOrder { get; set; }
         public List<FormFieldDto> Fields { get; set; } = new List<FormFieldDto>();
     }
 }

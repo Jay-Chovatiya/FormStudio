@@ -267,5 +267,29 @@ namespace FormStudio.Infrastructure.Data
                 await context.SaveChangesAsync();
             }
         }
+
+        public static async Task CleanupCorruptedDefaultValuesAsync(FormStudioDbContext context)
+        {
+            List<FormFieldEntity> fields = await context.Fields.ToListAsync();
+            bool modified = false;
+
+            foreach (FormFieldEntity field in fields)
+            {
+                if (field.DefaultValue != null)
+                {
+                    string? cleaned = Application.Mappings.MappingProfile.CleanQuotes(field.DefaultValue);
+                    if (cleaned != field.DefaultValue)
+                    {
+                        field.DefaultValue = cleaned;
+                        modified = true;
+                    }
+                }
+            }
+
+            if (modified)
+            {
+                await context.SaveChangesAsync();
+            }
+        }
     }
 }

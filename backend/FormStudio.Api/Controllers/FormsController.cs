@@ -9,12 +9,10 @@ namespace FormStudio.Api.Controllers
     public class FormsController : ControllerBase
     {
         private readonly IFormService _formService;
-        private readonly ILogger<FormsController> _logger;
 
-        public FormsController(IFormService formService, ILogger<FormsController> logger)
+        public FormsController(IFormService formService)
         {
             _formService = formService ?? throw new ArgumentNullException(nameof(formService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [HttpGet]
@@ -43,21 +41,17 @@ namespace FormStudio.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<FormDefinitionDto>> CreateForm([FromBody] FormDefinitionDto dto)
         {
-            _logger.LogInformation("RECEIVED POST /api/forms PAYLOAD: {Payload}", System.Text.Json.JsonSerializer.Serialize(dto));
             if (!ModelState.IsValid) return BadRequest(ModelState);
             FormDefinitionDto createdForm = await _formService.CreateFormAsync(dto);
-            _logger.LogInformation("CREATED FORM RESULT: {Result}", System.Text.Json.JsonSerializer.Serialize(createdForm));
             return CreatedAtAction(nameof(GetFormById), new { id = createdForm.Id }, createdForm);
         }
 
         [HttpPut("{id:int}")]
         public async Task<ActionResult<FormDefinitionDto>> UpdateForm(int id, [FromBody] FormDefinitionDto dto)
         {
-            _logger.LogInformation("RECEIVED PUT /api/forms/{Id} PAYLOAD: {Payload}", id, System.Text.Json.JsonSerializer.Serialize(dto));
             if (!ModelState.IsValid) return BadRequest(ModelState);
             FormDefinitionDto? updatedForm = await _formService.UpdateFormAsync(id, dto);
             if (updatedForm == null) return NotFound(new { message = $"Form with ID {id} was not found." });
-            _logger.LogInformation("UPDATED FORM RESULT: {Result}", System.Text.Json.JsonSerializer.Serialize(updatedForm));
             return Ok(updatedForm);
         }
 

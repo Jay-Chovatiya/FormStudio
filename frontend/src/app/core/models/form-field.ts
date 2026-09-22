@@ -13,6 +13,7 @@ export interface FormField {
   placeholder?: string;
   default?: string | number | boolean;
   icon?: string;
+  displayOrder?: number;
   validations?: FieldValidation[];
   options?: FieldOption[];
 }

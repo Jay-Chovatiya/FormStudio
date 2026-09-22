@@ -78,7 +78,7 @@ export class FormBuilderState {
 
   createNewForm(name: string = 'Untitled Form', description: string = ''): void {
     const newForm: FormDefinition = {
-      id: Date.now(),
+      id: 0,
       name,
       description: description || 'Visual form created with Form Studio',
       code: 'form_' + Math.random().toString(36).substring(2, 8),

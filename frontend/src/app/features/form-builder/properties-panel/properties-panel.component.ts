@@ -6,7 +6,7 @@ import { FieldTypes } from '../../../core/models/field-types';
 import { FieldValidation } from '../../../core/models/field-validation';
 import { PropertyError, PropertyName } from './property-error';
 import { FormStatus } from '../../../core/models/form-status';
-import { generateGuid } from '../../../core/utils/guid';
+import { generateGuid, cleanValueQuotes } from '../../../core/utils/guid';
 import { UpperCasePipe, TitleCasePipe } from '@angular/common';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { requiredTrimmedValidator } from '../../../shared/validators/required-trimmed.validator';
@@ -111,6 +111,31 @@ export class PropertiesPanelComponent {
 
   readonly currentValidations = signal<FieldValidation[]>([]);
 
+  formatForDateTimeLocal(val: string | null | undefined): string {
+    if (!val) return '';
+    const str = String(val).trim();
+    if (str.length === 0) return '';
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(str)) {
+      return str;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      return `${str}T00:00`;
+    }
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  constructor() {
+    this.formForm.valueChanges.subscribe(() => {
+      if (this.formForm.valid && this.formForm.dirty) {
+        const value = this.formForm.getRawValue();
+        this.formBuilderState.updateFormMetadata(value);
+      }
+    });
+  }
+
   formEffectRef = effect(() => {
     const activeTab = this.activeTab();
     if (activeTab !== 'form') {
@@ -131,8 +156,8 @@ export class PropertiesPanelComponent {
           code: currentForm.code,
           category: currentForm.category,
           status: currentForm.status,
-          startDate: currentForm.startDate,
-          endDate: currentForm.endDate,
+          startDate: this.formatForDateTimeLocal(currentForm.startDate),
+          endDate: this.formatForDateTimeLocal(currentForm.endDate),
           allowMultipleSubmissions: currentForm.allowMultipleSubmissions,
           allowSaveAsDraft: currentForm.allowSaveAsDraft,
           confirmationMessage: currentForm.confirmationMessage,
@@ -241,6 +266,14 @@ export class PropertiesPanelComponent {
         return;
       }
 
+      const options = this.fieldForm.controls.options;
+      options.clear({ emitEvent: false });
+      for (const option of currentField.options ?? []) {
+        options.push(this.createOptionForm(option), { emitEvent: false });
+      }
+
+      const cleanDefault = cleanValueQuotes(currentField.default);
+
       this.fieldForm.patchValue(
         {
           label: currentField.label,
@@ -248,20 +281,49 @@ export class PropertiesPanelComponent {
           helperDescription: currentField.helperDescription,
           placeholder: currentField.placeholder,
           visibility: currentField.visibility,
-          default: currentField.default,
+          default: cleanDefault ?? '',
         },
         { emitEvent: false },
       );
 
-      const options = this.fieldForm.controls.options;
-      options.clear({ emitEvent: false });
-      for (const option of currentField.options ?? []) {
-        options.push(this.createOptionForm(option), { emitEvent: false });
-      }
-
       this.currentValidations.set(currentField.validations ? [...currentField.validations] : []);
     });
   });
+
+  presetColors: string[] = [
+    '#ffffff',
+    '#f8fafc',
+    '#f1f5f9',
+    '#fef2f2',
+    '#fffbeb',
+    '#f0fdf4',
+    '#eff6ff',
+    '#faf5ff',
+  ];
+
+  onFormColorPickerChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input) {
+      this.setFormTheme(input.value);
+    }
+  }
+
+  setFormTheme(color: string): void {
+    this.formForm.patchValue({ theme: color });
+    this.applyFormChanges();
+  }
+
+  onSectionColorPickerChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input) {
+      this.setSectionTheme(input.value);
+    }
+  }
+
+  setSectionTheme(color: string): void {
+    this.sectionForm.patchValue({ theme: color });
+    this.applySectionChanges();
+  }
 
   applyFormChanges(): void {
     this.formForm.markAllAsTouched();
@@ -291,8 +353,8 @@ export class PropertiesPanelComponent {
     if (!field) return;
 
     const currentValue = this.fieldForm.getRawValue();
-    let defaultValue = currentValue.default;
-    if (field.type === 'Number' && defaultValue !== '') {
+    let defaultValue = cleanValueQuotes(currentValue.default);
+    if (field.type === 'Number' && defaultValue !== null && defaultValue !== '') {
       defaultValue = Number(defaultValue);
     }
 
@@ -309,6 +371,29 @@ export class PropertiesPanelComponent {
   }
 
   createOptionForm(option: FieldOption): FormGroup {
+    let previousValue = option.value;
+
+    const valueControl = new FormControl(option.value, {
+      nonNullable: true,
+      validators: [requiredTrimmedValidator],
+    });
+
+    valueControl.valueChanges.subscribe((newValue: string) => {
+      const currentDefault = this.fieldForm.controls.default.value;
+      if (
+        currentDefault !== null &&
+        currentDefault !== undefined &&
+        currentDefault !== '' &&
+        String(currentDefault) === String(previousValue)
+      ) {
+        this.fieldForm.controls.default.setValue(newValue, { emitEvent: false });
+        setTimeout(() => {
+          this.fieldForm.controls.default.setValue(newValue);
+        }, 0);
+      }
+      previousValue = newValue;
+    });
+
     return new FormGroup({
       id: new FormControl(option.id, {
         nonNullable: true,
@@ -323,10 +408,7 @@ export class PropertiesPanelComponent {
         nonNullable: true,
         validators: [requiredTrimmedValidator],
       }),
-      value: new FormControl(option.value, {
-        nonNullable: true,
-        validators: [requiredTrimmedValidator],
-      }),
+      value: valueControl,
     });
   }
 
@@ -415,6 +497,7 @@ export class PropertiesPanelComponent {
     if (currentDefault === deletedValue) {
       this.fieldForm.controls.default.setValue('');
     }
+    this.applyFieldChanges();
   }
 
   isValidationEnabled(type: 'required' | 'email'): boolean {
