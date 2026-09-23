@@ -48,6 +48,16 @@
     font-size: var(--fs-font-size-sm);
     color: var(--fs-text-main);
     margin-bottom: var(--fs-space-2xs);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--fs-space-2xs);
+
+    .df-field-icon {
+      font-size: 1rem;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+    }
 
     .required-star {
       color: var(--fs-danger);

@@ -1,4 +1,4 @@
-import { generateGuid, normalizeFormGuids, stripGuidsFromForm, cleanValueQuotes } from './guid';
+import { generateGuid, normalizeFormGuids, stripGuidsFromForm } from './guid';
 import { FormDefinition } from '../models/form-definition';
 import { FormBuilderState } from '../services/form-builder-state';
 import { TestBed } from '@angular/core/testing';
@@ -254,7 +254,7 @@ describe('GUID Utilities and Form Element Tracking', () => {
               type: 'RadioButton',
               label: 'Radio Field',
               visibility: true,
-              default: '"very_smooth"',
+              default: 'very_smooth',
             },
             {
               id: 2,
@@ -262,7 +262,7 @@ describe('GUID Utilities and Form Element Tracking', () => {
               type: 'Date',
               label: 'Date Field',
               visibility: true,
-              default: '""',
+              default: '',
             },
           ],
         },
@@ -276,34 +276,6 @@ describe('GUID Utilities and Form Element Tracking', () => {
     const stripped = stripGuidsFromForm(normalized);
     expect(stripped.sections[0].fields[0].default).toBe('very_smooth');
     expect(stripped.sections[0].fields[1].default).toBeNull();
-  });
-
-  it('should thoroughly clean nested unicode escapes, escaped quotes, and empty values via cleanValueQuotes', () => {
-    // Nested quote and unicode patterns like "\u0022\\u0022M\\u0022\u0022"
-    expect(cleanValueQuotes('\\u0022M\\u0022')).toBe('M');
-    expect(cleanValueQuotes('\\\\u0022M\\\\u0022')).toBe('M');
-    expect(cleanValueQuotes('\"\\u0022\\\\u0022M\\\\u0022\\u0022\"')).toBe('M');
-    expect(cleanValueQuotes('""2026-09-22T12:01""')).toBe('2026-09-22T12:01');
-    expect(cleanValueQuotes('\\u00222026-09-22T12:01\\u0022')).toBe('2026-09-22T12:01');
-    expect(cleanValueQuotes('\\"M\\"')).toBe('M');
-    expect(cleanValueQuotes('"M"')).toBe('M');
-    expect(cleanValueQuotes("'M'")).toBe('M');
-
-    // Empty and quote-only inputs should normalize to null
-    expect(cleanValueQuotes('')).toBeNull();
-    expect(cleanValueQuotes('   ')).toBeNull();
-    expect(cleanValueQuotes('""')).toBeNull();
-    expect(cleanValueQuotes("''")).toBeNull();
-    expect(cleanValueQuotes('\\u0022\\u0022')).toBeNull();
-    expect(cleanValueQuotes('\\\\u0022\\\\u0022')).toBeNull();
-    expect(cleanValueQuotes('\\"\\"')).toBeNull();
-    expect(cleanValueQuotes(null)).toBeNull();
-    expect(cleanValueQuotes(undefined)).toBeNull();
-
-    // Primitive values preserved
-    expect(cleanValueQuotes(42)).toBe(42);
-    expect(cleanValueQuotes(true)).toBe(true);
-    expect(cleanValueQuotes(false)).toBe(false);
   });
 
   it('should move fields within and between sections in FormBuilderState without duplicating', () => {
@@ -361,5 +333,33 @@ describe('GUID Utilities and Form Element Tracking', () => {
 
     // Default value should be updated to 'Male_Value'
     expect(panel.fieldForm.controls.default.value).toBe('Male_Value');
+  });
+
+  it('should assign default icon when adding a field and allow updating icon in PropertiesPanel', () => {
+    TestBed.configureTestingModule({
+      providers: [FormBuilderState],
+    });
+
+    const state = TestBed.inject(FormBuilderState);
+    state.createNewForm('Icon Test');
+    const form = state.form()!;
+    const secGuid = form.sections[0].guid!;
+
+    // Adding an Email field should give default icon '📧'
+    state.addFieldToSection(secGuid, 'Email');
+    const currentForm = state.form()!;
+    const emailField = currentForm.sections[0].fields[0];
+    expect(emailField.icon).toBe('📧');
+
+    // Select the field in state
+    state.selectField(secGuid, emailField.guid!);
+
+    const fixture = TestBed.createComponent(PropertiesPanelComponent);
+    fixture.detectChanges();
+
+    const panel = fixture.componentInstance;
+    panel.setFieldIcon('👤');
+    const updatedForm = state.form()!;
+    expect(updatedForm.sections[0].fields[0].icon).toBe('👤');
   });
 });

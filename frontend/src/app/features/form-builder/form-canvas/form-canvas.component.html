@@ -118,6 +118,9 @@
 
                   <div class="field-details">
                     <div class="field-meta">
+                      @if (field.icon) {
+                        <span class="field-icon-badge">{{ field.icon }}</span>
+                      }
                       <span class="field-label-text">{{ field.label }}</span>
                       @if (isFieldRequired(field)) {
                         <span class="required-asterisk">*</span>

@@ -18,6 +18,9 @@
                   <div class="df-field-group">
                     @if (field.type !== 'Checkbox') {
                       <label [for]="field.name" class="df-field-label">
+                        @if (field.icon) {
+                          <span class="df-field-icon">{{ field.icon }}</span>
+                        }
                         {{ field.label }}
                         @if (isFieldRequired(field)) {
                           <span class="required-star">*</span>
@@ -35,6 +38,9 @@
                 } @else if (field.type === 'Checkbox') {
                   <label class="fs-checkbox-label">
                     <input type="checkbox" [id]="field.name" [formControlName]="field.name" />
+                    @if (field.icon) {
+                      <span class="df-field-icon">{{ field.icon }}</span>
+                    }
                     <span>{{ field.placeholder || field.label }}</span>
                   </label>
                 } @else if (field.type === 'Textarea') {

@@ -180,7 +180,15 @@
 
     .field-meta {
       display: flex;
+      align-items: center;
       gap: var(--fs-space-2xs);
+
+      .field-icon-badge {
+        font-size: 1rem;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+      }
 
       .field-label-text {
         font-weight: 600;

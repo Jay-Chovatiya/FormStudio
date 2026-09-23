@@ -6,7 +6,7 @@ import { FieldTypes } from '../../../core/models/field-types';
 import { FieldValidation } from '../../../core/models/field-validation';
 import { PropertyError, PropertyName } from './property-error';
 import { FormStatus } from '../../../core/models/form-status';
-import { generateGuid, cleanValueQuotes } from '../../../core/utils/guid';
+import { generateGuid } from '../../../core/utils/guid';
 import { UpperCasePipe, TitleCasePipe } from '@angular/common';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { requiredTrimmedValidator } from '../../../shared/validators/required-trimmed.validator';
@@ -97,7 +97,6 @@ export class PropertiesPanelComponent {
 
       headerText: new FormControl('', {
         nonNullable: true,
-        validators: [requiredTrimmedValidator],
       }),
 
       footerText: new FormControl('', {
@@ -110,22 +109,6 @@ export class PropertiesPanelComponent {
   );
 
   readonly currentValidations = signal<FieldValidation[]>([]);
-
-  formatForDateTimeLocal(val: string | null | undefined): string {
-    if (!val) return '';
-    const str = String(val).trim();
-    if (str.length === 0) return '';
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(str)) {
-      return str;
-    }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-      return `${str}T00:00`;
-    }
-    const d = new Date(str);
-    if (isNaN(d.getTime())) return '';
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
 
   constructor() {
     this.formForm.valueChanges.subscribe(() => {
@@ -156,8 +139,8 @@ export class PropertiesPanelComponent {
           code: currentForm.code,
           category: currentForm.category,
           status: currentForm.status,
-          startDate: this.formatForDateTimeLocal(currentForm.startDate),
-          endDate: this.formatForDateTimeLocal(currentForm.endDate),
+          startDate: currentForm.startDate ?? '',
+          endDate: currentForm.endDate ?? '',
           allowMultipleSubmissions: currentForm.allowMultipleSubmissions,
           allowSaveAsDraft: currentForm.allowSaveAsDraft,
           confirmationMessage: currentForm.confirmationMessage,
@@ -242,6 +225,9 @@ export class PropertiesPanelComponent {
       placeholder: new FormControl('', {
         nonNullable: true,
       }),
+      icon: new FormControl('', {
+        nonNullable: true,
+      }),
       options: new FormArray<FormGroup>([], {
         validators: [uniqueOptionValueValidator],
       }),
@@ -272,16 +258,15 @@ export class PropertiesPanelComponent {
         options.push(this.createOptionForm(option), { emitEvent: false });
       }
 
-      const cleanDefault = cleanValueQuotes(currentField.default);
-
       this.fieldForm.patchValue(
         {
           label: currentField.label,
           name: currentField.name,
           helperDescription: currentField.helperDescription,
           placeholder: currentField.placeholder,
+          icon: currentField.icon ?? '',
           visibility: currentField.visibility,
-          default: cleanDefault ?? '',
+          default: currentField.default ?? '',
         },
         { emitEvent: false },
       );
@@ -300,6 +285,13 @@ export class PropertiesPanelComponent {
     '#eff6ff',
     '#faf5ff',
   ];
+
+  presetFieldIcons: string[] = ['📝', '👤', '📧', '📞', '📅', '🕒', '🏢', '📍', '🔢', '💬', '⭐', '🏷️', '🌐', '🔒'];
+
+  setFieldIcon(icon: string): void {
+    this.fieldForm.patchValue({ icon });
+    this.applyFieldChanges();
+  }
 
   onFormColorPickerChange(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -353,15 +345,18 @@ export class PropertiesPanelComponent {
     if (!field) return;
 
     const currentValue = this.fieldForm.getRawValue();
-    let defaultValue = cleanValueQuotes(currentValue.default);
-    if (field.type === 'Number' && defaultValue !== null && defaultValue !== '') {
-      defaultValue = Number(defaultValue);
+    let defaultValue: any = currentValue.default;
+    if (defaultValue !== null && defaultValue !== undefined && defaultValue !== '') {
+      defaultValue = field.type === 'Number' ? Number(defaultValue) : String(defaultValue).trim();
+    } else {
+      defaultValue = null;
     }
 
     const currentOptions: FieldOption[] = (currentValue.options ?? []) as FieldOption[];
 
     const updatedValue: Partial<FormField> = {
       ...currentValue,
+      icon: currentValue.icon ? String(currentValue.icon).trim() : undefined,
       options: currentOptions,
       default: defaultValue,
       validations: this.currentValidations(),

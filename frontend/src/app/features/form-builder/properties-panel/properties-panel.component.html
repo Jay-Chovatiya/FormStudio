@@ -7,7 +7,11 @@
           <h3 class="panel-title">{{ field.label }}</h3>
           <span class="panel-type-tag">{{ field.type }}</span>
         </div>
-        <button type="button" class="fs-btn fs-btn-primary fs-btn-sm apply-btn" (click)="applyFieldChanges()">
+        <button
+          type="button"
+          class="fs-btn fs-btn-primary fs-btn-sm apply-btn"
+          (click)="applyFieldChanges()"
+        >
           Apply Changes
         </button>
       </div>
@@ -20,7 +24,12 @@
 
         <div class="form-field-item">
           <label class="fs-label" for="prop-label">Label</label>
-          <input id="prop-label" class="fs-input" formControlName="label" placeholder="Field Label" />
+          <input
+            id="prop-label"
+            class="fs-input"
+            formControlName="label"
+            placeholder="Field Label"
+          />
         </div>
 
         <div class="form-field-item">
@@ -30,7 +39,9 @@
             @if (fieldForm.controls.name.hasError('requiredTrimmed')) {
               <span class="fs-error-message">Field name is required.</span>
             } @else if (fieldForm.controls.name.hasError('invalidIdentifier')) {
-              <span class="fs-error-message">Must start with a letter & use letters, numbers, or underscores.</span>
+              <span class="fs-error-message"
+                >Must start with a letter & use letters, numbers, or underscores.</span
+              >
             } @else if (fieldForm.controls.name.hasError('duplicateFieldName')) {
               <span class="fs-error-message">Field name already exists.</span>
             }
@@ -45,14 +56,63 @@
         </div>
 
         <div class="form-field-item">
-          <label class="fs-label" for="prop-helper">Helper Description</label>
-          <input id="prop-helper" class="fs-input" formControlName="helperDescription" placeholder="Help text for users" />
+          <label class="fs-label" for="prop-icon">Field Icon</label>
+          <div class="icon-input-wrap">
+            <input
+              id="prop-icon"
+              class="fs-input"
+              formControlName="icon"
+              placeholder="e.g. 👤, 📧, 📅, or icon name"
+              (blur)="applyFieldChanges()"
+            />
+            @if (fieldForm.controls.icon.value) {
+              <span class="icon-preview-chip">{{ fieldForm.controls.icon.value }}</span>
+            }
+          </div>
+          <div class="icon-presets-row">
+            @for (preset of presetFieldIcons; track preset) {
+              <button
+                type="button"
+                class="icon-chip-btn"
+                [class.selected]="fieldForm.controls.icon.value === preset"
+                (click)="setFieldIcon(preset)"
+              >
+                {{ preset }}
+              </button>
+            }
+            @if (fieldForm.controls.icon.value) {
+              <button
+                type="button"
+                class="icon-chip-clear"
+                (click)="setFieldIcon('')"
+                title="Clear icon"
+              >
+                ✕
+              </button>
+            }
+          </div>
         </div>
 
         <div class="form-field-item">
-          <label class="fs-label" for="prop-placeholder">Placeholder</label>
-          <input id="prop-placeholder" class="fs-input" formControlName="placeholder" placeholder="Input placeholder text" />
+          <label class="fs-label" for="prop-helper">Helper Description</label>
+          <input
+            id="prop-helper"
+            class="fs-input"
+            formControlName="helperDescription"
+            placeholder="Help text for users"
+          />
         </div>
+        @if (field.type !== 'Checkbox' && !supportsOptions(field.type)) {
+          <div class="form-field-item">
+            <label class="fs-label" for="prop-placeholder">Placeholder</label>
+            <input
+              id="prop-placeholder"
+              class="fs-input"
+              formControlName="placeholder"
+              placeholder="Input placeholder text"
+            />
+          </div>
+        }
       </div>
 
       <!-- Options Group for Dropdown / Radio Button -->
@@ -60,7 +120,11 @@
         <div class="prop-group">
           <div class="group-header-row">
             <h4 class="prop-group-title">Field Options</h4>
-            <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm" (click)="addFieldOption()">
+            <button
+              type="button"
+              class="fs-btn fs-btn-secondary fs-btn-sm"
+              (click)="addFieldOption()"
+            >
               + Add Option
             </button>
           </div>
@@ -77,7 +141,10 @@
                 <div class="option-input-wrap">
                   <!-- (blur)="applyFieldChanges()" -->
                   <input class="fs-input" formControlName="label" placeholder="Option Label" />
-                  @if (option.controls['label'].hasError('requiredTrimmed') && option.controls['label'].touched) {
+                  @if (
+                    option.controls['label'].hasError('requiredTrimmed') &&
+                    option.controls['label'].touched
+                  ) {
                     <span class="fs-error-message">Label required</span>
                   }
                 </div>
@@ -117,7 +184,12 @@
               </label>
               @for (option of fieldForm.controls.options.controls; track option) {
                 <label class="fs-radio-label">
-                  <input type="radio" name="default" [value]="option.value.value" formControlName="default" />
+                  <input
+                    type="radio"
+                    name="default"
+                    [value]="option.value.value"
+                    formControlName="default"
+                  />
                   {{ option.value.label }}
                 </label>
               }
@@ -126,7 +198,9 @@
             <select class="fs-select" formControlName="default">
               <option value="">No default value</option>
               @for (option of fieldForm.controls.options.controls; track option) {
-                <option [value]="option.get('value')?.value">{{ option.get('label')?.value }}</option>
+                <option [value]="option.value.value">
+                  {{ option.value.label }}
+                </option>
               }
             </select>
           } @else if (field.type === 'Checkbox') {
@@ -135,15 +209,26 @@
               Checked by default
             </label>
           } @else if (field.type === 'Textarea') {
-            <textarea class="fs-textarea" formControlName="default" placeholder="Default multiline text..."></textarea>
+            <textarea
+              class="fs-textarea"
+              formControlName="default"
+              placeholder="Default multiline text..."
+            ></textarea>
           } @else {
-            <input class="fs-input" [type]="getInputType(field.type)" formControlName="default" placeholder="Default value..." />
+            <input
+              class="fs-input"
+              [type]="getInputType(field.type)"
+              formControlName="default"
+              placeholder="Default value..."
+            />
           }
 
           @if (fieldForm.hasError('defaultMinValue')) {
             <span class="fs-error-message">Default value cannot be less than minimum limit.</span>
           } @else if (fieldForm.hasError('defaultMaxValue')) {
-            <span class="fs-error-message">Default value cannot be greater than maximum limit.</span>
+            <span class="fs-error-message"
+              >Default value cannot be greater than maximum limit.</span
+            >
           } @else if (fieldForm.hasError('defaultMinLength')) {
             <span class="fs-error-message">Default value is shorter than minimum length.</span>
           } @else if (fieldForm.hasError('defaultMaxLength')) {
@@ -273,7 +358,11 @@
           <div class="panel-header-badge">Section Settings</div>
           <h3 class="panel-title">Configure Section</h3>
         </div>
-        <button type="button" class="fs-btn fs-btn-primary fs-btn-sm apply-btn" (click)="applySectionChanges()">
+        <button
+          type="button"
+          class="fs-btn fs-btn-primary fs-btn-sm apply-btn"
+          (click)="applySectionChanges()"
+        >
           Apply Changes
         </button>
       </div>
@@ -285,15 +374,28 @@
 
         <div class="form-field-item">
           <label class="fs-label" for="sec-title">Section Title</label>
-          <input id="sec-title" class="fs-input" formControlName="title" placeholder="Section Title" />
-          @if (sectionForm.controls.title.hasError('requiredTrimmed') && sectionForm.controls.title.touched) {
+          <input
+            id="sec-title"
+            class="fs-input"
+            formControlName="title"
+            placeholder="Section Title"
+          />
+          @if (
+            sectionForm.controls.title.hasError('requiredTrimmed') &&
+            sectionForm.controls.title.touched
+          ) {
             <span class="fs-error-message">Section title is required.</span>
           }
         </div>
 
         <div class="form-field-item">
           <label class="fs-label" for="sec-desc">Description</label>
-          <input id="sec-desc" class="fs-input" formControlName="description" placeholder="Brief section description" />
+          <input
+            id="sec-desc"
+            class="fs-input"
+            formControlName="description"
+            placeholder="Brief section description"
+          />
         </div>
 
         <div class="form-field-item">
@@ -353,7 +455,11 @@
           <div class="panel-header-badge">Form Configuration</div>
           <h3 class="panel-title">Global Settings</h3>
         </div>
-        <button type="button" class="fs-btn fs-btn-primary fs-btn-sm apply-btn" (click)="applyFormChanges()">
+        <button
+          type="button"
+          class="fs-btn fs-btn-primary fs-btn-sm apply-btn"
+          (click)="applyFormChanges()"
+        >
           Apply Changes
         </button>
       </div>
@@ -367,15 +473,25 @@
         <div class="form-field-item">
           <label class="fs-label" for="frm-name">Form Name</label>
           <input id="frm-name" class="fs-input" formControlName="name" placeholder="Form Title" />
-          @if (formForm.controls.name.hasError('requiredTrimmed') && formForm.controls.name.touched) {
+          @if (
+            formForm.controls.name.hasError('requiredTrimmed') && formForm.controls.name.touched
+          ) {
             <span class="fs-error-message">Form name is required.</span>
           }
         </div>
 
         <div class="form-field-item">
           <label class="fs-label" for="frm-desc">Description</label>
-          <input id="frm-desc" class="fs-input" formControlName="description" placeholder="Form purpose description" />
-          @if (formForm.controls.description.hasError('requiredTrimmed') && formForm.controls.description.touched) {
+          <input
+            id="frm-desc"
+            class="fs-input"
+            formControlName="description"
+            placeholder="Form purpose description"
+          />
+          @if (
+            formForm.controls.description.hasError('requiredTrimmed') &&
+            formForm.controls.description.touched
+          ) {
             <span class="fs-error-message">Description is required.</span>
           }
         </div>
@@ -428,7 +544,9 @@
             (change)="applyFormChanges()"
             (blur)="applyFormChanges()"
           />
-          @if (formForm.controls.startDate.hasError('pastDate') && formForm.controls.startDate.touched) {
+          @if (
+            formForm.controls.startDate.hasError('pastDate') && formForm.controls.startDate.touched
+          ) {
             <span class="fs-error-message">Start date must be in the future.</span>
           }
         </div>
@@ -443,7 +561,9 @@
             (change)="applyFormChanges()"
             (blur)="applyFormChanges()"
           />
-          @if (formForm.controls.endDate.hasError('pastDate') && formForm.controls.endDate.touched) {
+          @if (
+            formForm.controls.endDate.hasError('pastDate') && formForm.controls.endDate.touched
+          ) {
             <span class="fs-error-message">End date must be in the future.</span>
           } @else if (formForm.hasError('invalidDateRange') && formForm.controls.endDate.touched) {
             <span class="fs-error-message">End date must be after start date.</span>
@@ -476,22 +596,43 @@
 
         <div class="form-field-item">
           <label class="fs-label" for="frm-confirm">Confirmation Message</label>
-          <input id="frm-confirm" class="fs-input" formControlName="confirmationMessage" placeholder="Thank you message" />
+          <input
+            id="frm-confirm"
+            class="fs-input"
+            formControlName="confirmationMessage"
+            placeholder="Thank you message"
+          />
         </div>
 
         <div class="form-row-2col">
           <div class="form-field-item">
             <label class="fs-label" for="frm-submitbtn">Submit Button</label>
-            <input id="frm-submitbtn" class="fs-input" formControlName="submitButtonText" placeholder="Submit" />
-            @if (formForm.controls.submitButtonText.hasError('requiredTrimmed') && formForm.controls.submitButtonText.touched) {
+            <input
+              id="frm-submitbtn"
+              class="fs-input"
+              formControlName="submitButtonText"
+              placeholder="Submit"
+            />
+            @if (
+              formForm.controls.submitButtonText.hasError('requiredTrimmed') &&
+              formForm.controls.submitButtonText.touched
+            ) {
               <span class="fs-error-message">Required.</span>
             }
           </div>
 
           <div class="form-field-item">
             <label class="fs-label" for="frm-cancelbtn">Cancel Button</label>
-            <input id="frm-cancelbtn" class="fs-input" formControlName="cancelButtonText" placeholder="Cancel" />
-            @if (formForm.controls.cancelButtonText.hasError('requiredTrimmed') && formForm.controls.cancelButtonText.touched) {
+            <input
+              id="frm-cancelbtn"
+              class="fs-input"
+              formControlName="cancelButtonText"
+              placeholder="Cancel"
+            />
+            @if (
+              formForm.controls.cancelButtonText.hasError('requiredTrimmed') &&
+              formForm.controls.cancelButtonText.touched
+            ) {
               <span class="fs-error-message">Required.</span>
             }
           </div>
@@ -504,20 +645,32 @@
 
         <div class="form-field-item">
           <label class="fs-label" for="frm-logo">Logo URL</label>
-          <input id="frm-logo" class="fs-input" formControlName="logoUrl" placeholder="https://example.com/logo.png" />
+          <input
+            id="frm-logo"
+            class="fs-input"
+            formControlName="logoUrl"
+            placeholder="https://example.com/logo.png"
+          />
         </div>
 
         <div class="form-field-item">
           <label class="fs-label" for="frm-header">Header Text</label>
-          <input id="frm-header" class="fs-input" formControlName="headerText" placeholder="Form banner header" />
-          @if (formForm.controls.headerText.hasError('requiredTrimmed') && formForm.controls.headerText.touched) {
-            <span class="fs-error-message">Header text is required.</span>
-          }
+          <input
+            id="frm-header"
+            class="fs-input"
+            formControlName="headerText"
+            placeholder="Form banner header"
+          />
         </div>
 
         <div class="form-field-item">
           <label class="fs-label" for="frm-footer">Footer Text</label>
-          <input id="frm-footer" class="fs-input" formControlName="footerText" placeholder="Footer note" />
+          <input
+            id="frm-footer"
+            class="fs-input"
+            formControlName="footerText"
+            placeholder="Footer note"
+          />
         </div>
 
         <div class="form-field-item">
@@ -566,15 +719,26 @@
   } @else {
     <div class="panel-empty-state">
       <div class="empty-icon">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-          <line x1="9" y1="9" x2="15" y2="9"/>
-          <line x1="9" y1="13" x2="15" y2="13"/>
-          <line x1="9" y1="17" x2="13" y2="17"/>
+        <svg
+          width="36"
+          height="36"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+          <line x1="9" y1="9" x2="15" y2="9" />
+          <line x1="9" y1="13" x2="15" y2="13" />
+          <line x1="9" y1="17" x2="13" y2="17" />
         </svg>
       </div>
       <h4 class="empty-title">No Selection</h4>
-      <p class="empty-desc">Select a field, section, or form setting to view and edit properties.</p>
+      <p class="empty-desc">
+        Select a field, section, or form setting to view and edit properties.
+      </p>
     </div>
   }
 </div>

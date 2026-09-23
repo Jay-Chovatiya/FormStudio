@@ -11,7 +11,7 @@ export interface FormField {
   visibility: boolean;
   helperDescription?: string;
   placeholder?: string;
-  default?: string | number | boolean;
+  default?: string | number | boolean | null;
   icon?: string;
   displayOrder?: number;
   validations?: FieldValidation[];

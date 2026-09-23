@@ -5,6 +5,6 @@ namespace FormStudio.Application.DTOs
         public int Id { get; set; }
         public int FormId { get; set; }
         public List<FormResponseDto> Responses { get; set; } = new List<FormResponseDto>();
-        public string? SubmittedAt { get; set; }
+        public DateTime? SubmittedAt { get; set; }
     }
 }

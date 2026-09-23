@@ -55,7 +55,6 @@ using (IServiceScope scope = app.Services.CreateScope())
         FormStudioDbContext context = services.GetRequiredService<FormStudioDbContext>();
         await context.Database.MigrateAsync();
         await DbInitializer.InitializeAsync(context);
-        await DbInitializer.CleanupCorruptedDefaultValuesAsync(context);
     }
     catch (Exception ex)
     {

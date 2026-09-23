@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using FormStudio.Application.Common;
 
 namespace FormStudio.Application.DTOs
 {
@@ -11,7 +12,9 @@ namespace FormStudio.Application.DTOs
         public string? HelperDescription { get; set; }
         public bool Visibility { get; set; } = true;
         public string? Placeholder { get; set; }
-        public object? Default { get; set; }
+
+        [JsonConverter(typeof(StringJsonConverter))]
+        public string? Default { get; set; }
         public string? Icon { get; set; }
         public int DisplayOrder { get; set; }
 
