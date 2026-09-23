@@ -31,15 +31,35 @@ export class FormBuilderComponent implements OnInit {
   readonly canUndo = this.formBuilderState.canUndo;
   readonly canRedo = this.formBuilderState.canRedo;
   saving = signal<boolean>(false);
+  readonly mobileView = signal<'palette' | 'canvas' | 'properties'>('canvas');
+
+  setMobileView(view: 'palette' | 'canvas' | 'properties'): void {
+    this.mobileView.set(view);
+  }
 
   ngOnInit(): void {
     this.route.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
+        const currentForm = this.formBuilderState.form();
+
+        if (history.state?.fromPreview && currentForm) {
+          return;
+        }
+
+        if (history.state?.createNew) {
+          this.formBuilderState.createNewForm();
+          return;
+        }
+
         const paramId = params.get('id');
         if (paramId) {
           const id = Number(paramId);
           if (!isNaN(id) && id > 0) {
+            if (currentForm && (currentForm.id === id || String(currentForm.id) === String(id))) {
+              return;
+            }
+
             this.formService.getFormById(id).subscribe({
               next: (formDef: FormDefinition | null) => {
                 if (formDef) {
@@ -50,8 +70,11 @@ export class FormBuilderComponent implements OnInit {
                 console.error('Error fetching form details:', err);
               }
             });
+            return;
           }
-        } else {
+        }
+
+        if (!currentForm) {
           this.formBuilderState.createNewForm();
         }
       });

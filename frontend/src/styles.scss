@@ -299,6 +299,69 @@ body {
   min-height: 48px;
 }
 
+/* Maintain exact option row appearance and centering when dragging */
+.option-item-row.cdk-drag-preview {
+  display: grid !important;
+  grid-template-columns: 20px 1fr 1fr 32px !important;
+  gap: var(--fs-space-xs) !important;
+  align-items: center !important;
+  align-content: center !important;
+  background-color: var(--fs-surface) !important;
+  border-radius: var(--fs-radius-md) !important;
+  box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.12), 0 3px 6px -2px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid var(--fs-primary-border) !important;
+  padding: 6px 8px !important;
+  height: auto !important;
+  box-sizing: border-box !important;
+  opacity: 1 !important;
+  z-index: 1000 !important;
+
+  .option-drag-handle {
+    cursor: grabbing;
+    color: var(--fs-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    margin: 0;
+  }
+
+  .option-input-wrap {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    margin: 0;
+
+    .fs-input {
+      width: 100%;
+      height: 38px;
+      margin: 0;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+  }
+
+  .delete-option-btn {
+    height: 38px;
+    padding: 0;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    box-sizing: border-box;
+  }
+}
+
+.option-item-row.cdk-drag-placeholder {
+  min-height: 38px !important;
+  border: 1px dashed var(--fs-primary-border) !important;
+  background-color: var(--fs-primary-light) !important;
+  border-radius: var(--fs-radius-md) !important;
+  opacity: 0.4 !important;
+}
+
 .cdk-drag-animating {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }

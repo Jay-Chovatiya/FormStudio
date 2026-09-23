@@ -16,6 +16,16 @@ export class FormPreviewComponent {
   readonly form = this.formBuilderState.form;
 
   backToBuilder(): void {
-    this.router.navigate(['/form-builder']);
+    const currentForm = this.form();
+    if (currentForm && currentForm.id && typeof currentForm.id === 'number' && currentForm.id < 1000000000) {
+      this.router.navigate(['/form-builder'], {
+        queryParams: { id: currentForm.id },
+        state: { fromPreview: true }
+      });
+    } else {
+      this.router.navigate(['/form-builder'], {
+        state: { fromPreview: true }
+      });
+    }
   }
 }

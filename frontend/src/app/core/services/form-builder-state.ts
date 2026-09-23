@@ -67,11 +67,7 @@ export class FormBuilderState {
     this.recordState();
     const normalized = normalizeFormGuids(formDefinition);
     this.form.set(normalized);
-    if (normalized.sections.length > 0) {
-      this.selectedSectionId.set(normalized.sections[0].id);
-    } else {
-      this.selectedSectionId.set(null);
-    }
+    this.selectedSectionId.set(null);
     this.selectedFieldId.set(null);
     this.activeTab.set('form');
   }
@@ -96,6 +92,8 @@ export class FormBuilderState {
 
     this.form.set(newForm);
     this.addSection('General Information', 'Please complete all required fields below');
+    this.selectedSectionId.set(null);
+    this.selectedFieldId.set(null);
     this.activeTab.set('form');
   }
 

@@ -114,24 +114,69 @@
 
   .options-header-labels {
     display: grid;
-    grid-template-columns: 1fr 1fr 32px;
+    grid-template-columns: 20px 1fr 1fr 32px;
     gap: var(--fs-space-xs);
     font-size: var(--fs-font-size-xs);
     font-weight: 600;
     color: var(--fs-text-subtle);
     margin-bottom: 2px;
+    align-items: center;
+
+    .col-drag,
+    .col-action {
+      display: inline-block;
+    }
   }
 
   .option-item-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 32px;
+    grid-template-columns: 20px 1fr 1fr 32px;
     gap: var(--fs-space-xs);
-    align-items: start;
+    align-items: center;
+    background-color: var(--fs-surface);
+    border-radius: var(--fs-radius-md);
+    transition: background-color 0.15s ease;
+
+    .option-drag-handle {
+      cursor: grab;
+      color: var(--fs-text-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 38px;
+      user-select: none;
+      transition: color 0.15s ease;
+
+      &:hover {
+        color: var(--fs-primary);
+      }
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
 
     .option-input-wrap {
       display: flex;
       flex-direction: column;
+      justify-content: center;
     }
+
+    .delete-option-btn {
+      height: 38px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &.cdk-drag-animating {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+
+  &.cdk-drop-list-dragging .option-item-row:not(.cdk-drag-placeholder) {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
   }
 }
 
@@ -234,7 +279,9 @@
     border-radius: 50%;
     border: 1px solid var(--fs-border);
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
     padding: 0;
 
     &:hover {
@@ -309,5 +356,16 @@
     &:hover {
       color: var(--fs-danger);
     }
+  }
+}
+
+@media (max-width: 1024px) {
+  .panel-header,
+  .panel-body,
+  .panel-empty-state {
+    max-width: 680px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
   }
 }

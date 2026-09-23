@@ -33,6 +33,12 @@
     box-shadow: var(--fs-shadow-sm);
   }
 
+  &.selected {
+    border: 2px solid var(--fs-primary);
+    background-color: #fafbfd;
+    box-shadow: var(--fs-shadow-md);
+  }
+
   .form-title {
     font-size: var(--fs-font-size-xl);
     font-weight: 700;
@@ -227,5 +233,15 @@
     color: var(--fs-primary);
     padding: var(--fs-space-md);
     font-weight: 600;
+  }
+}
+
+@media (max-width: 600px) {
+  .canvas-workspace {
+    padding: var(--fs-space-md) var(--fs-space-sm);
+  }
+
+  .form-header-card {
+    padding: var(--fs-space-md);
   }
 }

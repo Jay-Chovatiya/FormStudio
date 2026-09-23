@@ -15,10 +15,11 @@ import { duplicateFieldNameValidator } from '../../../shared/validators/duplicat
 import { uniqueOptionValueValidator } from '../../../shared/validators/unique-option-value.validator';
 import { defaultValueValidator } from '../../../shared/validators/default-value.validator';
 import { futureDateValidator } from '../../../shared/validators/future-date.validator';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { dateRangeValidator } from '../../../shared/validators/date-range.validator';
 
 @Component({
-  imports: [UpperCasePipe, TitleCasePipe, ReactiveFormsModule],
+  imports: [UpperCasePipe, TitleCasePipe, ReactiveFormsModule, CdkDrag, CdkDropList, CdkDragHandle],
   selector: 'app-properties-panel',
   styleUrl: './properties-panel.component.scss',
   templateUrl: './properties-panel.component.html',
@@ -119,41 +120,43 @@ export class PropertiesPanelComponent {
     });
   }
 
+  private lastSyncedFormId: string | number | null = null;
+
   formEffectRef = effect(() => {
     const activeTab = this.activeTab();
-    if (activeTab !== 'form') {
+    const currentForm = this.form();
+
+    if (activeTab !== 'form' || !currentForm) {
       return;
     }
 
-    untracked(() => {
-      const currentForm = this.form();
-
-      if (!currentForm) {
-        return;
-      }
-
-      this.formForm.patchValue(
-        {
-          name: currentForm.name,
-          description: currentForm.description,
-          code: currentForm.code,
-          category: currentForm.category,
-          status: currentForm.status,
-          startDate: currentForm.startDate ?? '',
-          endDate: currentForm.endDate ?? '',
-          allowMultipleSubmissions: currentForm.allowMultipleSubmissions,
-          allowSaveAsDraft: currentForm.allowSaveAsDraft,
-          confirmationMessage: currentForm.confirmationMessage,
-          submitButtonText: currentForm.submitButtonText,
-          cancelButtonText: currentForm.cancelButtonText,
-          theme: currentForm.theme,
-          logoUrl: currentForm.logoUrl,
-          headerText: currentForm.headerText,
-          footerText: currentForm.footerText
-        },
-        { emitEvent: false },
-      );
-    });
+    if (currentForm.id !== this.lastSyncedFormId || !this.formForm.dirty) {
+      this.lastSyncedFormId = currentForm.id;
+      untracked(() => {
+        this.formForm.patchValue(
+          {
+            name: currentForm.name,
+            description: currentForm.description,
+            code: currentForm.code,
+            category: currentForm.category,
+            status: currentForm.status,
+            startDate: currentForm.startDate ?? '',
+            endDate: currentForm.endDate ?? '',
+            allowMultipleSubmissions: currentForm.allowMultipleSubmissions,
+            allowSaveAsDraft: currentForm.allowSaveAsDraft,
+            confirmationMessage: currentForm.confirmationMessage,
+            submitButtonText: currentForm.submitButtonText,
+            cancelButtonText: currentForm.cancelButtonText,
+            theme: currentForm.theme,
+            logoUrl: currentForm.logoUrl,
+            headerText: currentForm.headerText,
+            footerText: currentForm.footerText
+          },
+          { emitEvent: false },
+        );
+        this.formForm.markAsPristine();
+      });
+    }
   });
 
   sectionForm = new FormGroup({
@@ -302,7 +305,6 @@ export class PropertiesPanelComponent {
 
   setFormTheme(color: string): void {
     this.formForm.patchValue({ theme: color });
-    this.applyFormChanges();
   }
 
   onSectionColorPickerChange(event: Event): void {
@@ -314,7 +316,6 @@ export class PropertiesPanelComponent {
 
   setSectionTheme(color: string): void {
     this.sectionForm.patchValue({ theme: color });
-    this.applySectionChanges();
   }
 
   applyFormChanges(): void {
@@ -324,6 +325,7 @@ export class PropertiesPanelComponent {
     }
     const value = this.formForm.getRawValue();
     this.formBuilderState.updateFormMetadata(value);
+    this.formForm.markAsPristine();
   }
 
   applySectionChanges(): void {
@@ -492,6 +494,19 @@ export class PropertiesPanelComponent {
     if (currentDefault === deletedValue) {
       this.fieldForm.controls.default.setValue('');
     }
+    this.applyFieldChanges();
+  }
+
+  dropOption(event: CdkDragDrop<FieldOption[]>): void {
+    if (event.previousIndex === event.currentIndex) {
+      return;
+    }
+
+    const options = this.fieldForm.controls.options;
+    const movedControl = options.at(event.previousIndex);
+    options.removeAt(event.previousIndex);
+    options.insert(event.currentIndex, movedControl);
+
     this.applyFieldChanges();
   }
 

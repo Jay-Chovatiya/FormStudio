@@ -116,7 +116,7 @@ export class FormListComponent implements OnInit {
   }
 
   onCreateForm(): void {
-    this.router.navigate(['/form-builder']);
+    this.router.navigate(['/form-builder'], { state: { createNew: true } });
   }
 
   onEditForm(form: FormDefinition): void {

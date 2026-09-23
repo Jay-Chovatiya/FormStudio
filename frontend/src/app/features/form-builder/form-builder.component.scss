@@ -68,10 +68,62 @@
   }
 }
 
-.header-actions {
+  .header-actions {
   display: flex;
   align-items: center;
   gap: var(--fs-space-xs);
+  flex-shrink: 0;
+}
+
+.btn-header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+@media (max-width: 960px) {
+  .header-actions .btn-header-action .btn-text,
+  .btn-back-list .btn-text {
+    display: none;
+  }
+
+  .btn-header-action {
+    padding: 0.35rem 0.55rem;
+    min-width: 34px;
+    justify-content: center;
+  }
+
+  .header-brand {
+    gap: var(--fs-space-xs);
+  }
+
+  .form-title-badge {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 680px) {
+  .brand-title {
+    display: none;
+  }
+
+  .form-title-badge {
+    max-width: 90px;
+    font-size: var(--fs-font-size-xs);
+  }
+
+  .header-brand .fs-badge {
+    display: none;
+  }
+}
+
+.mobile-builder-nav {
+  display: none;
 }
 
 .builder-workspace {
@@ -107,17 +159,68 @@
 }
 
 @media (max-width: 1024px) {
+  .mobile-builder-nav {
+    display: flex;
+    align-items: stretch;
+    background-color: var(--fs-surface);
+    border-bottom: 1px solid var(--fs-border);
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 var(--fs-space-sm);
+    gap: var(--fs-space-xs);
+  }
+
+  .mobile-nav-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0 0.5rem;
+    font-size: var(--fs-font-size-sm);
+    font-weight: 500;
+    color: var(--fs-text-muted);
+    background: transparent;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+
+    &:hover {
+      color: var(--fs-text-main);
+      background-color: var(--fs-bg-subtle, rgba(0, 0, 0, 0.02));
+    }
+
+    &.active {
+      color: var(--fs-primary);
+      border-bottom-color: var(--fs-primary);
+      font-weight: 600;
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
   .builder-workspace {
-    flex-direction: column;
-    overflow-y: auto;
+    flex-direction: row;
+    overflow: hidden;
   }
 
   .workspace-palette,
+  .workspace-canvas,
   .workspace-properties {
-    width: 100%;
-    min-width: 100%;
-    height: auto;
-    border: none;
-    border-bottom: 1px solid var(--fs-border);
+    display: none !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+
+    &.mobile-active {
+      display: block !important;
+      flex: 1;
+      height: 100% !important;
+    }
   }
 }

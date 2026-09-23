@@ -63,7 +63,6 @@
               class="fs-input"
               formControlName="icon"
               placeholder="e.g. 👤, 📧, 📅, or icon name"
-              (blur)="applyFieldChanges()"
             />
             @if (fieldForm.controls.icon.value) {
               <span class="icon-preview-chip">{{ fieldForm.controls.icon.value }}</span>
@@ -128,18 +127,41 @@
               + Add Option
             </button>
           </div>
-
-          <div formArrayName="options" class="options-list">
+          <div
+            cdkDropList
+            (cdkDropListDropped)="dropOption($event)"
+            formArrayName="options"
+            class="options-list"
+          >
             <div class="options-header-labels">
+              <span class="col-drag"></span>
               <span>Label</span>
               <span>Value</span>
-              <span></span>
+              <span class="col-action"></span>
             </div>
 
             @for (option of fieldForm.controls.options.controls; track option; let i = $index) {
-              <div [formGroupName]="i" class="option-item-row">
+              <div cdkDrag [formGroupName]="i" class="option-item-row">
+                <div class="option-drag-handle" cdkDragHandle title="Drag option to reorder">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="9" cy="5" r="1" />
+                    <circle cx="15" cy="5" r="1" />
+                    <circle cx="9" cy="12" r="1" />
+                    <circle cx="15" cy="12" r="1" />
+                    <circle cx="9" cy="19" r="1" />
+                    <circle cx="15" cy="19" r="1" />
+                  </svg>
+                </div>
                 <div class="option-input-wrap">
-                  <!-- (blur)="applyFieldChanges()" -->
                   <input class="fs-input" formControlName="label" placeholder="Option Label" />
                   @if (
                     option.controls['label'].hasError('requiredTrimmed') &&
@@ -156,7 +178,7 @@
                 </div>
                 <button
                   type="button"
-                  class="fs-btn fs-btn-danger fs-btn-sm"
+                  class="fs-btn fs-btn-danger fs-btn-sm delete-option-btn"
                   (click)="deleteFieldOption(option.value.guid || option.value.id)"
                   title="Remove Option"
                 >
@@ -173,69 +195,71 @@
       }
 
       <!-- Default Value Group -->
-      <div class="prop-group">
-        <h4 class="prop-group-title">Default Value</h4>
-        <div class="form-field-item">
-          @if (field.type === 'RadioButton') {
-            <div class="radio-options-stack">
-              <label class="fs-radio-label">
-                <input type="radio" name="default" value="" formControlName="default" />
-                (None)
-              </label>
-              @for (option of fieldForm.controls.options.controls; track option) {
+      @if (field.type !== 'Email') {
+        <div class="prop-group">
+          <h4 class="prop-group-title">Default Value</h4>
+          <div class="form-field-item">
+            @if (field.type === 'RadioButton') {
+              <div class="radio-options-stack">
                 <label class="fs-radio-label">
-                  <input
-                    type="radio"
-                    name="default"
-                    [value]="option.value.value"
-                    formControlName="default"
-                  />
-                  {{ option.value.label }}
+                  <input type="radio" name="default" value="" formControlName="default" />
+                  (None)
                 </label>
-              }
-            </div>
-          } @else if (field.type === 'Dropdown') {
-            <select class="fs-select" formControlName="default">
-              <option value="">No default value</option>
-              @for (option of fieldForm.controls.options.controls; track option) {
-                <option [value]="option.value.value">
-                  {{ option.value.label }}
-                </option>
-              }
-            </select>
-          } @else if (field.type === 'Checkbox') {
-            <label class="fs-checkbox-label">
-              <input type="checkbox" formControlName="default" />
-              Checked by default
-            </label>
-          } @else if (field.type === 'Textarea') {
-            <textarea
-              class="fs-textarea"
-              formControlName="default"
-              placeholder="Default multiline text..."
-            ></textarea>
-          } @else {
-            <input
-              class="fs-input"
-              [type]="getInputType(field.type)"
-              formControlName="default"
-              placeholder="Default value..."
-            />
-          }
+                @for (option of fieldForm.controls.options.controls; track option) {
+                  <label class="fs-radio-label">
+                    <input
+                      type="radio"
+                      name="default"
+                      [value]="option.value.value"
+                      formControlName="default"
+                    />
+                    {{ option.value.label }}
+                  </label>
+                }
+              </div>
+            } @else if (field.type === 'Dropdown') {
+              <select class="fs-select" formControlName="default">
+                <option value="">No default value</option>
+                @for (option of fieldForm.controls.options.controls; track option) {
+                  <option [value]="option.value.value">
+                    {{ option.value.label }}
+                  </option>
+                }
+              </select>
+            } @else if (field.type === 'Checkbox') {
+              <label class="fs-checkbox-label">
+                <input type="checkbox" formControlName="default" />
+                Checked by default
+              </label>
+            } @else if (field.type === 'Textarea') {
+              <textarea
+                class="fs-textarea"
+                formControlName="default"
+                placeholder="Default multiline text..."
+              ></textarea>
+            } @else {
+              <input
+                class="fs-input"
+                [type]="getInputType(field.type)"
+                formControlName="default"
+                placeholder="Default value..."
+              />
+            }
 
-          @if (fieldForm.hasError('defaultMinValue')) {
-            <span class="fs-error-message">Default value cannot be less than minimum limit.</span>
-          } @else if (fieldForm.hasError('defaultMaxValue')) {
-            <span class="fs-error-message"
-              >Default value cannot be greater than maximum limit.</span
-            >
-          } @else if (fieldForm.hasError('defaultMinLength')) {
-            <span class="fs-error-message">Default value is shorter than minimum length.</span>
-          } @else if (fieldForm.hasError('defaultMaxLength')) {
-            <span class="fs-error-message">Default value is longer than maximum length.</span>
-          }
+            @if (fieldForm.hasError('defaultMinValue')) {
+              <span class="fs-error-message">Default value cannot be less than minimum limit.</span>
+            } @else if (fieldForm.hasError('defaultMaxValue')) {
+              <span class="fs-error-message"
+                >Default value cannot be greater than maximum limit.</span
+              >
+            } @else if (fieldForm.hasError('defaultMinLength')) {
+              <span class="fs-error-message">Default value is shorter than minimum length.</span>
+            } @else if (fieldForm.hasError('defaultMaxLength')) {
+              <span class="fs-error-message">Default value is longer than maximum length.</span>
+            }
+          </div>
         </div>
-      </div>
+      }
 
       <!-- Validation Group -->
       <div class="prop-group">
@@ -413,7 +437,6 @@
               class="fs-input color-text-input"
               formControlName="theme"
               placeholder="#ffffff or color name"
-              (input)="applySectionChanges()"
             />
             @if (sectionForm.controls.theme.value) {
               <button
@@ -541,8 +564,6 @@
             class="fs-input"
             type="datetime-local"
             formControlName="startDate"
-            (change)="applyFormChanges()"
-            (blur)="applyFormChanges()"
           />
           @if (
             formForm.controls.startDate.hasError('pastDate') && formForm.controls.startDate.touched
@@ -558,8 +579,6 @@
             class="fs-input"
             type="datetime-local"
             formControlName="endDate"
-            (change)="applyFormChanges()"
-            (blur)="applyFormChanges()"
           />
           @if (
             formForm.controls.endDate.hasError('pastDate') && formForm.controls.endDate.touched
@@ -688,7 +707,6 @@
               class="fs-input color-text-input"
               formControlName="theme"
               placeholder="#ffffff or color name"
-              (input)="applyFormChanges()"
             />
             @if (formForm.controls.theme.value) {
               <button

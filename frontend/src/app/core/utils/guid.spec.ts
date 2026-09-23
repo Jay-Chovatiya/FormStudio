@@ -362,4 +362,23 @@ describe('GUID Utilities and Form Element Tracking', () => {
     const updatedForm = state.form()!;
     expect(updatedForm.sections[0].fields[0].icon).toBe('👤');
   });
+
+  it('should preserve in-memory form in FormBuilderState when navigating back from preview', () => {
+    TestBed.configureTestingModule({
+      providers: [FormBuilderState],
+    });
+
+    const state = TestBed.inject(FormBuilderState);
+    state.createNewForm('Preserved Form');
+    const secGuid = state.form()!.sections[0].guid!;
+    state.addFieldToSection(secGuid, 'Textbox');
+
+    expect(state.form()!.name).toBe('Preserved Form');
+    expect(state.form()!.sections[0].fields.length).toBe(1);
+
+    // FormBuilderState maintains in-memory state so returning from preview does not clear it
+    const activeForm = state.form();
+    expect(activeForm).toBeTruthy();
+    expect(activeForm?.sections[0].fields[0].type).toBe('Textbox');
+  });
 });

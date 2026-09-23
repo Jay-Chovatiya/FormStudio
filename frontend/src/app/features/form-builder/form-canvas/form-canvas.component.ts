@@ -1,27 +1,23 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilderState } from '../../../core/services/form-builder-state';
 import { CdkDrag, CdkDropList, CdkDragDrop, CdkDragHandle, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { FormSection } from '../../../core/models/form-section';
 import { FormField } from '../../../core/models/form-field';
 import { Router } from '@angular/router';
+import { TitleCasePipe } from '@angular/common';
 
 @Component({
-  imports: [CdkDrag, CdkDropList, CdkDropListGroup, CdkDragHandle],
+  imports: [CdkDrag, CdkDropList, CdkDropListGroup, CdkDragHandle, TitleCasePipe],
   selector: 'app-form-canvas',
   styleUrl: './form-canvas.component.scss',
   templateUrl: './form-canvas.component.html',
 })
-export class FormCanvasComponent implements OnInit {
+export class FormCanvasComponent {
   private formBuilderState = inject(FormBuilderState);
   private readonly router = inject(Router);
 
-  ngOnInit(): void {
-    if (!this.formBuilderState.form()) {
-      this.formBuilderState.createNewForm('Sample Form', 'Dynamic form builder canvas');
-    }
-  }
-
   form = this.formBuilderState.form;
+  activeTab = this.formBuilderState.activeTab;
   canUndo = this.formBuilderState.canUndo;
   canRedo = this.formBuilderState.canRedo;
 
@@ -38,11 +34,17 @@ export class FormCanvasComponent implements OnInit {
   }
 
   isSectionSelected(sectionId: string | number): boolean {
+    if (this.formBuilderState.activeTab() !== 'section') {
+      return false;
+    }
     const selected = this.formBuilderState.selectedSectionId();
     return selected === sectionId || (selected !== null && String(selected) === String(sectionId));
   }
 
   isFieldSelected(fieldId: string | number): boolean {
+    if (this.formBuilderState.activeTab() !== 'field') {
+      return false;
+    }
     const selected = this.formBuilderState.selectedFieldId();
     return selected === fieldId || (selected !== null && String(selected) === String(fieldId));
   }

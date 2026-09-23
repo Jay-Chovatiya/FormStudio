@@ -4,6 +4,7 @@
       <!-- Form Header Info Card -->
       <div
         class="form-header-card"
+        [class.selected]="activeTab() === 'form'"
         (click)="openFormProperties()"
         role="button"
         tabindex="0"
@@ -121,7 +122,7 @@
                       @if (field.icon) {
                         <span class="field-icon-badge">{{ field.icon }}</span>
                       }
-                      <span class="field-label-text">{{ field.label }}</span>
+                      <span class="field-label-text">{{ field.label | titlecase }}</span>
                       @if (isFieldRequired(field)) {
                         <span class="required-asterisk">*</span>
                       }

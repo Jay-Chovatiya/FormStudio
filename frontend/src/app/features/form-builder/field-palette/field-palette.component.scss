@@ -70,3 +70,17 @@
     color: var(--fs-text-main);
   }
 }
+
+@media (max-width: 1024px) {
+  .palette-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: var(--fs-space-lg) var(--fs-space-md);
+  }
+
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--fs-space-sm);
+  }
+}
