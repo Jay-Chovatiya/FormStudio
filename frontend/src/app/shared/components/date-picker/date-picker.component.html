@@ -1,0 +1,246 @@
+<div class="fs-datepicker-container" [class.is-open]="isOpen()" [class.is-disabled]="isDisabled()">
+  <!-- Trigger Input Box -->
+  <div
+    class="fs-datepicker-trigger fs-input"
+    [class.has-value]="!!selectedDate()"
+    [class.disabled]="isDisabled()"
+    (click)="togglePicker()"
+    tabindex="0"
+    role="button"
+    [attr.aria-expanded]="isOpen()"
+    (keydown.enter)="togglePicker()"
+    (keydown.space)="togglePicker(); $event.preventDefault()"
+  >
+    <div class="trigger-left">
+      <svg
+        class="calendar-icon"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+      <span class="value-text" [class.placeholder]="!selectedDate()">
+        {{ displayValue() || effectivePlaceholder() }}
+      </span>
+    </div>
+
+    <div class="trigger-actions">
+      @if (selectedDate() && !isDisabled()) {
+        <button
+          type="button"
+          class="clear-btn"
+          (click)="clearValue($event)"
+          title="Clear date"
+        >
+          ✕
+        </button>
+      }
+      <svg
+        class="chevron-icon"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- Calendar Dropdown Popover -->
+  @if (isOpen()) {
+    <div
+      class="fs-datepicker-dropdown"
+      [class.position-above]="positionAbove()"
+      [class.align-right]="alignRight()"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Navigation Header -->
+      <div class="dp-header">
+        <button
+          type="button"
+          class="nav-btn prev-btn"
+          (click)="prevMonth()"
+          title="Previous"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          class="view-switch-btn"
+          (click)="toggleViewMode()"
+          title="Switch calendar view"
+        >
+          @if (viewMode() === 'days') {
+            {{ monthNames[viewMonth()] }} {{ viewYear() }}
+          } @else if (viewMode() === 'months') {
+            {{ viewYear() }}
+          } @else {
+            {{ yearRangeStart() }} - {{ yearRangeStart() + 11 }}
+          }
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          class="nav-btn next-btn"
+          (click)="nextMonth()"
+          title="Next"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Days Grid View -->
+      @if (viewMode() === 'days') {
+        <div class="dp-days-view">
+          <div class="dp-weekdays-row">
+            @for (w of weekDays; track w) {
+              <span class="dp-weekday">{{ w }}</span>
+            }
+          </div>
+
+          <div class="dp-days-grid">
+            @for (d of calendarDays(); track d.dateString + d.day) {
+              <button
+                type="button"
+                class="dp-day-cell"
+                [class.is-current-month]="d.isCurrentMonth"
+                [class.is-other-month]="!d.isCurrentMonth"
+                [class.is-today]="d.isToday"
+                [class.is-selected]="d.isSelected"
+                [disabled]="d.isDisabled"
+                (click)="selectDay(d)"
+              >
+                {{ d.day }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Months Grid View -->
+      @if (viewMode() === 'months') {
+        <div class="dp-grid-selector">
+          @for (m of shortMonthNames; track m; let idx = $index) {
+            <button
+              type="button"
+              class="dp-selector-cell"
+              [class.is-selected]="idx === viewMonth()"
+              (click)="selectMonth(idx)"
+            >
+              {{ m }}
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Years Grid View -->
+      @if (viewMode() === 'years') {
+        <div class="dp-grid-selector">
+          @for (y of yearsGrid(); track y) {
+            <button
+              type="button"
+              class="dp-selector-cell"
+              [class.is-selected]="y === viewYear()"
+              (click)="selectYear(y)"
+            >
+              {{ y }}
+            </button>
+          }
+        </div>
+      }
+
+      <!-- 24-Hour Time Picker (for DateTime Mode) -->
+      @if (mode() === 'DateTime') {
+        <div class="dp-time-section">
+          <div class="time-header-row">
+            <span class="time-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              Time (24h)
+            </span>
+            <div class="time-presets">
+              <button type="button" class="preset-pill" (click)="setTimePreset(9, 0)">09:00</button>
+              <button type="button" class="preset-pill" (click)="setTimePreset(12, 0)">12:00</button>
+              <button type="button" class="preset-pill" (click)="setTimePreset(15, 0)">15:00</button>
+              <button type="button" class="preset-pill" (click)="setTimePreset(18, 0)">18:00</button>
+            </div>
+          </div>
+
+          <div class="time-controls-row">
+            <!-- Hour Box -->
+            <div class="time-unit-box">
+              <button type="button" class="time-step-btn" (click)="stepHour(1)" title="Increase hour">▲</button>
+              <input
+                type="number"
+                class="time-num-input"
+                min="0"
+                max="23"
+                [value]="selectedHour() < 10 ? '0' + selectedHour() : selectedHour()"
+                (change)="onHourInput($event)"
+              />
+              <button type="button" class="time-step-btn" (click)="stepHour(-1)" title="Decrease hour">▼</button>
+            </div>
+
+            <span class="time-colon">:</span>
+
+            <!-- Minute Box -->
+            <div class="time-unit-box">
+              <button type="button" class="time-step-btn" (click)="stepMinute(5)" title="Increase 5 minutes">▲</button>
+              <input
+                type="number"
+                class="time-num-input"
+                min="0"
+                max="59"
+                [value]="selectedMinute() < 10 ? '0' + selectedMinute() : selectedMinute()"
+                (change)="onMinuteInput($event)"
+              />
+              <button type="button" class="time-step-btn" (click)="stepMinute(-5)" title="Decrease 5 minutes">▼</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Action Footer -->
+      <div class="dp-footer">
+        <button type="button" class="dp-action-btn dp-btn-link" (click)="pickToday()">
+          {{ mode() === 'DateTime' ? 'Current Time' : 'Today' }}
+        </button>
+
+        <div class="footer-right">
+          @if (selectedDate()) {
+            <button type="button" class="dp-action-btn dp-btn-clear" (click)="clearValue()">
+              Clear
+            </button>
+          }
+          <button type="button" class="dp-action-btn dp-btn-apply" (click)="applyAndClose()">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

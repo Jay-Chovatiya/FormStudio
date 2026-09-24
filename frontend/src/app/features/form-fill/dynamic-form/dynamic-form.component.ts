@@ -15,9 +15,10 @@ import { FormSubmission } from '../../../core/models/form-submission';
 import { FormDefinition } from '../../../core/models/form-definition';
 import { MockBackendService } from '../../../core/services/mock-backend.service';
 import { TitleCasePipe } from '@angular/common';
+import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 
 @Component({
-  imports: [ReactiveFormsModule, TitleCasePipe],
+  imports: [ReactiveFormsModule, TitleCasePipe, DatePickerComponent],
   selector: 'app-dynamic-form',
   styleUrl: './dynamic-form.component.scss',
   templateUrl: './dynamic-form.component.html',
@@ -93,16 +94,11 @@ export class DynamicFormComponent implements OnInit {
 
   getInputType(fieldType: FieldTypes): string {
     switch (fieldType) {
-      case 'Textbox':
-        return 'text';
       case 'Email':
         return 'email';
       case 'Number':
         return 'number';
-      case 'Date':
-        return 'date';
-      case 'DateTime':
-        return 'datetime-local';
+      case 'Textbox':
       default:
         return 'text';
     }

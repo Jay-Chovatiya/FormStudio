@@ -17,9 +17,18 @@ import { defaultValueValidator } from '../../../shared/validators/default-value.
 import { futureDateValidator } from '../../../shared/validators/future-date.validator';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { dateRangeValidator } from '../../../shared/validators/date-range.validator';
+import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 
 @Component({
-  imports: [UpperCasePipe, TitleCasePipe, ReactiveFormsModule, CdkDrag, CdkDropList, CdkDragHandle],
+  imports: [
+    UpperCasePipe,
+    TitleCasePipe,
+    ReactiveFormsModule,
+    CdkDrag,
+    CdkDropList,
+    CdkDragHandle,
+    DatePickerComponent,
+  ],
   selector: 'app-properties-panel',
   styleUrl: './properties-panel.component.scss',
   templateUrl: './properties-panel.component.html',
@@ -415,16 +424,11 @@ export class PropertiesPanelComponent {
 
   getInputType(fieldType: FieldTypes): string {
     switch (fieldType) {
-      case 'Textbox':
-        return 'text';
       case 'Email':
         return 'email';
       case 'Number':
         return 'number';
-      case 'Date':
-        return 'date';
-      case 'DateTime':
-        return 'datetime-local';
+      case 'Textbox':
       default:
         return 'text';
     }

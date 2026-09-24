@@ -237,6 +237,12 @@
                 formControlName="default"
                 placeholder="Default multiline text..."
               ></textarea>
+            } @else if (field.type === 'Date' || field.type === 'DateTime') {
+              <app-date-picker
+                formControlName="default"
+                [mode]="field.type"
+                placeholder="Default value..."
+              ></app-date-picker>
             } @else {
               <input
                 class="fs-input"
@@ -559,12 +565,12 @@
 
         <div class="form-field-item">
           <label class="fs-label" for="frm-startdate">Start Date</label>
-          <input
+          <app-date-picker
             id="frm-startdate"
-            class="fs-input"
-            type="datetime-local"
             formControlName="startDate"
-          />
+            mode="Date"
+            placeholder="Select start date..."
+          ></app-date-picker>
           @if (
             formForm.controls.startDate.hasError('pastDate') && formForm.controls.startDate.touched
           ) {
@@ -574,12 +580,12 @@
 
         <div class="form-field-item">
           <label class="fs-label" for="frm-enddate">End Date</label>
-          <input
+          <app-date-picker
             id="frm-enddate"
-            class="fs-input"
-            type="datetime-local"
             formControlName="endDate"
-          />
+            mode="Date"
+            placeholder="Select end date..."
+          ></app-date-picker>
           @if (
             formForm.controls.endDate.hasError('pastDate') && formForm.controls.endDate.touched
           ) {

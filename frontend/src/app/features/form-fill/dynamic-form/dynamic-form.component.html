@@ -116,6 +116,13 @@
                           </label>
                         }
                       </div>
+                    } @else if (field.type === 'Date' || field.type === 'DateTime') {
+                      <app-date-picker
+                        [id]="field.name"
+                        [formControlName]="field.name"
+                        [placeholder]="field.placeholder ?? ''"
+                        [mode]="field.type"
+                      ></app-date-picker>
                     } @else {
                       <input
                         [id]="field.name"
