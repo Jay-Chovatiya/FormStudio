@@ -1,12 +1,12 @@
 <div class="builder-container">
   <header class="builder-header">
     <div class="header-brand">
-      <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm btn-header-action btn-back-list" (click)="backToList()" title="Back to Form Library">
+      <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm btn-header-action btn-back-list" (click)="backToList()" title="Back">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="19" y1="12" x2="5" y2="12"/>
           <polyline points="12 19 5 12 12 5"/>
         </svg>
-        <span class="btn-text">Forms List</span>
+        <span class="btn-text">Back</span>
       </button>
       <div class="brand-logo" title="FormStudio Builder">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -52,6 +52,17 @@
         </svg>
         <span class="btn-text">Preview</span>
       </button>
+
+      @if (form()?.id) {
+        <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm btn-header-action" (click)="openResponses()" title="View Submissions & Responses">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          <span class="btn-text">Responses</span>
+        </button>
+      }
 
       <button
         type="button"

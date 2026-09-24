@@ -1,6 +1,6 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, map } from 'rxjs';
 import { FormDefinition } from '../models/form-definition';
 import { MockBackendService } from './mock-backend.service';
 import { environment } from '../../../environment/environment';
@@ -54,7 +54,7 @@ export class FormService {
     if (this.useMock) {
       return of(this.mockBackend.deleteForm(id));
     }
-    return this.http.delete<boolean>(`${this.baseUrl}/${id}`);
+    return this.http.delete(`${this.baseUrl}/${id}`).pipe(map(() => true));
   }
 
   updateFormStatus(id: number, status: string): Observable<FormDefinition | null> {

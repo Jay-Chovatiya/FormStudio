@@ -1,7 +1,6 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormService } from '../../core/services/form.service';
 import { FormDefinition } from '../../core/models/form-definition';
 import { FormSection } from '../../core/models/form-section';
@@ -10,24 +9,24 @@ import { FormStatus } from '../../core/models/form-status';
 @Component({
   selector: 'app-form-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [FormsModule],
   templateUrl: './form-list.component.html',
   styleUrl: './form-list.component.scss'
 })
 export class FormListComponent implements OnInit {
-  private formService = inject(FormService);
-  private router = inject(Router);
+  private readonly formService = inject(FormService);
+  private readonly router = inject(Router);
 
-  forms = signal<FormDefinition[]>([]);
-  loading = signal<boolean>(true);
-  error = signal<string | null>(null);
+  readonly forms = signal<FormDefinition[]>([]);
+  readonly loading = signal<boolean>(true);
+  readonly error = signal<string | null>(null);
 
-  searchTerm = signal<string>('');
-  selectedStatus = signal<string>('ALL');
+  readonly searchTerm = signal<string>('');
+  readonly selectedStatus = signal<string>('ALL');
 
-  allowedStatuses: FormStatus[] = ['Draft', 'Published', 'Unpublished', 'Archived'];
+  readonly allowedStatuses: FormStatus[] = ['Draft', 'Published', 'Unpublished', 'Archived'];
 
-  filteredForms = computed(() => {
+  readonly filteredForms = computed(() => {
     const search = this.searchTerm().toLowerCase().trim();
     const status = this.selectedStatus();
 
@@ -57,7 +56,7 @@ export class FormListComponent implements OnInit {
         this.forms.set(data);
         this.loading.set(false);
       },
-      error: (err: any) => {
+      error: (err: unknown) => {
         console.error('Failed to load forms:', err);
         this.error.set('Failed to connect to backend server at http://localhost:5000. Please ensure the backend is running.');
         this.loading.set(false);
@@ -75,8 +74,9 @@ export class FormListComponent implements OnInit {
           this.forms.update((list: FormDefinition[]) => list.map(f => f.id === form.id ? { ...f, status: typedStatus } : f));
         }
       },
-      error: (err: any) => {
-        alert(`Failed to update status: ${err.message || 'Error occurred'}`);
+      error: (err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Error occurred';
+        alert(`Failed to update status: ${message}`);
       }
     });
   }
@@ -91,7 +91,7 @@ export class FormListComponent implements OnInit {
           this.loadForms();
         }
       },
-      error: (_err: any) => {
+      error: () => {
         alert('Failed to duplicate form.');
       }
     });
@@ -103,10 +103,10 @@ export class FormListComponent implements OnInit {
 
     if (confirm(`Are you sure you want to delete form "${form.name}"?`)) {
       this.formService.deleteForm(form.id).subscribe({
-        next: (success: boolean) => {
-          if (success) {
-            this.forms.update((list: FormDefinition[]) => list.filter(f => f.id !== form.id));
-          }
+        next: () => {
+          this.forms.update((list: FormDefinition[]) =>
+            list.filter((f) => f.id !== form.id)
+          );
         },
         error: () => {
           alert('Failed to delete form.');
@@ -126,6 +126,11 @@ export class FormListComponent implements OnInit {
   onPreviewForm(form: FormDefinition, event: Event): void {
     event.stopPropagation();
     this.router.navigate(['/forms', form.id, 'preview']);
+  }
+
+  onViewResponses(form: FormDefinition, event: Event): void {
+    event.stopPropagation();
+    this.router.navigate(['/forms', form.id, 'responses']);
   }
 
   getStatusBadgeClass(status: string): string {

@@ -124,7 +124,7 @@ namespace FormStudio.Application.Services
             FormDefinitionEntity duplicatedForm = new FormDefinitionEntity
             {
                 Name = $"{sourceForm.Name} (Copy)",
-                Code = $"{sourceForm.Code}-copy-{randomSuffix}",
+                Code = $"{sourceForm.Code}_{randomSuffix}",
                 Description = sourceForm.Description,
                 Category = sourceForm.Category,
                 Status = "Draft",

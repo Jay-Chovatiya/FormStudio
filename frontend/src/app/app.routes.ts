@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { FormListComponent } from './features/form-list/form-list.component';
 import { FormBuilderComponent } from './features/form-builder/form-builder.component';
-import { DynamicFormComponent } from './features/form-fill/dynamic-form/dynamic-form.component';
 
 export const routes: Routes = [
   {
@@ -21,7 +20,9 @@ export const routes: Routes = [
   },
   {
     path: 'forms/:id/fill',
-    component: DynamicFormComponent,
+    loadComponent: () =>
+      import('./features/form-fill/dynamic-form/dynamic-form.component')
+        .then(m => m.DynamicFormComponent),
     title: 'Fill Form - FormStudio',
   },
   {
@@ -30,5 +31,12 @@ export const routes: Routes = [
       import('./features/form-preview/form-preview/form-preview.component')
         .then(m => m.FormPreviewComponent),
     title: 'Form Preview - FormStudio',
+  },
+  {
+    path: 'forms/:id/responses',
+    loadComponent: () =>
+      import('./features/form-responses/form-responses.component')
+        .then(m => m.FormResponsesComponent),
+    title: 'Form Responses - FormStudio',
   },
 ];

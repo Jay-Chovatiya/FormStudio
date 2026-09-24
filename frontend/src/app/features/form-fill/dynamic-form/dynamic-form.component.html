@@ -1,203 +1,349 @@
-@if (formDefinition(); as currentForm) {
-  @if (submitted()) {
-    <div class="df-submission-success">
-      <div class="success-icon">
-        <svg
-          width="40"
-          height="40"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-          <polyline points="22 4 12 14.01 9 11.01" />
-        </svg>
-      </div>
-      <h2 class="success-title">
-        {{ currentForm.confirmationMessage || 'Form submitted successfully.' }}
-      </h2>
-      @if (isPreview()) {
-        <div class="preview-mode-alert">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="16" x2="12" y2="12" />
-            <line x1="12" y1="8" x2="12.01" y2="8" />
-          </svg>
-          <span
-            ><strong>Preview Mode:</strong> Validation passed successfully! No response data was
-            saved to the server or database.</span
-          >
+@if (loading()) {
+  <div class="df-state-card">
+    <div class="spinner"></div>
+    <p>Loading form...</p>
+  </div>
+} @else if (error()) {
+  <div class="df-state-card error-state">
+    <div class="state-icon">⚠️</div>
+    <h3>Unable to Load Form</h3>
+    <p>{{ error() }}</p>
+    <button type="button" class="fs-btn fs-btn-secondary" (click)="backToForms()">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="19" y1="12" x2="5" y2="12" />
+        <polyline points="12 19 5 12 12 5" />
+      </svg>
+      Back
+    </button>
+  </div>
+} @else if (activeForm(); as currentForm) {
+  <div class="public-form-shell" [class.is-preview-shell]="isPreview()">
+    <div class="public-form-card" [style.backgroundColor]="currentForm.theme || null">
+      @if (currentForm.logoUrl) {
+        <div class="public-logo-wrapper">
+          <img [src]="currentForm.logoUrl" alt="Form Logo" class="public-logo" />
         </div>
       }
-      <div class="success-actions">
-        <button type="button" class="fs-btn fs-btn-primary" (click)="resetForm()">
-          {{ isPreview() ? 'Test Form Again' : 'Submit Another Response' }}
-        </button>
-      </div>
-    </div>
-  } @else {
-    <form
-      [formGroup]="form"
-      (ngSubmit)="submit()"
-      class="dynamic-form-body"
-      [style.backgroundColor]="currentForm.theme || null"
-      novalidate
-    >
-      @for (section of currentForm.sections; track section.guid || section.id) {
-        @if (section.visibility) {
-          <section class="df-section" [style.backgroundColor]="section.theme || null">
-            <h2 class="df-section-title">{{ section.title }}</h2>
 
-            @if (section.description) {
-              <p class="df-section-desc">{{ section.description }}</p>
-            }
-
-            <div class="df-fields-grid">
-              @for (field of section.fields; track field.guid || field.id) {
-                @if (field.visibility) {
-                  <div class="df-field-group">
-                    @if (field.type !== 'Checkbox') {
-                      <label [for]="field.name" class="df-field-label">
-                        @if (field.icon) {
-                          <span class="df-field-icon">{{ field.icon }}</span>
-                        }
-                        {{ field.label | titlecase }}
-                        @if (isFieldRequired(field)) {
-                          <span class="required-star">*</span>
-                        }
-                      </label>
-                    }
-
-                    @if (field.type === 'Dropdown') {
-                      <select [id]="field.name" class="fs-select" [formControlName]="field.name">
-                        <option value="">Select option...</option>
-                        @for (option of field.options ?? []; track option.id) {
-                          <option [value]="option.value">{{ option.label }}</option>
-                        }
-                      </select>
-                    } @else if (field.type === 'Checkbox') {
-                      <label class="fs-checkbox-label">
-                        <input type="checkbox" [id]="field.name" [formControlName]="field.name" />
-                        @if (field.icon) {
-                          <span class="df-field-icon">{{ field.icon }}</span>
-                        }
-                        <span>{{ field.placeholder || field.label }}</span>
-                      </label>
-                    } @else if (field.type === 'Textarea') {
-                      <textarea
-                        [id]="field.name"
-                        class="fs-textarea"
-                        [formControlName]="field.name"
-                        [placeholder]="field.placeholder ?? ''"
-                      ></textarea>
-                    } @else if (field.type === 'RadioButton') {
-                      <div class="df-radio-group">
-                        @for (option of field.options ?? []; track option.id) {
-                          <label class="fs-radio-label" [for]="field.id + '-' + option.id">
-                            <input
-                              type="radio"
-                              [id]="field.id + '-' + option.id"
-                              [formControlName]="field.name"
-                              [value]="option.value"
-                            />
-                            <span>{{ option.label }}</span>
-                          </label>
-                        }
-                      </div>
-                    } @else if (field.type === 'Date' || field.type === 'DateTime') {
-                      <app-date-picker
-                        [id]="field.name"
-                        [formControlName]="field.name"
-                        [placeholder]="field.placeholder ?? ''"
-                        [mode]="field.type"
-                      ></app-date-picker>
-                    } @else {
-                      <input
-                        [id]="field.name"
-                        class="fs-input"
-                        [type]="getInputType(field.type)"
-                        [formControlName]="field.name"
-                        [placeholder]="field.placeholder ?? ''"
-                      />
-                    }
-
-                    @if (field.helperDescription) {
-                      <span class="df-helper-text">{{ field.helperDescription }}</span>
-                    }
-
-                    @let control = getControl(field.name);
-
-                    @if (control?.invalid && control?.touched) {
-                      <div class="df-errors-list">
-                        @if (control?.errors?.['required']) {
-                          <span class="fs-error-message">{{ field.label }} is required.</span>
-                        }
-                        @if (control?.errors?.['email']) {
-                          <span class="fs-error-message"
-                            >{{ field.label }} must be a valid email address.</span
-                          >
-                        }
-                        @if (control?.errors?.['minlength']) {
-                          <span class="fs-error-message">
-                            {{ field.label }} must be at least
-                            {{ control?.errors?.['minlength']?.requiredLength }} characters.
-                          </span>
-                        }
-                        @if (control?.errors?.['maxlength']) {
-                          <span class="fs-error-message">
-                            {{ field.label }} must be at most
-                            {{ control?.errors?.['maxlength']?.requiredLength }} characters.
-                          </span>
-                        }
-                        @if (control?.errors?.['min']) {
-                          <span class="fs-error-message"
-                            >{{ field.label }} must be at least
-                            {{ control?.errors?.['min']?.min }}.</span
-                          >
-                        }
-                        @if (control?.errors?.['max']) {
-                          <span class="fs-error-message"
-                            >{{ field.label }} must be at most
-                            {{ control?.errors?.['max']?.max }}.</span
-                          >
-                        }
-                        @if (control?.errors?.['pattern']) {
-                          <span class="fs-error-message"
-                            >{{ field.label }} has an invalid format.</span
-                          >
-                        }
-                      </div>
-                    }
-                  </div>
-                }
-              }
-            </div>
-          </section>
-        }
+      @if (currentForm.headerText) {
+        <div class="public-header-banner">
+          {{ currentForm.headerText }}
+        </div>
       }
 
-      <div class="df-form-actions">
-        <button type="submit" class="fs-btn fs-btn-primary">
-          {{ currentForm.submitButtonText || 'Submit' }}
-        </button>
-        <button type="button" class="fs-btn fs-btn-secondary" (click)="resetForm()">
-          {{ currentForm.cancelButtonText || 'Cancel' }}
-        </button>
+      <div class="public-title-group">
+        <h1 class="public-title">{{ currentForm.name }}</h1>
+        @if (currentForm.description) {
+          <p class="public-desc">{{ currentForm.description }}</p>
+        }
       </div>
-    </form>
-  }
+
+      @if (isPreview()) {
+        <div class="df-alert df-alert-preview">
+          <span class="alert-icon">👁️</span>
+          <div class="alert-content">
+            <strong>Preview Mode</strong>
+            <p>
+              You are viewing this form exactly as respondents will see it. Validation is active,
+              but responses will not be saved.
+            </p>
+          </div>
+        </div>
+      }
+
+      @if (statusWarning(); as warning) {
+        <div class="df-alert df-alert-warning">
+          <span class="alert-icon">⚠️</span>
+          <div class="alert-content">
+            <strong>Form Closed / Inactive</strong>
+            <p>{{ warning.message }}</p>
+          </div>
+        </div>
+      }
+
+      @if (hasRestoredDraft() && !submitted() && !isPreview()) {
+        <div class="df-alert df-alert-info">
+          <span class="alert-icon">📝</span>
+          <div class="alert-content">
+            <span>You have resumed a previously saved draft on this device.</span>
+            <button type="button" class="btn-discard-draft" (click)="discardDraft()">
+              Discard Draft
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (draftSaved()) {
+        <div class="df-alert df-alert-success">
+          <span class="alert-icon">💾</span>
+          <span>Draft successfully saved to this browser! You can return later to finish.</span>
+        </div>
+      }
+
+      @if (submitted()) {
+        <div class="df-submission-success">
+          <div class="success-icon">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <h2 class="success-title">
+            {{ currentForm.confirmationMessage || 'Thank you! Your response has been recorded.' }}
+          </h2>
+          @if (isPreview()) {
+            <div class="preview-mode-alert">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              <span
+                ><strong>Preview Mode:</strong> Validation passed successfully! No response data was
+                saved to the database.</span
+              >
+            </div>
+          }
+          <div class="success-actions">
+            @if (currentForm.allowMultipleSubmissions || isPreview()) {
+              <button type="button" class="fs-btn fs-btn-primary" (click)="resetForm()">
+                {{ isPreview() ? 'Test Form Again' : 'Submit Another Response' }}
+              </button>
+            } @else {
+              <p class="single-sub-note">
+                Thank you. This form only allows one response per respondent.
+              </p>
+            }
+          </div>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="submit()" class="dynamic-form-body" novalidate>
+          @for (section of currentForm.sections; track section.guid || section.id) {
+            @if (section.visibility) {
+              <section
+                class="df-section"
+                [class.has-custom-theme]="!!section.theme"
+                [style.backgroundColor]="section.theme || null"
+              >
+                <h2 class="df-section-title">{{ section.title }}</h2>
+
+                @if (section.description) {
+                  <p class="df-section-desc">{{ section.description }}</p>
+                }
+
+                <div class="df-fields-grid">
+                  @for (field of section.fields; track field.guid || field.id) {
+                    @if (field.visibility) {
+                      <div class="df-field-group">
+                        @if (field.type !== 'Checkbox') {
+                          <label [for]="field.name" class="df-field-label">
+                            @if (field.icon) {
+                              <span class="df-field-icon">{{ field.icon }}</span>
+                            }
+                            {{ field.label | titlecase }}
+                            @if (isFieldRequired(field)) {
+                              <span class="required-star">*</span>
+                            }
+                          </label>
+                        }
+
+                        @if (field.type === 'Dropdown') {
+                          <select
+                            [id]="field.name"
+                            class="fs-select"
+                            [formControlName]="field.name"
+                          >
+                            <option value="">Select option...</option>
+                            @for (option of field.options ?? []; track option.id) {
+                              <option [value]="option.value">{{ option.label }}</option>
+                            }
+                          </select>
+                        } @else if (field.type === 'Checkbox') {
+                          <label class="fs-checkbox-label">
+                            <input
+                              type="checkbox"
+                              [id]="field.name"
+                              [formControlName]="field.name"
+                            />
+                            @if (field.icon) {
+                              <span class="df-field-icon">{{ field.icon }}</span>
+                            }
+                            <span>{{ field.placeholder || field.label }}</span>
+                          </label>
+                        } @else if (field.type === 'Textarea') {
+                          <textarea
+                            [id]="field.name"
+                            class="fs-textarea"
+                            [formControlName]="field.name"
+                            [placeholder]="field.placeholder ?? ''"
+                          ></textarea>
+                        } @else if (field.type === 'RadioButton') {
+                          <div class="df-radio-group">
+                            @for (option of field.options ?? []; track option.id) {
+                              <label class="fs-radio-label" [for]="field.id + '-' + option.id">
+                                <input
+                                  type="radio"
+                                  [id]="field.id + '-' + option.id"
+                                  [formControlName]="field.name"
+                                  [value]="option.value"
+                                />
+                                <span>{{ option.label }}</span>
+                              </label>
+                            }
+                          </div>
+                        } @else if (field.type === 'Date' || field.type === 'DateTime') {
+                          <app-date-picker
+                            [id]="field.name"
+                            [formControlName]="field.name"
+                            [placeholder]="field.placeholder ?? ''"
+                            [mode]="field.type"
+                          ></app-date-picker>
+                        } @else {
+                          <input
+                            [id]="field.name"
+                            class="fs-input"
+                            [type]="getInputType(field.type)"
+                            [formControlName]="field.name"
+                            [placeholder]="field.placeholder ?? ''"
+                          />
+                        }
+
+                        @if (field.helperDescription) {
+                          <span class="df-helper-text">{{ field.helperDescription }}</span>
+                        }
+
+                        @let control = getControl(field.name);
+
+                        @if (control?.invalid && control?.touched) {
+                          <div class="df-errors-list">
+                            @if (control?.errors?.['required']) {
+                              <span class="fs-error-message">{{ field.label }} is required.</span>
+                            }
+                            @if (control?.errors?.['email']) {
+                              <span class="fs-error-message"
+                                >{{ field.label }} must be a valid email address.</span
+                              >
+                            }
+                            @if (control?.errors?.['minlength']) {
+                              <span class="fs-error-message">
+                                {{ field.label }} must be at least
+                                {{ control?.errors?.['minlength']?.requiredLength }} characters.
+                              </span>
+                            }
+                            @if (control?.errors?.['maxlength']) {
+                              <span class="fs-error-message">
+                                {{ field.label }} must be at most
+                                {{ control?.errors?.['maxlength']?.requiredLength }} characters.
+                              </span>
+                            }
+                            @if (control?.errors?.['min']) {
+                              <span class="fs-error-message"
+                                >{{ field.label }} must be at least
+                                {{ control?.errors?.['min']?.min }}.</span
+                              >
+                            }
+                            @if (control?.errors?.['max']) {
+                              <span class="fs-error-message"
+                                >{{ field.label }} must be at most
+                                {{ control?.errors?.['max']?.max }}.</span
+                              >
+                            }
+                            @if (control?.errors?.['pattern']) {
+                              <span class="fs-error-message"
+                                >{{ field.label }} has an invalid format.</span
+                              >
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              </section>
+            }
+          }
+
+          <div class="df-form-actions">
+            <button
+              type="submit"
+              class="fs-btn fs-btn-primary"
+              [disabled]="isSubmitting() || (statusWarning()?.isBlocked ?? false)"
+            >
+              {{ isSubmitting() ? 'Submitting...' : currentForm.submitButtonText || 'Submit' }}
+            </button>
+
+            <button type="button" class="fs-btn fs-btn-secondary" (click)="resetForm()">
+              {{ currentForm.cancelButtonText || 'Cancel' }}
+            </button>
+
+            @if (currentForm.allowSaveAsDraft && !isPreview()) {
+              <button
+                type="button"
+                class="fs-btn fs-btn-secondary btn-save-draft"
+                (click)="saveAsDraft()"
+                title="Save draft to finish later"
+              >
+                💾 Save Draft
+              </button>
+            }
+          </div>
+        </form>
+      }
+
+      @if (currentForm.footerText) {
+        <footer class="public-footer-text">
+          {{ currentForm.footerText }}
+        </footer>
+      }
+    </div>
+  </div>
 } @else {
-  <p class="df-no-data">No form data available.</p>
+  <div class="df-state-card">
+    <div class="state-icon">📋</div>
+    <h3>No Form Selected</h3>
+    <p>Please specify a valid form ID to view and submit responses.</p>
+    <button type="button" class="fs-btn fs-btn-secondary" (click)="backToForms()">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="19" y1="12" x2="5" y2="12" />
+        <polyline points="12 19 5 12 12 5" />
+      </svg>
+      Back
+    </button>
+  </div>
 }

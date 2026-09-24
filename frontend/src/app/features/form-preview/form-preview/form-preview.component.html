@@ -1,51 +1,16 @@
 <div class="preview-page-wrapper">
   <header class="preview-navbar">
-    <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm" (click)="backToBuilder()">
+    <button type="button" class="fs-btn fs-btn-secondary fs-btn-sm" (click)="goBack()" title="Back">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="19" y1="12" x2="5" y2="12"/>
         <polyline points="12 19 5 12 12 5"/>
       </svg>
-      Back to Builder
+      Back
     </button>
     <span class="preview-badge">Form Preview Mode</span>
   </header>
 
   <main class="preview-content">
-    @if (form(); as currentForm) {
-      <div class="form-preview-card" [style.backgroundColor]="currentForm.theme || null">
-        @if (currentForm.logoUrl) {
-          <div class="preview-logo-wrapper">
-            <img [src]="currentForm.logoUrl" alt="Form Logo" class="preview-logo" />
-          </div>
-        }
-
-        @if (currentForm.headerText) {
-          <div class="preview-header-banner">
-            {{ currentForm.headerText }}
-          </div>
-        }
-
-        <div class="preview-form-title-group">
-          <h1 class="form-title">{{ currentForm.name }}</h1>
-          @if (currentForm.description) {
-            <p class="form-description">{{ currentForm.description }}</p>
-          }
-        </div>
-
-        <app-dynamic-form [formDefinition]="currentForm" [isPreview]="true" />
-
-        @if (currentForm.footerText) {
-          <footer class="preview-footer-text">
-            {{ currentForm.footerText }}
-          </footer>
-        }
-      </div>
-    } @else {
-      <div class="no-form-card">
-        <h3>No Form Data Available</h3>
-        <p>Return to the Form Builder to configure a form.</p>
-        <button type="button" class="fs-btn fs-btn-primary" (click)="backToBuilder()">Go to Builder</button>
-      </div>
-    }
+    <app-dynamic-form [formDefinition]="form()" [isPreview]="true" />
   </main>
 </div>

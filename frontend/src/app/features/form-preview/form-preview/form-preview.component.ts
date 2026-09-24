@@ -1,7 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilderState } from '../../../core/services/form-builder-state';
+import { FormService } from '../../../core/services/form.service';
+import { NavigationHistoryService } from '../../../core/services/navigation-history.service';
 import { DynamicFormComponent } from '../../form-fill/dynamic-form/dynamic-form.component';
-import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   imports: [DynamicFormComponent],
@@ -9,23 +11,33 @@ import { Router } from '@angular/router';
   styleUrl: './form-preview.component.scss',
   templateUrl: './form-preview.component.html',
 })
-export class FormPreviewComponent {
+export class FormPreviewComponent implements OnInit {
   private readonly formBuilderState = inject(FormBuilderState);
-  private readonly router = inject(Router);
+  private readonly formService = inject(FormService);
+  private readonly navHistory = inject(NavigationHistoryService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly form = this.formBuilderState.form;
 
-  backToBuilder(): void {
-    const currentForm = this.form();
-    if (currentForm && currentForm.id && typeof currentForm.id === 'number' && currentForm.id < 1000000000) {
-      this.router.navigate(['/form-builder'], {
-        queryParams: { id: currentForm.id },
-        state: { fromPreview: true }
-      });
-    } else {
-      this.router.navigate(['/form-builder'], {
-        state: { fromPreview: true }
-      });
+  ngOnInit(): void {
+    if (!this.form()) {
+      const idParam = this.route.snapshot.paramMap.get('id');
+      if (idParam) {
+        const formId = Number(idParam);
+        if (!isNaN(formId) && formId > 0) {
+          this.formService.getFormById(formId).subscribe({
+            next: (formDef) => {
+              if (formDef) {
+                this.formBuilderState.setForm(formDef);
+              }
+            }
+          });
+        }
+      }
     }
+  }
+
+  goBack(): void {
+    this.navHistory.back();
   }
 }

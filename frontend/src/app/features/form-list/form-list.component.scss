@@ -247,19 +247,16 @@
 
   .card-footer {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     padding-top: 12px;
     border-top: 1px solid #f1f5f9;
 
-    .timestamps {
-      font-size: 11px;
-      color: #94a3b8;
-    }
-
     .card-actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 6px;
+      width: 100%;
+      justify-content: flex-end;
 
       .btn-icon-action {
         border: none;
@@ -271,8 +268,13 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.15s ease;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
 
         &.preview { &:hover { background: #eff6ff; color: #2563eb; } }
+        &.responses { &:hover { background: #f5f3ff; color: #7c3aed; } }
         &.duplicate { &:hover { background: #f0fdf4; color: #16a34a; } }
         &.delete { &:hover { background: #fef2f2; color: #dc2626; } }
       }

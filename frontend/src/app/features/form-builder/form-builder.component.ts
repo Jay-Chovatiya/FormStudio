@@ -66,7 +66,7 @@ export class FormBuilderComponent implements OnInit {
                   this.formBuilderState.setForm(formDef);
                 }
               },
-              error: (err: any) => {
+              error: (err: unknown) => {
                 console.error('Error fetching form details:', err);
               }
             });
@@ -98,7 +98,7 @@ export class FormBuilderComponent implements OnInit {
           alert('Form updated successfully!');
           if (savedForm) this.formBuilderState.setForm(savedForm);
         },
-        error: (_err: any) => {
+        error: () => {
           this.saving.set(false);
           alert('Failed to save form changes.');
         }
@@ -113,7 +113,7 @@ export class FormBuilderComponent implements OnInit {
             this.router.navigate(['/form-builder'], { queryParams: { id: createdForm.id } });
           }
         },
-        error: (_err: any) => {
+        error: () => {
           this.saving.set(false);
           alert('Failed to create form.');
         }
@@ -133,6 +133,13 @@ export class FormBuilderComponent implements OnInit {
     const currentForm = this.form();
     if (currentForm) {
       this.router.navigate(['/forms', currentForm.id, 'preview']);
+    }
+  }
+
+  openResponses(): void {
+    const currentForm = this.form();
+    if (currentForm && currentForm.id) {
+      this.router.navigate(['/forms', currentForm.id, 'responses']);
     }
   }
 

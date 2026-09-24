@@ -246,6 +246,14 @@ export class MockBackendService {
   deleteForm(id: number): boolean {
     const forms = this.getForms().filter((f) => f.id !== id);
     localStorage.setItem(FORMS_STORAGE_KEY, JSON.stringify(forms));
+
+    // Also clean up any submissions associated with this form
+    const rawSubs = localStorage.getItem(SUBMISSIONS_STORAGE_KEY);
+    if (rawSubs) {
+      const allSubs: FormSubmission[] = JSON.parse(rawSubs);
+      const remainingSubs = allSubs.filter((s) => s.formId !== id);
+      localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(remainingSubs));
+    }
     return true;
   }
 

@@ -42,90 +42,16 @@
   justify-content: center;
   align-items: flex-start;
   box-sizing: border-box;
-}
 
-.form-preview-card {
-  width: 100%;
-  max-width: 780px;
-  background-color: var(--fs-surface);
-  border: 1px solid var(--fs-border);
-  border-radius: var(--fs-radius-lg);
-  padding: var(--fs-space-xl);
-  box-shadow: var(--fs-shadow-md);
-  box-sizing: border-box;
-  transition: all 0.2s ease;
-}
-
-.preview-logo-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--fs-space-md);
-
-  .preview-logo {
-    max-height: 64px;
-    max-width: 100%;
-    object-fit: contain;
+  app-dynamic-form {
+    width: 100%;
+    max-width: 760px;
   }
-}
-
-.preview-header-banner {
-  background-color: var(--fs-primary-light);
-  color: var(--fs-primary);
-  font-weight: 600;
-  font-size: var(--fs-font-size-sm);
-  padding: var(--fs-space-sm) var(--fs-space-md);
-  border-radius: var(--fs-radius-md);
-  text-align: center;
-  margin-bottom: var(--fs-space-md);
-}
-
-.preview-form-title-group {
-  margin-bottom: var(--fs-space-lg);
-  border-bottom: 1px solid var(--fs-border);
-  padding-bottom: var(--fs-space-md);
-
-  .form-title {
-    font-size: clamp(1.4rem, 2.5vw, 1.85rem);
-    font-weight: 800;
-    color: var(--fs-text-main);
-    line-height: 1.25;
-  }
-
-  .form-description {
-    font-size: var(--fs-font-size-sm);
-    color: var(--fs-text-muted);
-    margin-top: var(--fs-space-2xs);
-    line-height: 1.5;
-  }
-}
-
-.preview-footer-text {
-  margin-top: var(--fs-space-xl);
-  padding-top: var(--fs-space-md);
-  border-top: 1px solid var(--fs-border);
-  text-align: center;
-  font-size: var(--fs-font-size-xs);
-  color: var(--fs-text-muted);
-}
-
-.no-form-card {
-  text-align: center;
-  padding: var(--fs-space-xl);
-  background-color: var(--fs-surface);
-  border-radius: var(--fs-radius-lg);
-  box-shadow: var(--fs-shadow-sm);
-  max-width: 480px;
-  width: 100%;
 }
 
 @media (max-width: 768px) {
   .preview-content {
     padding: var(--fs-space-lg) var(--fs-space-sm);
-  }
-
-  .form-preview-card {
-    padding: var(--fs-space-lg);
-    border-radius: var(--fs-radius-md);
   }
 }
 
@@ -142,11 +68,5 @@
 
   .preview-content {
     padding: var(--fs-space-sm) var(--fs-space-2xs);
-  }
-
-  .form-preview-card {
-    padding: var(--fs-space-md) var(--fs-space-sm);
-    border-radius: var(--fs-radius-sm);
-    box-shadow: var(--fs-shadow-sm);
   }
 }

@@ -1,6 +1,6 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, map } from 'rxjs';
 import { FormSubmission } from '../models/form-submission';
 import { FormDefinition } from '../models/form-definition';
 import { MockBackendService } from './mock-backend.service';
@@ -31,7 +31,7 @@ export class ResponseService {
     if (this.useMock) {
       return of(this.mockBackend.deleteSubmission(submissionId));
     }
-    return this.http.delete<boolean>(`${this.baseUrl}/${formId}/submissions/${submissionId}`);
+    return this.http.delete(`${this.baseUrl}/${formId}/submissions/${submissionId}`).pipe(map(() => true));
   }
 
   exportToCsv(form: FormDefinition, submissions: FormSubmission[]): void {
@@ -39,10 +39,10 @@ export class ResponseService {
 
     // Collect all field headers
     const allFields = form.sections.flatMap((s) => s.fields);
-    const headers = ['Submission ID', 'Submitted At', 'Respondent', ...allFields.map((f) => f.label)];
+    const headers = ['Submission ID', 'Submitted At', ...allFields.map((f) => f.label)];
 
     const rows = submissions.map((sub) => {
-      const responseMap = new Map<number, any>();
+      const responseMap = new Map<number, unknown>();
       sub.responses.forEach((r) => responseMap.set(r.fieldId, r.value));
 
       const fieldValues = allFields.map((field) => {

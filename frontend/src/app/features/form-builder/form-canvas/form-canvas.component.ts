@@ -13,13 +13,13 @@ import { TitleCasePipe } from '@angular/common';
   templateUrl: './form-canvas.component.html',
 })
 export class FormCanvasComponent {
-  private formBuilderState = inject(FormBuilderState);
+  private readonly formBuilderState = inject(FormBuilderState);
   private readonly router = inject(Router);
 
-  form = this.formBuilderState.form;
-  activeTab = this.formBuilderState.activeTab;
-  canUndo = this.formBuilderState.canUndo;
-  canRedo = this.formBuilderState.canRedo;
+  readonly form = this.formBuilderState.form;
+  readonly activeTab = this.formBuilderState.activeTab;
+  readonly canUndo = this.formBuilderState.canUndo;
+  readonly canRedo = this.formBuilderState.canRedo;
 
   openFormProperties(): void {
     this.formBuilderState.selectFormSettings();
@@ -76,7 +76,7 @@ export class FormCanvasComponent {
     this.formBuilderState.moveSection(event.previousIndex, event.currentIndex);
   }
 
-  dropField(event: CdkDragDrop<any>): void {
+  dropField(event: CdkDragDrop<string | number>): void {
     if (
       event.previousContainer === event.container &&
       event.previousIndex === event.currentIndex
@@ -84,9 +84,8 @@ export class FormCanvasComponent {
       return;
     }
 
-    // Check if dragged from field palette
     if (event.previousContainer.id === 'palette-drop-list') {
-      const fieldType = event.item.data.type;
+      const fieldType = (event.item.data as { type: string }).type as any;
       const targetSectionId = event.container.data;
       this.formBuilderState.addFieldToSection(targetSectionId, fieldType, event.currentIndex);
       return;
