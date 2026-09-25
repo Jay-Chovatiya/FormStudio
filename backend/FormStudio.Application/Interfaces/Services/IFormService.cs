@@ -14,5 +14,6 @@ namespace FormStudio.Application.Interfaces.Services
         Task<FormDefinitionDto?> PublishFormAsync(int id);
         Task<FormDefinitionDto?> UnpublishFormAsync(int id);
         Task<FormDefinitionDto?> DuplicateFormAsync(int id);
+        Task<bool> IsFormCodeUniqueAsync(string code, int? excludeId = null);
     }
 }

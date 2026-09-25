@@ -30,13 +30,23 @@ namespace FormStudio.Api.Middleware
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+            int statusCode = exception switch
+            {
+                ArgumentException or InvalidOperationException => (int)HttpStatusCode.BadRequest,
+                KeyNotFoundException => (int)HttpStatusCode.NotFound,
+                _ => (int)HttpStatusCode.InternalServerError
+            };
+
+            context.Response.StatusCode = statusCode;
 
             object response = new
             {
-                status = context.Response.StatusCode,
-                message = "An error occurred while processing your request.",
-                detail = exception.Message
+                status = statusCode,
+                message = statusCode == (int)HttpStatusCode.InternalServerError 
+                    ? "An error occurred while processing your request." 
+                    : exception.Message,
+                detail = exception.Message,
             };
 
             string json = JsonSerializer.Serialize(response);

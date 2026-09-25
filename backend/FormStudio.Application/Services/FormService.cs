@@ -454,5 +454,13 @@ namespace FormStudio.Application.Services
                 }
             }
         }
+
+        public async Task<bool> IsFormCodeUniqueAsync(string code, int? excludeId = null)
+        {
+            if (string.IsNullOrWhiteSpace(code)) return true;
+            string trimmedCode = code.Trim();
+            return !await _unitOfWork.Repository<FormDefinitionEntity>()
+                .ExistAsync(f => f.Code.ToLower() == trimmedCode.ToLower() && (!excludeId.HasValue || f.Id != excludeId.Value));
+        }
     }
 }

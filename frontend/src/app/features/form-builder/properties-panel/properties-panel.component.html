@@ -42,7 +42,7 @@
               <span class="fs-error-message"
                 >Must start with a letter & use letters, numbers, or underscores.</span
               >
-            } @else if (fieldForm.controls.name.hasError('duplicateFieldName')) {
+            } @else if (fieldForm.controls.name.hasError('duplicateValue')) {
               <span class="fs-error-message">Field name already exists.</span>
             }
           }
@@ -410,11 +410,13 @@
             formControlName="title"
             placeholder="Section Title"
           />
-          @if (
-            sectionForm.controls.title.hasError('requiredTrimmed') &&
-            sectionForm.controls.title.touched
-          ) {
-            <span class="fs-error-message">Section title is required.</span>
+          @if (sectionForm.controls.title.touched) {
+            @if (sectionForm.controls.title.hasError('requiredTrimmed')) {
+              <span class="fs-error-message">Section title is required.</span>
+            }
+            @if (sectionForm.controls.title.hasError('duplicateValue')) {
+              <span class="fs-error-message">Section title must be unique.</span>
+            }
           }
         </div>
 

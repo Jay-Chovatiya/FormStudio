@@ -11,13 +11,14 @@ import { UpperCasePipe, TitleCasePipe } from '@angular/common';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { requiredTrimmedValidator } from '../../../shared/validators/required-trimmed.validator';
 import { identifierValidator } from '../../../shared/validators/identifier.validator';
-import { duplicateFieldNameValidator } from '../../../shared/validators/duplicate-field-name.validator';
-import { uniqueOptionValueValidator } from '../../../shared/validators/unique-option-value.validator';
 import { defaultValueValidator } from '../../../shared/validators/default-value.validator';
 import { futureDateValidator } from '../../../shared/validators/future-date.validator';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { dateRangeValidator } from '../../../shared/validators/date-range.validator';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
+import { duplicateValueValidator } from '../../../shared/validators/duplicate-value.validator';
+import { uniqueOptionValueValidator } from '../../../shared/validators/unique-option-value.validator';
+import { FormSection } from '../../../core/models/form-section';
 
 @Component({
   imports: [
@@ -171,7 +172,12 @@ export class PropertiesPanelComponent {
   sectionForm = new FormGroup({
     title: new FormControl('', {
       nonNullable: true,
-      validators: [requiredTrimmedValidator],
+      validators: [requiredTrimmedValidator, duplicateValueValidator<FormSection>(
+        () => this.form()?.sections ?? [],
+        (section) => section.title,
+        (section) => section.guid ?? section.id,
+        () => this.formBuilderState.selectedSection()?.guid ?? this.formBuilderState.selectedSection()?.id ?? null
+      )],
     }),
     description: new FormControl('', {
       nonNullable: true,
@@ -219,9 +225,11 @@ export class PropertiesPanelComponent {
         validators: [
           requiredTrimmedValidator,
           identifierValidator,
-          duplicateFieldNameValidator(
-            () => this.formBuilderState.form()?.sections.flatMap((section) => section.fields) ?? [],
-            () => this.selectedField()?.guid ?? (this.selectedField()?.id ?? null),
+          duplicateValueValidator<FormField>(
+            () => this.form()?.sections.flatMap((section) => section.fields) ?? [],
+            (field) => field.name,
+            (field) => field.guid ?? field.id,
+            () => this.selectedField()?.guid ?? this.selectedField()?.id ?? null,
           ),
         ],
       }),
@@ -405,7 +413,8 @@ export class PropertiesPanelComponent {
         nonNullable: true,
       }),
       guid: new FormControl(
-        option.guid || (option.id !== undefined && option.id !== null ? String(option.id) : generateGuid()),
+        option.guid ||
+          (option.id !== undefined && option.id !== null ? String(option.id) : generateGuid()),
         {
           nonNullable: true,
         },
@@ -516,7 +525,7 @@ export class PropertiesPanelComponent {
 
   isValidationEnabled(type: 'required' | 'email'): boolean {
     const validations = this.currentValidations();
-    
+
     return validations.some((validation) => validation.type === type);
   }
 
@@ -622,7 +631,9 @@ export class PropertiesPanelComponent {
     this.clearPropertyError('pattern');
 
     if (value === '') {
-      this.currentValidations.set(validations.filter((validation) => validation.type !== 'pattern'));
+      this.currentValidations.set(
+        validations.filter((validation) => validation.type !== 'pattern'),
+      );
       this.fieldForm.updateValueAndValidity();
       return;
     }

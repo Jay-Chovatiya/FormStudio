@@ -89,7 +89,7 @@ export function stripGuidsFromForm(form: FormDefinition): FormDefinition {
           const { guid: _fieldGuid, ...cleanField } = field;
           cleanField.displayOrder = fieldIndex;
 
-          cleanField.default = cleanField.default !== undefined && cleanField.default !== null && cleanField.default !== ''
+          cleanField.default = cleanField.default !== undefined && cleanField.default !== null && String(cleanField.default).trim() !== ''
             ? String(cleanField.default)
             : null;
 

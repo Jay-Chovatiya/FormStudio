@@ -5,7 +5,7 @@ export const uniqueOptionValueValidator: ValidatorFn = (
 ): ValidationErrors | null => {
   const options = control as FormArray;
 
-  const values = options.controls.map((option) => option.get('value')?.value).filter(value => value.trimmed !== '');
+  const values = options.controls.map((option) => option.get('value')?.value).filter(value => value.trim() !== '');
 
   const uniqueValues = new Set(values);
 

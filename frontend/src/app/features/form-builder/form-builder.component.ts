@@ -98,9 +98,10 @@ export class FormBuilderComponent implements OnInit {
           alert('Form updated successfully!');
           if (savedForm) this.formBuilderState.setForm(savedForm);
         },
-        error: () => {
+        error: (err: any) => {
           this.saving.set(false);
-          alert('Failed to save form changes.');
+          const msg = this.extractErrorMessage(err, 'Failed to save form changes.');
+          alert(msg);
         }
       });
     } else {
@@ -113,12 +114,38 @@ export class FormBuilderComponent implements OnInit {
             this.router.navigate(['/form-builder'], { queryParams: { id: createdForm.id } });
           }
         },
-        error: () => {
+        error: (err: any) => {
           this.saving.set(false);
-          alert('Failed to create form.');
+          const msg = this.extractErrorMessage(err, 'Failed to create form.');
+          alert(msg);
         }
       });
     }
+  }
+
+  private extractErrorMessage(err: any, fallback: string): string {
+    const errorBody = err?.error;
+
+    if (errorBody?.status && (errorBody?.message || errorBody?.detail)) {
+      return errorBody.message || errorBody.detail;
+    }
+
+    if (errorBody && typeof errorBody === 'object' && !Array.isArray(errorBody)) {
+      const messages: string[] = [];
+      for (const [field, errors] of Object.entries(errorBody)) {
+        if (Array.isArray(errors)) {
+          for (const msg of errors) {
+            messages.push(`${field}: ${msg}`);
+          }
+        }
+      }
+      if (messages.length > 0) {
+        return messages.join('\n');
+      }
+    }
+
+    if (typeof errorBody === 'string') return errorBody;
+    return errorBody?.message || errorBody?.title || fallback;
   }
 
   undo(): void {
