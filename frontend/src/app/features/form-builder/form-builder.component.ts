@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef, HostListener } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FieldPaletteComponent } from './field-palette/field-palette.component';
 import { FormCanvasComponent } from './form-canvas/form-canvas.component';
@@ -31,6 +31,8 @@ export class FormBuilderComponent implements OnInit {
   readonly canUndo = this.formBuilderState.canUndo;
   readonly canRedo = this.formBuilderState.canRedo;
   saving = signal<boolean>(false);
+  publishing = signal<boolean>(false);
+  readonly isMoreMenuOpen = signal<boolean>(false);
   readonly mobileView = signal<'palette' | 'canvas' | 'properties'>('canvas');
 
   setMobileView(view: 'palette' | 'canvas' | 'properties'): void {
@@ -168,6 +170,69 @@ export class FormBuilderComponent implements OnInit {
     if (currentForm && currentForm.id) {
       this.router.navigate(['/forms', currentForm.id, 'responses']);
     }
+  }
+
+  togglePublishStatus(): void {
+    const currentForm = this.form();
+    if (!currentForm?.id) {
+      alert('Please save the form before publishing.');
+      return;
+    }
+
+    const isPublished = currentForm.status === 'Published';
+    this.publishing.set(true);
+
+    const action$ = isPublished
+      ? this.formService.unpublishForm(currentForm.id)
+      : this.formService.publishForm(currentForm.id);
+
+    action$.subscribe({
+      next: (updatedForm: FormDefinition | null) => {
+        this.publishing.set(false);
+        const nextStatus = isPublished ? 'Unpublished' : 'Published';
+        this.formBuilderState.updateFormMetadata({
+          status: updatedForm?.status || nextStatus,
+          updatedAt: updatedForm?.updatedAt || new Date().toISOString()
+        });
+        alert(`Form successfully ${isPublished ? 'unpublished' : 'published'}!`);
+      },
+      error: (err: unknown) => {
+        this.publishing.set(false);
+        const msg = this.extractErrorMessage(err, `Failed to ${isPublished ? 'unpublish' : 'publish'} form.`);
+        alert(msg);
+      }
+    });
+  }
+
+  toggleMoreMenu(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.isMoreMenuOpen.update((v) => !v);
+  }
+
+  closeMoreMenu(): void {
+    this.isMoreMenuOpen.set(false);
+  }
+
+  openFormSettings(): void {
+    this.formBuilderState.selectFormSettings();
+    this.setMobileView('properties');
+    this.closeMoreMenu();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.isMoreMenuOpen()) return;
+    const target = event.target as HTMLElement | null;
+    if (!target?.closest('.mobile-more-container')) {
+      this.closeMoreMenu();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeMoreMenu();
   }
 
   backToList(): void {

@@ -22,7 +22,6 @@ namespace FormStudio.Application.DTOs
         public string? Category { get; set; }
         public string Status { get; set; } = "Draft";
 
-        [FutureDate(ErrorMessage = "Start date must be a future date.")]
         [JsonConverter(typeof(DateTimeJsonConverter))]
         public DateTime? StartDate { get; set; }
 
@@ -56,6 +55,11 @@ namespace FormStudio.Application.DTOs
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            if (Id == 0 && StartDate.HasValue && StartDate.Value <= DateTime.Now)
+            {
+                yield return new ValidationResult("Start date must be a future date.", new[] { nameof(StartDate) });
+            }
+
             if (StartDate.HasValue && EndDate.HasValue && EndDate.Value <= StartDate.Value)
             {
                 yield return new ValidationResult("End date must be greater than start date.", new[] { nameof(EndDate) });

@@ -70,6 +70,9 @@
   border-radius: var(--fs-radius-lg);
   padding: var(--fs-space-lg);
   box-shadow: var(--fs-shadow-xs);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
 
   &.selected {
     border: 2px solid var(--fs-primary);
@@ -105,6 +108,7 @@
 
     .section-title-group {
       flex: 1;
+      min-width: 0;
 
       .section-title-row {
         display: flex;
@@ -130,6 +134,7 @@
   flex-direction: column;
   gap: var(--fs-space-sm);
   min-height: 48px;
+  min-width: 0;
 
   &.empty-container {
     padding: var(--fs-space-md);
@@ -156,6 +161,10 @@
   border: 1px solid var(--fs-border);
   border-radius: var(--fs-radius-md);
   cursor: pointer;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 
   &:hover {
     border-color: var(--fs-border-hover);
@@ -175,6 +184,7 @@
     cursor: grab;
     color: var(--fs-text-subtle);
     display: flex;
+    flex-shrink: 0;
 
     &:hover {
       color: var(--fs-primary);
@@ -183,11 +193,15 @@
 
   .field-details {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
 
     .field-meta {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: var(--fs-space-2xs);
+      min-width: 0;
 
       .field-icon-badge {
         font-size: 1rem;
@@ -198,6 +212,9 @@
 
       .field-label-text {
         font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: break-word;
       }
 
       .required-asterisk {
@@ -207,16 +224,46 @@
 
     .field-sub-meta {
       display: flex;
+      align-items: center;
+      flex-wrap: wrap;
       gap: var(--fs-space-xs);
-      margin-top: 2px;
+      margin-top: 4px;
+      min-width: 0;
+
+      .fs-badge {
+        flex-shrink: 0;
+      }
 
       .field-name-code {
         font-family: monospace;
         font-size: var(--fs-font-size-xs);
         color: var(--fs-text-muted);
         background: rgba(0, 0, 0, 0.04);
-        padding: 1px 4px;
+        padding: 1px 5px;
         border-radius: 4px;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .field-actions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+
+    .fs-btn-ghost {
+      padding: 0.3rem;
+      min-width: 28px;
+      height: 28px;
+      border-radius: var(--fs-radius-sm);
+      color: var(--fs-text-muted);
+
+      &:hover {
+        background-color: #fef2f2;
+        color: var(--fs-danger);
       }
     }
   }
@@ -238,10 +285,30 @@
 
 @media (max-width: 600px) {
   .canvas-workspace {
-    padding: var(--fs-space-md) var(--fs-space-sm);
+    padding: var(--fs-space-md) var(--fs-space-xs);
   }
 
   .form-header-card {
-    padding: var(--fs-space-md);
+    padding: var(--fs-space-md) var(--fs-space-sm);
+  }
+
+  .canvas-section {
+    padding: var(--fs-space-md) var(--fs-space-sm);
+
+    .section-header {
+      flex-wrap: wrap;
+      gap: var(--fs-space-xs);
+
+      .section-actions {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+      }
+    }
+  }
+
+  .canvas-field {
+    padding: var(--fs-space-sm) var(--fs-space-xs);
+    gap: var(--fs-space-xs);
   }
 }

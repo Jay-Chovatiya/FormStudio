@@ -121,15 +121,6 @@ export class PropertiesPanelComponent {
 
   readonly currentValidations = signal<FieldValidation[]>([]);
 
-  constructor() {
-    this.formForm.valueChanges.subscribe(() => {
-      if (this.formForm.valid && this.formForm.dirty) {
-        const value = this.formForm.getRawValue();
-        this.formBuilderState.updateFormMetadata(value);
-      }
-    });
-  }
-
   private lastSyncedFormId: string | number | null = null;
 
   formEffectRef = effect(() => {

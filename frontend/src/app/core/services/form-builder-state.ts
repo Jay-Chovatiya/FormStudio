@@ -106,7 +106,6 @@ export class FormBuilderState {
       ...updates,
       updatedAt: new Date().toISOString(),
     });
-    console.log(this.form());
   }
 
   // Section operations

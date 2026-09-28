@@ -8,7 +8,7 @@ namespace FormStudio.Domain.Entities
         public int Id { get; set; }
         public int FormId { get; set; }
         public FormDefinitionEntity? FormDefinition { get; set; }
-        public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
+        public DateTime SubmittedAt { get; set; } = DateTime.Now;
 
         public ICollection<FormResponseEntity> Responses { get; set; } = new List<FormResponseEntity>();
     }

@@ -206,6 +206,21 @@ body {
   }
 }
 
+.fs-btn-success {
+  background-color: var(--fs-success);
+  color: #ffffff;
+  border-color: var(--fs-success);
+
+  &:hover:not(:disabled) {
+    background-color: #15803d;
+    border-color: #15803d;
+  }
+
+  &:active:not(:disabled) {
+    background-color: #166534;
+  }
+}
+
 .fs-btn-secondary {
   background-color: var(--fs-surface);
   color: var(--fs-text-main);

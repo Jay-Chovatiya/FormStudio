@@ -39,6 +39,10 @@ namespace FormStudio.Infrastructure.Data
                 entity.Property(e => e.Code).IsRequired().HasMaxLength(100);
                 entity.HasIndex(e => e.Code).IsUnique();
                 entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.StartDate).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.EndDate).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.CreatedAt).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.UpdatedAt).HasColumnType("timestamp without time zone");
             });
 
             // FormSection Configuration
@@ -96,6 +100,7 @@ namespace FormStudio.Infrastructure.Data
             modelBuilder.Entity<FormSubmissionEntity>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.SubmittedAt).HasColumnType("timestamp without time zone");
                 entity.HasOne(e => e.FormDefinition)
                     .WithMany(f => f.Submissions)
                     .HasForeignKey(e => e.FormId)

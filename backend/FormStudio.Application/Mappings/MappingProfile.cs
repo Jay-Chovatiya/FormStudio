@@ -12,7 +12,7 @@ namespace FormStudio.Application.Mappings
             CreateMap<FormDefinitionEntity, FormDefinitionDto>()
                 .ForMember(dest => dest.Sections, opt => opt.MapFrom(src => src.Sections.OrderBy(s => s.DisplayOrder)))
                 .ReverseMap()
-                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.Now));
 
             // 2. FormSection <-> FormSectionDto
             CreateMap<FormSectionEntity, FormSectionDto>()

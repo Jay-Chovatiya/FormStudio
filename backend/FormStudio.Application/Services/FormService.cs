@@ -37,8 +37,8 @@ namespace FormStudio.Application.Services
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
             FormDefinitionEntity entity = dto.ToEntity();
-            entity.CreatedAt = DateTime.UtcNow;
-            entity.UpdatedAt = DateTime.UtcNow;
+            entity.CreatedAt = DateTime.Now;
+            entity.UpdatedAt = DateTime.Now;
 
             await _unitOfWork.Repository<FormDefinitionEntity>().AddAsync(entity);
             await _unitOfWork.CompleteAsync();
@@ -98,7 +98,7 @@ namespace FormStudio.Application.Services
             if (form == null) return null;
 
             form.Status = status;
-            form.UpdatedAt = DateTime.UtcNow;
+            form.UpdatedAt = DateTime.Now;
             _unitOfWork.Repository<FormDefinitionEntity>().Update(form);
             await _unitOfWork.CompleteAsync();
 
@@ -139,8 +139,8 @@ namespace FormStudio.Application.Services
                 LogoUrl = sourceForm.LogoUrl,
                 HeaderText = sourceForm.HeaderText,
                 FooterText = sourceForm.FooterText,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
                 Sections = sourceForm.Sections.Select(s => new FormSectionEntity
                 {
                     Title = s.Title,
@@ -337,7 +337,7 @@ namespace FormStudio.Application.Services
             existingForm.LogoUrl = updatedForm.LogoUrl;
             existingForm.HeaderText = updatedForm.HeaderText;
             existingForm.FooterText = updatedForm.FooterText;
-            existingForm.UpdatedAt = DateTime.UtcNow;
+            existingForm.UpdatedAt = DateTime.Now;
 
             HashSet<int> existingSectionIds = existingForm.Sections.Select(s => s.Id).ToHashSet();
             HashSet<int> updatedSectionIds = updatedForm.Sections.Where(s => existingSectionIds.Contains(s.Id)).Select(s => s.Id).ToHashSet();

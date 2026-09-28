@@ -1,5 +1,3 @@
-import { FormField } from "../../../core/models/form-field";
-
 export type PropertyName =
   | 'label'
   | 'name'

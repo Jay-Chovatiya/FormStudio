@@ -24,8 +24,8 @@ namespace FormStudio.Domain.Entities
         public string? LogoUrl { get; set; }
         public string? HeaderText { get; set; }
         public string? FooterText { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
         public ICollection<FormSectionEntity> Sections { get; set; } = new List<FormSectionEntity>();
         public ICollection<FormSubmissionEntity> Submissions { get; set; } = new List<FormSubmissionEntity>();

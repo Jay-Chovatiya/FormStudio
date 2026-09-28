@@ -1,21 +1,28 @@
 import { Routes } from '@angular/router';
-import { FormListComponent } from './features/form-list/form-list.component';
-import { FormBuilderComponent } from './features/form-builder/form-builder.component';
 
 export const routes: Routes = [
   {
     path: '',
-    component: FormListComponent,
+    loadComponent: () =>
+      import('./features/form-list/form-list.component').then(
+        (m) => m.FormListComponent
+      ),
     title: 'Form Library - FormStudio',
   },
   {
     path: 'forms',
-    component: FormListComponent,
+    loadComponent: () =>
+      import('./features/form-list/form-list.component').then(
+        (m) => m.FormListComponent
+      ),
     title: 'Form Library - FormStudio',
   },
   {
     path: 'form-builder',
-    component: FormBuilderComponent,
+    loadComponent: () =>
+      import('./features/form-builder/form-builder.component').then(
+        (m) => m.FormBuilderComponent
+      ),
     title: 'Form Builder - FormStudio',
   },
   {

@@ -35,7 +35,7 @@ namespace FormStudio.Application.Services
 
             submissionDto.FormId = formId;
             FormSubmissionEntity entity = submissionDto.ToEntity();
-            entity.SubmittedAt = DateTime.UtcNow;
+            entity.SubmittedAt = DateTime.Now;
 
             await _unitOfWork.Repository<FormSubmissionEntity>().AddAsync(entity);
             await _unitOfWork.CompleteAsync();
