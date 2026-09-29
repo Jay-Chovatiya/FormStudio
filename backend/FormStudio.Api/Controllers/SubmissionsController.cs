@@ -1,5 +1,6 @@
 using FormStudio.Application.DTOs;
 using FormStudio.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FormStudio.Api.Controllers
@@ -16,6 +17,7 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrator,SuperAdministrator")]
         public async Task<ActionResult<IEnumerable<FormSubmissionDto>>> GetSubmissions(int formId)
         {
             IEnumerable<FormSubmissionDto> submissions = await _submissionService.GetSubmissionsAsync(formId);
@@ -23,6 +25,7 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<ActionResult<FormSubmissionDto>> SubmitForm(int formId, [FromBody] FormSubmissionDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -32,6 +35,7 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpDelete("{submissionId:int}")]
+        [Authorize(Roles = "Administrator,SuperAdministrator")]
         public async Task<IActionResult> DeleteSubmission(int formId, int submissionId)
         {
             bool deleted = await _submissionService.DeleteSubmissionAsync(formId, submissionId);

@@ -1,13 +1,20 @@
 import { Routes } from '@angular/router';
+import { authGuard, guestGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
-    path: '',
+    path: 'login',
     loadComponent: () =>
-      import('./features/form-list/form-list.component').then(
-        (m) => m.FormListComponent
+      import('./features/auth/login/login.component').then(
+        (m) => m.LoginComponent
       ),
-    title: 'Form Library - FormStudio',
+    canActivate: [guestGuard],
+    title: 'Sign In - FormStudio',
+  },
+  {
+    path: '',
+    redirectTo: 'forms',
+    pathMatch: 'full',
   },
   {
     path: 'forms',
@@ -15,6 +22,7 @@ export const routes: Routes = [
       import('./features/form-list/form-list.component').then(
         (m) => m.FormListComponent
       ),
+    canActivate: [authGuard],
     title: 'Form Library - FormStudio',
   },
   {
@@ -23,6 +31,7 @@ export const routes: Routes = [
       import('./features/form-builder/form-builder.component').then(
         (m) => m.FormBuilderComponent
       ),
+    canActivate: [authGuard],
     title: 'Form Builder - FormStudio',
   },
   {
@@ -45,5 +54,19 @@ export const routes: Routes = [
       import('./features/form-responses/form-responses.component')
         .then(m => m.FormResponsesComponent),
     title: 'Form Responses - FormStudio',
+  },
+  {
+    path: 'users',
+    loadComponent: () =>
+      import('./features/user-management/user-management.component').then(
+        (m) => m.UserManagementComponent
+      ),
+    canActivate: [authGuard],
+    data: { role: 'SuperAdministrator' },
+    title: 'User Management - FormStudio',
+  },
+  {
+    path: '**',
+    redirectTo: 'forms',
   },
 ];

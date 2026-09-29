@@ -37,5 +37,8 @@ namespace FormStudio.Application.Mappings
 
         public static FormResponseDto ToDto(this FormResponseEntity entity) => Mapper.Map<FormResponseDto>(entity);
         public static FormResponseEntity ToEntity(this FormResponseDto dto) => Mapper.Map<FormResponseEntity>(dto);
+
+        public static UserDto ToDto(this UserEntity entity) => Mapper.Map<UserDto>(entity);
+        public static UserEntity ToEntity(this UserDto dto) => Mapper.Map<UserEntity>(dto);
     }
 }

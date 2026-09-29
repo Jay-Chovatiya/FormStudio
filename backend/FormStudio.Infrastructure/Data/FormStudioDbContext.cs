@@ -16,6 +16,7 @@ namespace FormStudio.Infrastructure.Data
         public DbSet<FieldValidationEntity> FieldValidations => Set<FieldValidationEntity>();
         public DbSet<FormSubmissionEntity> FormSubmissions => Set<FormSubmissionEntity>();
         public DbSet<FormResponseEntity> FormResponses => Set<FormResponseEntity>();
+        public DbSet<UserEntity> Users => Set<UserEntity>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,6 +30,23 @@ namespace FormStudio.Infrastructure.Data
             modelBuilder.Entity<FieldValidationEntity>().ToTable("field_validations");
             modelBuilder.Entity<FormSubmissionEntity>().ToTable("form_submissions");
             modelBuilder.Entity<FormResponseEntity>().ToTable("form_responses");
+            modelBuilder.Entity<UserEntity>().ToTable("users");
+
+            // User Configuration
+            modelBuilder.Entity<UserEntity>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => e.Username).IsUnique();
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.Property(e => e.PasswordHash).IsRequired();
+                entity.Property(e => e.FullName).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.CreatedAt).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.UpdatedAt).HasColumnType("timestamp without time zone");
+            });
 
             // FormDefinition Configuration
             modelBuilder.Entity<FormDefinitionEntity>(entity =>

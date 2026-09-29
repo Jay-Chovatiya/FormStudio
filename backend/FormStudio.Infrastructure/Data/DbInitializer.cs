@@ -7,7 +7,41 @@ namespace FormStudio.Infrastructure.Data
     {
         public static async Task InitializeAsync(FormStudioDbContext context)
         {
-            if (await context.Forms.AnyAsync(f => f.Code == "emp-feedback-2026"))
+            if (!await context.Users.AnyAsync())
+            {
+                string adminPasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123");
+
+                List<UserEntity> defaultUsers = new List<UserEntity>
+                {
+                    new UserEntity
+                    {
+                        Username = "superadmin",
+                        Email = "admin@formstudio.com",
+                        PasswordHash = adminPasswordHash,
+                        FullName = "System Super Administrator",
+                        Role = "SuperAdministrator",
+                        IsActive = true,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
+                    },
+                    new UserEntity
+                    {
+                        Username = "john_admin",
+                        Email = "john@formstudio.com",
+                        PasswordHash = adminPasswordHash,
+                        FullName = "John Administrator",
+                        Role = "Administrator",
+                        IsActive = true,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
+                    }
+                };
+
+                await context.Users.AddRangeAsync(defaultUsers);
+                await context.SaveChangesAsync();
+            }
+
+            if (await context.Forms.AnyAsync())
             {
                 return; 
             }

@@ -56,6 +56,10 @@
   border-radius: var(--fs-radius-sm);
   cursor: pointer;
   transition: all 0.15s ease;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   &:hover {
     background-color: var(--fs-surface-alt);
@@ -381,7 +385,7 @@
   }
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1080px) {
   .header-actions .btn-header-action .btn-text,
   .btn-back-list .btn-text {
     display: none;
@@ -396,9 +400,30 @@
   .header-brand { gap: var(--fs-space-xs); }
 
   .form-title-badge {
-    max-width: 130px;
+    max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+@media (max-width: 680px) {
+  .brand-logo,
+  .brand-title {
+    display: none !important;
+  }
+
+  .form-title-badge {
+    max-width: 180px;
+
+    &::before {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .form-title-badge {
+    max-width: 120px;
   }
 }

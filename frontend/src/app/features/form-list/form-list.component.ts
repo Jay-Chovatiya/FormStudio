@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { FormService } from '../../core/services/form.service';
+import { AuthService } from '../../core/services/auth.service';
 import { FormDefinition } from '../../core/models/form-definition';
 import { FormSection } from '../../core/models/form-section';
 import { FormStatus } from '../../core/models/form-status';
@@ -16,6 +17,7 @@ import { FormStatus } from '../../core/models/form-status';
 export class FormListComponent implements OnInit {
   private readonly formService = inject(FormService);
   private readonly router = inject(Router);
+  readonly authService = inject(AuthService);
 
   readonly forms = signal<FormDefinition[]>([]);
   readonly loading = signal<boolean>(true);
@@ -146,4 +148,13 @@ export class FormListComponent implements OnInit {
   getTotalFields(form: FormDefinition): number {
     return form.sections ? form.sections.reduce((acc: number, sec: FormSection) => acc + (sec.fields ? sec.fields.length : 0), 0) : 0;
   }
+
+  goToUsers(): void {
+    this.router.navigate(['/users']);
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
 }
+

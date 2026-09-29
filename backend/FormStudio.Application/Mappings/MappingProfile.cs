@@ -43,6 +43,9 @@ namespace FormStudio.Application.Mappings
                 .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.ValueJson))
                 .ReverseMap()
                 .ForMember(dest => dest.ValueJson, opt => opt.MapFrom(src => src.Value != null ? src.Value.ToString() : null));
+
+            // 8. User <-> UserDto
+            CreateMap<UserEntity, UserDto>().ReverseMap();
         }
 
         private static object? ParseValidationValue(string? val)

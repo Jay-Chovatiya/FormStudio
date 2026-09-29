@@ -8,6 +8,7 @@ import { FormService } from '../../core/services/form.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { FormDefinition } from '../../core/models/form-definition';
+import { NavigationHistoryService } from '../../core/services/navigation-history.service';
 
 @Component({
   imports: [
@@ -26,6 +27,7 @@ export class FormBuilderComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly navHistory = inject(NavigationHistoryService);
 
   readonly form = this.formBuilderState.form;
   readonly canUndo = this.formBuilderState.canUndo;
@@ -236,6 +238,6 @@ export class FormBuilderComponent implements OnInit {
   }
 
   backToList(): void {
-    this.router.navigate(['/forms']);
+    this.navHistory.back('/forms');
   }
 }

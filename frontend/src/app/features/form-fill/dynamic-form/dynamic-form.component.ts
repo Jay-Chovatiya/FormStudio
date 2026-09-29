@@ -30,6 +30,7 @@ import { FormService } from '../../../core/services/form.service';
 import { ResponseService } from '../../../core/services/response.service';
 import { NavigationHistoryService } from '../../../core/services/navigation-history.service';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
+import { emailValidator } from '../../../core/utils/regex.constants';
 
 @Component({
   imports: [ReactiveFormsModule, TitleCasePipe, DatePickerComponent],
@@ -187,7 +188,7 @@ export class DynamicFormComponent implements OnInit {
           validators.push(fieldType === 'Checkbox' ? Validators.requiredTrue : Validators.required);
           break;
         case 'email':
-          validators.push(Validators.email);
+          validators.push(emailValidator);
           break;
         case 'minLength':
           validators.push(Validators.minLength(validation.value));
@@ -206,6 +207,11 @@ export class DynamicFormComponent implements OnInit {
           break;
       }
     });
+
+    if (fieldType === 'Email' && !validations.some((v) => v.type === 'email')) {
+      validators.push(emailValidator);
+    }
+
     return validators;
   }
 
@@ -326,7 +332,8 @@ export class DynamicFormComponent implements OnInit {
       error: (err) => {
         this.isSubmitting.set(false);
         console.error('Failed to submit form:', err);
-        alert('Failed to submit your response. Please check your connection and try again.');
+        const serverMsg = err.error?.message || (typeof err.error === 'string' ? err.error : null);
+        alert(serverMsg || 'Failed to submit your response. Please check your connection and try again.');
       },
     });
   }

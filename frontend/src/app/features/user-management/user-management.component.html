@@ -1,0 +1,287 @@
+<div class="user-mgmt-container">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <button type="button" class="btn btn-secondary btn-sm" (click)="backToForms()" title="Back to Form Library">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"/>
+          <polyline points="12 19 5 12 12 5"/>
+        </svg>
+        <span>Forms</span>
+      </button>
+
+      <div class="header-brand">
+        <div class="logo-icon">👥</div>
+        <div class="brand-text">
+          <h1>User Management</h1>
+          <span class="subtitle">Manage administrators and role permissions</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      @if (authService.currentUser(); as me) {
+        <div class="current-user-badge">
+          <div class="user-avatar-sm">{{ me.username.charAt(0).toUpperCase() }}</div>
+          <div class="user-meta">
+            <span class="user-name">{{ me.fullName || me.username }}</span>
+            <span class="user-role">{{ me.role }}</span>
+          </div>
+        </div>
+      }
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <span class="btn-icon">+</span> Create New User
+      </button>
+    </div>
+  </header>
+
+  <!-- Controls Bar -->
+  <div class="controls-bar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        placeholder="Search users by name, username, or email..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label>Role:</label>
+      <select [ngModel]="selectedRole()" (ngModelChange)="selectedRole.set($event)">
+        <option value="ALL">All Roles</option>
+        <option value="Administrator">Administrator</option>
+        <option value="SuperAdministrator">Super Administrator</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Status:</label>
+      <select [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)">
+        <option value="ALL">All Statuses</option>
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- States -->
+  @if (loading()) {
+    <div class="state-card loading-state">
+      <div class="spinner"></div>
+      <p>Loading users from backend...</p>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="state-card error-state">
+      <div class="error-icon">⚠️</div>
+      <h3>Failed to Load Users</h3>
+      <p>{{ error() }}</p>
+      <button class="btn btn-secondary" (click)="loadUsers()">Retry</button>
+    </div>
+  }
+
+  @if (!loading() && !error() && filteredUsers().length === 0) {
+    <div class="state-card empty-state">
+      <div class="empty-icon">👥</div>
+      <h3>No Users Found</h3>
+      <p>No user accounts matched your search or filter criteria.</p>
+    </div>
+  }
+
+  @if (!loading() && !error() && filteredUsers().length > 0) {
+    <div class="table-container">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers(); track user.id) {
+            <tr [class.is-current-user]="user.username === authService.currentUser()?.username">
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+                  <div class="user-info">
+                    <span class="username">{{ user.username }}</span>
+                    @if (user.fullName) {
+                      <span class="full-name">{{ user.fullName }}</span>
+                    }
+                  </div>
+                </div>
+              </td>
+              <td>{{ user.email }}</td>
+              <td>
+                <span class="badge" [class.badge-superadmin]="user.role === 'SuperAdministrator'" [class.badge-admin]="user.role === 'Administrator'">
+                  {{ user.role === 'SuperAdministrator' ? 'Super Admin' : 'Admin' }}
+                </span>
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="status-toggle"
+                  [class.status-active]="user.isActive"
+                  [class.status-inactive]="!user.isActive"
+                  (click)="toggleStatus(user)"
+                  [title]="user.username === authService.currentUser()?.username ? 'Cannot toggle self' : (user.isActive ? 'Click to deactivate' : 'Click to activate')"
+                  [disabled]="user.username === authService.currentUser()?.username"
+                >
+                  <span class="status-indicator"></span>
+                  {{ user.isActive ? 'Active' : 'Inactive' }}
+                </button>
+              </td>
+              <td class="date-cell">{{ user.createdAt ? (user.createdAt | date:'mediumDate') : '-' }}</td>
+              <td class="text-right actions-cell">
+                <button
+                  type="button"
+                  class="btn-icon-action"
+                  (click)="openEditModal(user)"
+                  title="Edit User"
+                >
+                  ✏️
+                </button>
+                <button
+                  type="button"
+                  class="btn-icon-action btn-danger"
+                  (click)="deleteUser(user)"
+                  [disabled]="user.username === authService.currentUser()?.username"
+                  [title]="user.username === authService.currentUser()?.username ? 'Cannot delete self' : 'Delete User'"
+                >
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Create/Edit Modal -->
+  @if (isModalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ isEditing() ? 'Edit User' : 'Create New User' }}</h2>
+          <button type="button" class="btn-close" (click)="closeModal()">&times;</button>
+        </div>
+
+        @if (actionError()) {
+          <div class="modal-alert alert-danger">
+            {{ actionError() }}
+          </div>
+        }
+
+        <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="modal-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="modal-username">Username *</label>
+              <input
+                id="modal-username"
+                type="text"
+                formControlName="username"
+                placeholder="e.g. jdoe"
+                [class.is-invalid]="userForm.get('username')?.touched && userForm.get('username')?.invalid"
+              />
+              @if (userForm.get('username')?.touched && userForm.get('username')?.hasError('required')) {
+                <span class="field-error">Username is required.</span>
+              }
+              @if (userForm.get('username')?.touched && userForm.get('username')?.hasError('minlength')) {
+                <span class="field-error">Minimum 3 characters.</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="modal-fullname">Full Name</label>
+              <input
+                id="modal-fullname"
+                type="text"
+                formControlName="fullName"
+                placeholder="e.g. John Doe"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="modal-email">Email Address *</label>
+            <input
+              id="modal-email"
+              type="email"
+              formControlName="email"
+              placeholder="e.g. john@formstudio.com"
+              [class.is-invalid]="userForm.get('email')?.touched && userForm.get('email')?.invalid"
+            />
+            @if (userForm.get('email')?.touched && userForm.get('email')?.hasError('required')) {
+              <span class="field-error">Email is required.</span>
+            }
+            @if (userForm.get('email')?.touched && userForm.get('email')?.hasError('email')) {
+              <span class="field-error">Valid email format required.</span>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="modal-role">Role *</label>
+              <select id="modal-role" formControlName="role">
+                <option value="Administrator">Administrator</option>
+                <option value="SuperAdministrator">Super Administrator</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="modal-status">Account Status</label>
+              <select id="modal-status" formControlName="isActive">
+                <option [ngValue]="true">Active</option>
+                <option [ngValue]="false">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" [class.form-group-disabled]="isEditing()">
+            <label for="modal-password">
+              Password {{ isEditing() ? '(Disabled for Super Admin)' : '*' }}
+            </label>
+            <input
+              id="modal-password"
+              type="password"
+              formControlName="password"
+              [placeholder]="isEditing() ? 'Password managed by account holder' : 'Min. 6 characters'"
+              [class.is-invalid]="userForm.get('password')?.touched && userForm.get('password')?.invalid"
+            />
+            @if (isEditing()) {
+              <span class="field-hint">Only the account holder can change their password.</span>
+            }
+            @if (!isEditing() && userForm.get('password')?.touched && userForm.get('password')?.hasError('required')) {
+              <span class="field-error">Password is required.</span>
+            }
+            @if (!isEditing() && userForm.get('password')?.touched && userForm.get('password')?.hasError('minlength')) {
+              <span class="field-error">Minimum 6 characters.</span>
+            }
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSaving()">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+              @if (isSaving()) {
+                <span class="spinner-sm"></span>
+                <span>Saving...</span>
+              } @else {
+                <span>{{ isEditing() ? 'Update User' : 'Create User' }}</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
