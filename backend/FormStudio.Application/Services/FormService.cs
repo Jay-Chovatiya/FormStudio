@@ -27,9 +27,11 @@ namespace FormStudio.Application.Services
             return await GetFormWithDetailsAsync(f => f.Id == id);
         }
 
-        public async Task<FormDefinitionDto?> GetFormByCodeAsync(string code)
+        public async Task<FormDefinitionDto?> GetPublishedFormByCodeAsync(string code)
         {
-            return await GetFormWithDetailsAsync(f => f.Code == code);
+            if (string.IsNullOrWhiteSpace(code)) return null;
+            string trimmedCode = code.Trim();
+            return await GetFormWithDetailsAsync(f => f.Code == trimmedCode && f.Status == "Published");
         }
 
         public async Task<FormDefinitionDto> CreateFormAsync(FormDefinitionDto dto)

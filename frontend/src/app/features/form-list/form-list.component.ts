@@ -60,7 +60,7 @@ export class FormListComponent implements OnInit {
       },
       error: (err: unknown) => {
         console.error('Failed to load forms:', err);
-        this.error.set('Failed to connect to backend server at http://localhost:5000. Please ensure the backend is running.');
+        this.error.set((err as any)?.message || 'Failed to connect to backend server. Please ensure the backend is running.');
         this.loading.set(false);
       }
     });
@@ -77,8 +77,7 @@ export class FormListComponent implements OnInit {
         }
       },
       error: (err: unknown) => {
-        const message = err instanceof Error ? err.message : 'Error occurred';
-        alert(`Failed to update status: ${message}`);
+        alert((err as any)?.message || 'Failed to update status.');
       }
     });
   }
@@ -93,8 +92,8 @@ export class FormListComponent implements OnInit {
           this.loadForms();
         }
       },
-      error: () => {
-        alert('Failed to duplicate form.');
+      error: (err: unknown) => {
+        alert((err as any)?.message || 'Failed to duplicate form.');
       }
     });
   }
@@ -110,8 +109,8 @@ export class FormListComponent implements OnInit {
             list.filter((f) => f.id !== form.id)
           );
         },
-        error: () => {
-          alert('Failed to delete form.');
+        error: (err: unknown) => {
+          alert((err as any)?.message || 'Failed to delete form.');
         }
       });
     }

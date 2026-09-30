@@ -24,9 +24,7 @@ namespace FormStudio.Application.Common
 
                 if (DateTime.TryParse(str, out DateTime dt))
                 {
-                    return dt.Kind == DateTimeKind.Unspecified
-                        ? DateTime.SpecifyKind(dt, DateTimeKind.Utc)
-                        : dt.ToUniversalTime();
+                    return DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
                 }
             }
 

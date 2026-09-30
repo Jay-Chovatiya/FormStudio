@@ -35,7 +35,7 @@ export const routes: Routes = [
     title: 'Form Builder - FormStudio',
   },
   {
-    path: 'forms/:id/fill',
+    path: 'forms/:code/fill',
     loadComponent: () =>
       import('./features/form-fill/dynamic-form/dynamic-form.component')
         .then(m => m.DynamicFormComponent),
@@ -46,6 +46,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/form-preview/form-preview/form-preview.component')
         .then(m => m.FormPreviewComponent),
+    canActivate: [authGuard],
     title: 'Form Preview - FormStudio',
   },
   {
@@ -53,6 +54,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/form-responses/form-responses.component')
         .then(m => m.FormResponsesComponent),
+    canActivate: [authGuard],
     title: 'Form Responses - FormStudio',
   },
   {

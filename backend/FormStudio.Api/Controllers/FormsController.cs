@@ -1,11 +1,13 @@
 using FormStudio.Application.DTOs;
 using FormStudio.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FormStudio.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Administrator,SuperAdministrator")]
     public class FormsController : ControllerBase
     {
         private readonly IFormService _formService;
@@ -31,10 +33,14 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpGet("code/{code}")]
-        public async Task<ActionResult<FormDefinitionDto>> GetFormByCode(string code)
+        [AllowAnonymous]
+        public async Task<ActionResult<FormDefinitionDto>> GetPublishedFormByCode(string code)
         {
-            FormDefinitionDto? form = await _formService.GetFormByCodeAsync(code);
-            if (form == null) return NotFound(new { message = $"Form with code '{code}' was not found." });
+            FormDefinitionDto? form = await _formService.GetPublishedFormByCodeAsync(code);
+            if (form == null)
+            {
+                return NotFound(new { message = "Invalid form URL or form is not currently active." });
+            }
             return Ok(form);
         }
 

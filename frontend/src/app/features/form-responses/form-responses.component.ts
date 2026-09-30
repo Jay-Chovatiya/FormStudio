@@ -132,8 +132,8 @@ export class FormResponsesComponent implements OnInit {
         this.form.set(formDef);
         this.loadSubmissions(formId);
       },
-      error: () => {
-        this.error.set('Failed to load form details.');
+      error: (err) => {
+        this.error.set(err?.message || 'Failed to load form details.');
         this.loading.set(false);
       }
     });
@@ -147,7 +147,7 @@ export class FormResponsesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to load submissions:', err);
-        this.error.set('Failed to load form submissions.');
+        this.error.set(err?.message || 'Failed to load form submissions.');
         this.loading.set(false);
       }
     });
@@ -228,7 +228,7 @@ export class FormResponsesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to delete submission:', err);
-        alert('Failed to delete submission. Please try again.');
+        alert(err?.message || 'Failed to delete submission. Please try again.');
         this.deletingSubmission.set(null);
       }
     });
@@ -256,7 +256,7 @@ export class FormResponsesComponent implements OnInit {
   openFillForm(): void {
     const f = this.form();
     if (f) {
-      this.router.navigate(['/forms', f.id, 'fill']);
+      this.router.navigate(['/forms', f.code, 'fill']);
     }
   }
 

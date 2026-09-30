@@ -37,23 +37,17 @@ namespace FormStudio.Application.Services
             return submissionList.Select(s => s.ToDto());
         }
 
-        public async Task<FormSubmissionDto> SaveSubmissionAsync(int formId, FormSubmissionDto submissionDto)
+        public async Task<FormSubmissionDto> SaveSubmissionAsync(string code, FormSubmissionDto submissionDto)
         {
             if (submissionDto == null) throw new ArgumentNullException(nameof(submissionDto));
 
-            // 1. Fetch Authoritative Form Definition
-            FormDefinitionDto? form = await _formService.GetFormByIdAsync(formId);
+            FormDefinitionDto? form = await _formService.GetPublishedFormByCodeAsync(code);
             if (form == null)
             {
-                throw new KeyNotFoundException($"Form with ID {formId} was not found.");
+                throw new KeyNotFoundException("Invalid form URL or form is not currently active.");
             }
 
-            // 2. Validate Form Availability and Publication Status
-            if (!string.Equals(form.Status, "Published", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException("This form is currently not accepting submissions because it is not published.");
-            }
-
+            
             DateTime now = DateTime.Now;
             if (form.StartDate.HasValue && now < form.StartDate.Value)
             {
@@ -65,7 +59,6 @@ namespace FormStudio.Application.Services
                 throw new InvalidOperationException($"This form closed on {form.EndDate.Value:yyyy-MM-dd HH:mm}.");
             }
 
-            // 3. Authoritative Field-Level Validation
             List<FormFieldDto> allFields = form.Sections.SelectMany(s => s.Fields).ToList();
             Dictionary<int, FormResponseDto> responseMap = new Dictionary<int, FormResponseDto>();
             foreach (FormResponseDto resp in submissionDto.Responses)
@@ -165,7 +158,7 @@ namespace FormStudio.Application.Services
             }
 
             // 4. Save Submission
-            submissionDto.FormId = formId;
+            submissionDto.FormId = form.Id;
             FormSubmissionEntity entity = submissionDto.ToEntity();
             entity.SubmittedAt = DateTime.Now;
 

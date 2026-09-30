@@ -122,23 +122,20 @@ export class DynamicFormComponent implements OnInit {
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
-        const idParam = params.get('id');
-        if (idParam) {
-          const formId = Number(idParam);
-          if (!isNaN(formId) && formId > 0) {
-            this.loadFormById(formId);
-          } else {
-            this.error.set('Invalid Form ID specified in URL.');
-          }
+        const code = params.get('code');
+        if (code) {
+          this.loadFormByCode(code.trim());
+        } else {
+          this.error.set('Invalid form URL.');
         }
       });
   }
 
-  loadFormById(id: number): void {
+  loadFormByCode(code: string): void {
     this.loading.set(true);
     this.error.set(null);
 
-    this.formService.getFormById(id).subscribe({
+    this.formService.getFormByCode(code).subscribe({
       next: (formDef) => {
         this.loading.set(false);
         if (formDef) {
@@ -148,13 +145,13 @@ export class DynamicFormComponent implements OnInit {
             this.checkForSavedDraft(formDef.id);
           }
         } else {
-          this.error.set('The requested form could not be found.');
+          this.error.set('Invalid form URL or form is not currently active.');
         }
       },
       error: (err) => {
         this.loading.set(false);
         console.error('Failed to load form definition:', err);
-        this.error.set('Failed to connect to backend server. Please verify the backend is running.');
+        this.error.set(err?.message || 'Invalid form URL or form is not currently active.');
       },
     });
   }
@@ -321,7 +318,7 @@ export class DynamicFormComponent implements OnInit {
     }
 
     this.isSubmitting.set(true);
-    this.responseService.submitForm(formDefinition.id, payload).subscribe({
+    this.responseService.submitForm(formDefinition.code, payload).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.submitted.set(true);
@@ -332,8 +329,7 @@ export class DynamicFormComponent implements OnInit {
       error: (err) => {
         this.isSubmitting.set(false);
         console.error('Failed to submit form:', err);
-        const serverMsg = err.error?.message || (typeof err.error === 'string' ? err.error : null);
-        alert(serverMsg || 'Failed to submit your response. Please check your connection and try again.');
+        alert(err?.message || 'Failed to submit your response. Please check your connection and try again.');
       },
     });
   }

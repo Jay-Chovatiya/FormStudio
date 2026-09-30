@@ -104,8 +104,7 @@ export class FormBuilderComponent implements OnInit {
         },
         error: (err: any) => {
           this.saving.set(false);
-          const msg = this.extractErrorMessage(err, 'Failed to save form changes.');
-          alert(msg);
+          alert((err as any)?.message || 'Failed to save form changes.');
         }
       });
     } else {
@@ -120,37 +119,12 @@ export class FormBuilderComponent implements OnInit {
         },
         error: (err: any) => {
           this.saving.set(false);
-          const msg = this.extractErrorMessage(err, 'Failed to create form.');
-          alert(msg);
+          alert((err as any)?.message || 'Failed to create form.');
         }
       });
     }
   }
 
-  private extractErrorMessage(err: any, fallback: string): string {
-    const errorBody = err?.error;
-
-    if (errorBody?.status && (errorBody?.message || errorBody?.detail)) {
-      return errorBody.message || errorBody.detail;
-    }
-
-    if (errorBody && typeof errorBody === 'object' && !Array.isArray(errorBody)) {
-      const messages: string[] = [];
-      for (const [field, errors] of Object.entries(errorBody)) {
-        if (Array.isArray(errors)) {
-          for (const msg of errors) {
-            messages.push(`${field}: ${msg}`);
-          }
-        }
-      }
-      if (messages.length > 0) {
-        return messages.join('\n');
-      }
-    }
-
-    if (typeof errorBody === 'string') return errorBody;
-    return errorBody?.message || errorBody?.title || fallback;
-  }
 
   undo(): void {
     this.formBuilderState.undo();
@@ -200,8 +174,7 @@ export class FormBuilderComponent implements OnInit {
       },
       error: (err: unknown) => {
         this.publishing.set(false);
-        const msg = this.extractErrorMessage(err, `Failed to ${isPublished ? 'unpublish' : 'publish'} form.`);
-        alert(msg);
+        alert((err as any)?.message || `Failed to ${isPublished ? 'unpublish' : 'publish'} form.`);
       }
     });
   }

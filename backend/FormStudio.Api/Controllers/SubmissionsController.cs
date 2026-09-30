@@ -2,6 +2,7 @@ using FormStudio.Application.DTOs;
 using FormStudio.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FormStudio.Api.Controllers
 {
@@ -24,14 +25,30 @@ namespace FormStudio.Api.Controllers
             return Ok(submissions);
         }
 
-        [HttpPost]
+        [HttpPost("~/api/forms/code/{code}/submissions")]
         [AllowAnonymous]
-        public async Task<ActionResult<FormSubmissionDto>> SubmitForm(int formId, [FromBody] FormSubmissionDto dto)
+        [EnableRateLimiting("public-form-submission")]
+        public async Task<ActionResult<FormSubmissionDto>> SubmitForm(string code, [FromBody] FormSubmissionDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            FormSubmissionDto createdSubmission = await _submissionService.SaveSubmissionAsync(formId, dto);
-            return CreatedAtAction(nameof(GetSubmissions), new { formId }, createdSubmission);
+            try
+            {
+                FormSubmissionDto createdSubmission = await _submissionService.SaveSubmissionAsync(code, dto);
+                return CreatedAtAction(nameof(GetSubmissions), new { formId = createdSubmission.FormId }, createdSubmission);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{submissionId:int}")]

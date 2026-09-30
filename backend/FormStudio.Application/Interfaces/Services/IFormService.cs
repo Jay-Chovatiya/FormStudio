@@ -6,7 +6,7 @@ namespace FormStudio.Application.Interfaces.Services
     {
         Task<IEnumerable<FormDefinitionDto>> GetFormsAsync();
         Task<FormDefinitionDto?> GetFormByIdAsync(int id);
-        Task<FormDefinitionDto?> GetFormByCodeAsync(string code);
+        Task<FormDefinitionDto?> GetPublishedFormByCodeAsync(string code);
         Task<FormDefinitionDto> CreateFormAsync(FormDefinitionDto dto);
         Task<FormDefinitionDto?> UpdateFormAsync(int id, FormDefinitionDto dto);
         Task<bool> DeleteFormAsync(int id);
