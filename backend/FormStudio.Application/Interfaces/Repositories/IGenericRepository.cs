@@ -26,5 +26,11 @@ namespace FormStudio.Application.Interfaces.Repositories
         Task<List<TResult>> GetListAsync<TResult>(
             Expression<Func<T, bool>> expression,
             Expression<Func<T, TResult>> selector);
+
+        Task<List<TResult>> GetListAsync<TResult>(
+            Expression<Func<T, bool>> expression,
+            Expression<Func<T, TResult>> selector,
+            Expression<Func<T, object>> orderBy,
+            bool sortOrder = true);
     }
 }

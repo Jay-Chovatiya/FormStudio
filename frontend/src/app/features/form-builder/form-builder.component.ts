@@ -9,6 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { FormDefinition } from '../../core/models/form-definition';
 import { NavigationHistoryService } from '../../core/services/navigation-history.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   imports: [
@@ -28,6 +29,7 @@ export class FormBuilderComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly navHistory = inject(NavigationHistoryService);
+  private readonly toastService = inject(ToastService);
 
   readonly form = this.formBuilderState.form;
   readonly canUndo = this.formBuilderState.canUndo;
@@ -99,27 +101,25 @@ export class FormBuilderComponent implements OnInit {
       this.formService.updateForm(currentForm.id, currentForm).subscribe({
         next: (savedForm: FormDefinition) => {
           this.saving.set(false);
-          alert('Form updated successfully!');
+          this.toastService.success('Form changes saved successfully!');
           if (savedForm) this.formBuilderState.setForm(savedForm);
         },
-        error: (err: any) => {
+        error: () => {
           this.saving.set(false);
-          alert((err as any)?.message || 'Failed to save form changes.');
         }
       });
     } else {
       this.formService.createForm(currentForm).subscribe({
         next: (createdForm: FormDefinition) => {
           this.saving.set(false);
-          alert('New form created successfully!');
+          this.toastService.success('New form created successfully!');
           if (createdForm) {
             this.formBuilderState.setForm(createdForm);
             this.router.navigate(['/form-builder'], { queryParams: { id: createdForm.id } });
           }
         },
-        error: (err: any) => {
+        error: () => {
           this.saving.set(false);
-          alert((err as any)?.message || 'Failed to create form.');
         }
       });
     }
@@ -151,7 +151,7 @@ export class FormBuilderComponent implements OnInit {
   togglePublishStatus(): void {
     const currentForm = this.form();
     if (!currentForm?.id) {
-      alert('Please save the form before publishing.');
+      this.toastService.warning('Please save the form before publishing.');
       return;
     }
 
@@ -170,11 +170,10 @@ export class FormBuilderComponent implements OnInit {
           status: updatedForm?.status || nextStatus,
           updatedAt: updatedForm?.updatedAt || new Date().toISOString()
         });
-        alert(`Form successfully ${isPublished ? 'unpublished' : 'published'}!`);
+        this.toastService.success(`Form successfully ${isPublished ? 'unpublished' : 'published'}!`);
       },
-      error: (err: unknown) => {
+      error: () => {
         this.publishing.set(false);
-        alert((err as any)?.message || `Failed to ${isPublished ? 'unpublish' : 'publish'} form.`);
       }
     });
   }

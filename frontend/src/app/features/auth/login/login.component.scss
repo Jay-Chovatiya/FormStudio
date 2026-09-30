@@ -46,22 +46,6 @@
   }
 }
 
-.alert-danger {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-  padding: 12px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  margin-bottom: 20px;
-
-  svg {
-    flex-shrink: 0;
-  }
-}
 
 .login-form {
   display: flex;

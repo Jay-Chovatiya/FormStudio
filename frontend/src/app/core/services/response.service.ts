@@ -29,7 +29,7 @@ export class ResponseService {
     const allFields = form.sections.flatMap((s) => s.fields);
     const headers = ['Submission ID', 'Submitted At', ...allFields.map((f) => f.label)];
 
-    const rows = submissions.map((sub) => {
+    const rows = submissions.map((sub, index) => {
       const responseMap = new Map<number, unknown>();
       sub.responses.forEach((r) => responseMap.set(r.fieldId, r.value));
 
@@ -41,7 +41,7 @@ export class ResponseService {
       });
 
       return [
-        `"${sub.id}"`,
+        `"${index + 1}"`,
         `"${sub.submittedAt || ''}"`,
         ...fieldValues,
       ].join(',');

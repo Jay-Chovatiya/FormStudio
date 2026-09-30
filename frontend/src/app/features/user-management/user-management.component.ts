@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { User, UserUpsertRequest, UserRole } from '../../core/models/user';
 import { NavigationHistoryService } from '../../core/services/navigation-history.service';
 import { emailValidator } from '../../core/utils/regex.constants';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-user-management',
@@ -21,6 +22,7 @@ export class UserManagementComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly navHistory = inject(NavigationHistoryService);
   private readonly fb = inject(FormBuilder);
+  private readonly toastService = inject(ToastService);
 
   readonly users = signal<User[]>([]);
   readonly loading = signal<boolean>(true);
@@ -95,6 +97,10 @@ export class UserManagementComponent implements OnInit {
     this.currentUserId.set(null);
     this.actionError.set(null);
 
+    const passwordControl = this.userForm.get('password');
+    passwordControl?.enable();
+    passwordControl?.setValidators([Validators.required, Validators.minLength(6)]);
+
     this.userForm.reset({
       username: '',
       email: '',
@@ -103,10 +109,6 @@ export class UserManagementComponent implements OnInit {
       password: '',
       isActive: true
     });
-
-    const passwordControl = this.userForm.get('password');
-    passwordControl?.enable();
-    passwordControl?.setValidators([Validators.required, Validators.minLength(6)]);
     passwordControl?.updateValueAndValidity();
 
     this.isModalOpen.set(true);
@@ -117,19 +119,19 @@ export class UserManagementComponent implements OnInit {
     this.currentUserId.set(user.id);
     this.actionError.set(null);
 
-    this.userForm.reset({
-      username: user.username,
-      email: user.email,
-      fullName: user.fullName || '',
-      role: user.role,
-      password: '',
-      isActive: user.isActive
-    });
-
     const passwordControl = this.userForm.get('password');
     passwordControl?.clearValidators();
     passwordControl?.disable();
     passwordControl?.updateValueAndValidity();
+
+    this.userForm.reset();
+    this.userForm.patchValue({
+      username: user.username,
+      email: user.email,
+      fullName: user.fullName || '',
+      role: user.role,
+      isActive: user.isActive
+    });
 
     this.isModalOpen.set(true);
   }
@@ -165,6 +167,7 @@ export class UserManagementComponent implements OnInit {
           this.users.update((list) => list.map((u) => (u.id === id ? updatedUser : u)));
           this.isSaving.set(false);
           this.closeModal();
+          this.toastService.success('User updated successfully!');
         },
         error: (err) => {
           this.isSaving.set(false);
@@ -177,6 +180,7 @@ export class UserManagementComponent implements OnInit {
           this.users.update((list) => [newUser, ...list]);
           this.isSaving.set(false);
           this.closeModal();
+          this.toastService.success('User created successfully!');
         },
         error: (err) => {
           this.isSaving.set(false);
@@ -186,27 +190,10 @@ export class UserManagementComponent implements OnInit {
     }
   }
 
-  toggleStatus(user: User): void {
-    const currentUsername = this.authService.currentUser()?.username;
-    if (user.username === currentUsername) {
-      alert('You cannot deactivate your own logged-in account.');
-      return;
-    }
-
-    this.userService.toggleUserStatus(user.id).subscribe({
-      next: (updatedUser) => {
-        this.users.update((list) => list.map((u) => (u.id === user.id ? updatedUser : u)));
-      },
-      error: (err) => {
-        alert(err.error?.message || 'Failed to toggle user status.');
-      }
-    });
-  }
-
   deleteUser(user: User): void {
     const currentUsername = this.authService.currentUser()?.username;
     if (user.username === currentUsername) {
-      alert('You cannot delete your own account.');
+      this.toastService.warning('You cannot delete your own account.');
       return;
     }
 
@@ -217,9 +204,7 @@ export class UserManagementComponent implements OnInit {
     this.userService.deleteUser(user.id).subscribe({
       next: () => {
         this.users.update((list) => list.filter((u) => u.id !== user.id));
-      },
-      error: (err) => {
-        alert(err.error?.message || 'Failed to delete user.');
+        this.toastService.success(`User "${user.username}" deleted successfully!`);
       }
     });
   }

@@ -31,6 +31,7 @@ import { ResponseService } from '../../../core/services/response.service';
 import { NavigationHistoryService } from '../../../core/services/navigation-history.service';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { emailValidator } from '../../../core/utils/regex.constants';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   imports: [ReactiveFormsModule, TitleCasePipe, DatePickerComponent],
@@ -47,6 +48,7 @@ export class DynamicFormComponent implements OnInit {
   private readonly navHistory = inject(NavigationHistoryService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toastService = inject(ToastService);
 
   readonly resolvedForm = signal<FormDefinition | null>(null);
   readonly loading = signal<boolean>(false);
@@ -279,7 +281,7 @@ export class DynamicFormComponent implements OnInit {
   submit(): void {
     const warning = this.statusWarning();
     if (warning && warning.isBlocked) {
-      alert(warning.message);
+      this.toastService.warning(warning.message);
       return;
     }
 
@@ -325,11 +327,10 @@ export class DynamicFormComponent implements OnInit {
         if (typeof localStorage !== 'undefined') {
           localStorage.removeItem(`form_draft_${formDefinition.id}`);
         }
+        this.toastService.success('Form response submitted successfully!');
       },
-      error: (err) => {
+      error: () => {
         this.isSubmitting.set(false);
-        console.error('Failed to submit form:', err);
-        alert(err?.message || 'Failed to submit your response. Please check your connection and try again.');
       },
     });
   }

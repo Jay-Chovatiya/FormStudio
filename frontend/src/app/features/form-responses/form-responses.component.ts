@@ -9,6 +9,7 @@ import { NavigationHistoryService } from '../../core/services/navigation-history
 import { FormDefinition } from '../../core/models/form-definition';
 import { FormSubmission } from '../../core/models/form-submission';
 import { FormField } from '../../core/models/form-field';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-form-responses',
@@ -24,6 +25,7 @@ export class FormResponsesComponent implements OnInit {
   private readonly responseService = inject(ResponseService);
   private readonly navHistory = inject(NavigationHistoryService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toastService = inject(ToastService);
 
   form = signal<FormDefinition | null>(null);
   submissions = signal<FormSubmission[]>([]);
@@ -187,11 +189,12 @@ export class FormResponsesComponent implements OnInit {
     if (!currentForm) return;
 
     if (currentSubmissions.length === 0) {
-      alert('No submissions available to export.');
+      this.toastService.warning('No submissions available to export.');
       return;
     }
 
     this.responseService.exportToCsv(currentForm, currentSubmissions);
+    this.toastService.success('Responses exported to CSV successfully!');
   }
 
   onViewDetails(sub: FormSubmission): void {
@@ -224,11 +227,10 @@ export class FormResponsesComponent implements OnInit {
             this.selectedSubmission.set(null);
           }
           this.deletingSubmission.set(null);
+          this.toastService.success('Submission deleted successfully!');
         }
       },
-      error: (err) => {
-        console.error('Failed to delete submission:', err);
-        alert(err?.message || 'Failed to delete submission. Please try again.');
+      error: () => {
         this.deletingSubmission.set(null);
       }
     });

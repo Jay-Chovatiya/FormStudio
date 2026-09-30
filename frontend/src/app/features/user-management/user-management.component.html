@@ -125,18 +125,14 @@
                 </span>
               </td>
               <td>
-                <button
-                  type="button"
-                  class="status-toggle"
+                <span
+                  class="status-badge"
                   [class.status-active]="user.isActive"
                   [class.status-inactive]="!user.isActive"
-                  (click)="toggleStatus(user)"
-                  [title]="user.username === authService.currentUser()?.username ? 'Cannot toggle self' : (user.isActive ? 'Click to deactivate' : 'Click to activate')"
-                  [disabled]="user.username === authService.currentUser()?.username"
                 >
                   <span class="status-indicator"></span>
                   {{ user.isActive ? 'Active' : 'Inactive' }}
-                </button>
+                </span>
               </td>
               <td class="date-cell">{{ user.createdAt ? (user.createdAt | date:'mediumDate') : '-' }}</td>
               <td class="text-right actions-cell">

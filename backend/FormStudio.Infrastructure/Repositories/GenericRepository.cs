@@ -97,5 +97,16 @@ namespace FormStudio.Infrastructure.Repositories
         {
             return await _dbSet.Where(expression).Select(selector).ToListAsync();
         }
+
+        public async Task<List<TResult>> GetListAsync<TResult>(
+            Expression<Func<T, bool>> expression,
+            Expression<Func<T, TResult>> selector,
+            Expression<Func<T, object>> orderBy,
+            bool sortOrder = true)
+        {
+            if(sortOrder)
+                return await _dbSet.Where(expression).OrderBy(orderBy).Select(selector).ToListAsync();
+            return await _dbSet.Where(expression).OrderByDescending(orderBy).Select(selector).ToListAsync();
+        }
     }
 }

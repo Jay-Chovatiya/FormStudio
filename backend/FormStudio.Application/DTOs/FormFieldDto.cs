@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Text.Json.Serialization;
 using FormStudio.Application.Common;
 
@@ -40,10 +41,36 @@ namespace FormStudio.Application.DTOs
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (Validations == null || string.IsNullOrWhiteSpace(Default)) yield break;
+            if (string.IsNullOrWhiteSpace(Default)) yield break;
 
             string trimmedDefault = Default.Trim();
             string fieldDisplayName = !string.IsNullOrWhiteSpace(Label) ? Label.Trim() : Name?.Trim() ?? "Field";
+
+            if (string.Equals(Type, "Date", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(Type, "DateTime", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!DateTime.TryParse(trimmedDefault, CultureInfo.InvariantCulture, DateTimeStyles.None, out _) &&
+                    !DateTime.TryParse(trimmedDefault, out _))
+                {
+                    string typeDisplay = string.Equals(Type, "Date", StringComparison.OrdinalIgnoreCase) ? "date" : "date and time";
+                    yield return new ValidationResult(
+                        $"Default value '{trimmedDefault}' for field '{fieldDisplayName}' must be a valid {typeDisplay} value.",
+                        new[] { nameof(Default) });
+                }
+            }
+
+            if (Options != null && Options.Any() && (Type.Equals("Dropdown", StringComparison.OrdinalIgnoreCase) || Type.Equals("RadioButton", StringComparison.OrdinalIgnoreCase)))
+            {
+                bool isDefaultOptionSelected = Options.Any(o => string.Equals(o.Value?.Trim(), trimmedDefault, StringComparison.OrdinalIgnoreCase));
+                if (!isDefaultOptionSelected)
+                {
+                    yield return new ValidationResult(
+                        $"Default value '{trimmedDefault}' must be one of the defined options for field '{fieldDisplayName}'.",
+                        new[] { nameof(Default) });
+                }
+            }
+
+            if (Validations == null) yield break;
 
             // minValue validation
             FieldValidationDto? minVal = Validations.FirstOrDefault(v => string.Equals(v.Type, "minValue", StringComparison.OrdinalIgnoreCase));

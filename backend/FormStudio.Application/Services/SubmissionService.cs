@@ -24,17 +24,22 @@ namespace FormStudio.Application.Services
 
         public async Task<IEnumerable<FormSubmissionDto>> GetSubmissionsAsync(int formId)
         {
-            List<FormSubmissionEntity> submissions = await _unitOfWork.Repository<FormSubmissionEntity>().GetListAsync(s => s.FormId == formId);
-            List<int> submissionIds = submissions.Select(s => s.Id).ToList();
-            List<FormResponseEntity> responses = await _unitOfWork.Repository<FormResponseEntity>().GetListAsync(r => submissionIds.Contains(r.FormSubmissionId));
-
-            List<FormSubmissionEntity> submissionList = submissions.OrderByDescending(s => s.SubmittedAt).ToList();
-            foreach (FormSubmissionEntity sub in submissionList)
-            {
-                sub.Responses = responses.Where(r => r.FormSubmissionId == sub.Id).ToList();
-            }
-
-            return submissionList.Select(s => s.ToDto());
+            return await _unitOfWork.Repository<FormSubmissionEntity>().GetListAsync(
+                s => s.FormId == formId,
+                f => new FormSubmissionDto
+                {
+                    Id = f.Id,
+                    FormId = f.FormId,
+                    Responses = f.Responses.Select(r => new FormResponseDto
+                    {
+                        FieldId = r.FieldId,
+                        Value = r.ValueJson
+                    }).ToList(),
+                    SubmittedAt = f.SubmittedAt
+                },
+                f => f.SubmittedAt,
+                false
+                );
         }
 
         public async Task<FormSubmissionDto> SaveSubmissionAsync(string code, FormSubmissionDto submissionDto)
@@ -47,7 +52,7 @@ namespace FormStudio.Application.Services
                 throw new KeyNotFoundException("Invalid form URL or form is not currently active.");
             }
 
-            
+
             DateTime now = DateTime.Now;
             if (form.StartDate.HasValue && now < form.StartDate.Value)
             {

@@ -391,8 +391,8 @@
   }
 }
 
-/* Status toggle button */
-.status-toggle {
+/* Status badge */
+.status-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -401,8 +401,7 @@
   border: 1px solid transparent;
   font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  user-select: none;
 
   .status-indicator {
     width: 8px;
@@ -428,15 +427,6 @@
     .status-indicator {
       background-color: #ef4444;
     }
-  }
-
-  &:hover:not(:disabled) {
-    filter: brightness(0.95);
-  }
-
-  &:disabled {
-    cursor: default;
-    opacity: 0.8;
   }
 }
 

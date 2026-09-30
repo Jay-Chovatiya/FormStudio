@@ -6,6 +6,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { FormDefinition } from '../../core/models/form-definition';
 import { FormSection } from '../../core/models/form-section';
 import { FormStatus } from '../../core/models/form-status';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-form-list',
@@ -17,6 +18,7 @@ import { FormStatus } from '../../core/models/form-status';
 export class FormListComponent implements OnInit {
   private readonly formService = inject(FormService);
   private readonly router = inject(Router);
+  private readonly toastService = inject(ToastService);
   readonly authService = inject(AuthService);
 
   readonly forms = signal<FormDefinition[]>([]);
@@ -74,10 +76,8 @@ export class FormListComponent implements OnInit {
       next: (updatedForm: FormDefinition | null) => {
         if (updatedForm) {
           this.forms.update((list: FormDefinition[]) => list.map(f => f.id === form.id ? { ...f, status: typedStatus } : f));
+          this.toastService.success(`Form status updated to "${typedStatus}".`);
         }
-      },
-      error: (err: unknown) => {
-        alert((err as any)?.message || 'Failed to update status.');
       }
     });
   }
@@ -89,11 +89,9 @@ export class FormListComponent implements OnInit {
     this.formService.duplicateForm(form.id).subscribe({
       next: (duplicated: FormDefinition | null) => {
         if (duplicated) {
+          this.toastService.success('Form duplicated successfully!');
           this.loadForms();
         }
-      },
-      error: (err: unknown) => {
-        alert((err as any)?.message || 'Failed to duplicate form.');
       }
     });
   }
@@ -108,9 +106,7 @@ export class FormListComponent implements OnInit {
           this.forms.update((list: FormDefinition[]) =>
             list.filter((f) => f.id !== form.id)
           );
-        },
-        error: (err: unknown) => {
-          alert((err as any)?.message || 'Failed to delete form.');
+          this.toastService.success(`Form "${form.name}" deleted successfully!`);
         }
       });
     }
