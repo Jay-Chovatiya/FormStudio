@@ -101,7 +101,7 @@
             placeholder="Help text for users"
           />
         </div>
-        @if (field.type !== 'Checkbox' && !supportsOptions(field.type)) {
+        @if (field.type !== 'Checkbox' && field.type !== 'File' && !supportsOptions(field.type)) {
           <div class="form-field-item">
             <label class="fs-label" for="prop-placeholder">Placeholder</label>
             <input
@@ -194,8 +194,102 @@
         </div>
       }
 
+      <!-- File Upload Settings Group for File type -->
+      @if (field.type === 'File') {
+        <div class="prop-group file-settings-group">
+          <div class="group-header-row">
+            <h4 class="prop-group-title">File Upload Settings</h4>
+          </div>
+
+          <div class="form-field-item">
+            <label class="fs-checkbox-label">
+              <input type="checkbox" formControlName="multiple" />
+              Allow Multiple Files
+            </label>
+          </div>
+
+          @if (fieldForm.controls.multiple.value) {
+            <div class="form-field-item">
+              <label class="fs-label" for="prop-max-files">Maximum Number of Files</label>
+              <input
+                id="prop-max-files"
+                class="fs-input"
+                type="number"
+                min="1"
+                max="20"
+                formControlName="maxFiles"
+                placeholder="e.g. 5"
+              />
+            </div>
+          }
+
+          <div class="form-field-item">
+            <label class="fs-label" for="prop-max-size">Maximum File Size (MB)</label>
+            <input
+              id="prop-max-size"
+              class="fs-input"
+              type="number"
+              min="1"
+              max="100"
+              [value]="getMaxSizeInMB()"
+              (input)="setMaxSizeInMB($event)"
+              placeholder="e.g. 5"
+            />
+            <span class="file-settings-hint">
+              Limit applies per file. Default is 5 MB.
+            </span>
+          </div>
+
+          <div class="form-field-item">
+            <div class="file-types-header">
+              <label class="fs-label">Allowed File Types</label>
+              <div class="file-types-actions">
+                <button
+                  type="button"
+                  class="fs-btn fs-btn-ghost fs-btn-sm btn-quick-action"
+                  (click)="selectAllFileTypes()"
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  class="fs-btn fs-btn-ghost fs-btn-sm btn-quick-action"
+                  (click)="clearAllFileTypes()"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <div class="file-types-grid">
+              @for (ft of defaultFileTypes; track ft.extension) {
+                <label
+                  class="file-type-pill"
+                  [class.selected]="isFileTypeSelected(ft)"
+                >
+                  <input
+                    type="checkbox"
+                    [checked]="isFileTypeSelected(ft)"
+                    (change)="toggleFileType(ft)"
+                  />
+                  <span>{{ ft.extension | uppercase }}</span>
+                </label>
+              }
+            </div>
+
+            <span class="file-settings-hint">
+              @if (fieldForm.controls.allowedTypes.value.length === 0) {
+                Any supported file format (.pdf, .doc, .docx, .jpg, .png) will be accepted.
+              } @else {
+                Only selected extensions will be accepted.
+              }
+            </span>
+          </div>
+        </div>
+      }
+
       <!-- Default Value Group -->
-      @if (field.type !== 'Email') {
+      @if (field.type !== 'Email' && field.type !== 'File') {
         <div class="prop-group">
           <h4 class="prop-group-title">Default Value</h4>
           <div class="form-field-item">

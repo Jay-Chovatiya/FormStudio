@@ -1,6 +1,7 @@
 import { FieldOption } from './field-option';
 import { FieldTypes } from './field-types';
 import { FieldValidation } from './field-validation';
+import { FileTypeConfig } from './file-type-config';
 
 export interface FormField {
   id: number;
@@ -16,4 +17,8 @@ export interface FormField {
   displayOrder?: number;
   validations?: FieldValidation[];
   options?: FieldOption[];
+  multiple?: boolean;
+  maxFiles?: number;
+  maxSizeInBytes?: number;
+  allowedTypes?: FileTypeConfig[];
 }

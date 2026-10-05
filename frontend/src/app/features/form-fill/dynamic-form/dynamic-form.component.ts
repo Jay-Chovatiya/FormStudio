@@ -57,6 +57,7 @@ export class DynamicFormComponent implements OnInit {
   readonly submitted = signal<boolean>(false);
   readonly draftSaved = signal<boolean>(false);
   readonly hasRestoredDraft = signal<boolean>(false);
+  readonly selectedFilesMap = signal<Record<string, File[]>>({});
 
   readonly activeForm = computed<FormDefinition | null>(() => {
     return this.formDefinition() || this.resolvedForm();
@@ -167,6 +168,8 @@ export class DynamicFormComponent implements OnInit {
         const initialValue =
           field.type === 'Checkbox'
             ? field.default === true || field.default === 'true'
+            : field.type === 'File'
+            ? null
             : field.default ?? '';
         this.form.addControl(
           field.name,
@@ -270,12 +273,129 @@ export class DynamicFormComponent implements OnInit {
 
   resetForm(): void {
     const formDef = this.activeForm();
+    this.selectedFilesMap.set({});
     if (formDef) {
       this.createForm(formDef);
     } else {
       this.form.reset();
     }
     this.submitted.set(false);
+  }
+
+  getSelectedFiles(fieldName: string): File[] {
+    return this.selectedFilesMap()[fieldName] ?? [];
+  }
+
+  getAcceptedExtensions(field: FormField): string {
+    const allowed = field.allowedTypes;
+    if (allowed && allowed.length > 0) {
+      return allowed.map((t) => t.extension.toLowerCase()).join(',');
+    }
+    return '.pdf,.doc,.docx,.jpg,.png';
+  }
+
+  getFileConstraintsHint(field: FormField): string {
+    const maxMb = (field.maxSizeInBytes && field.maxSizeInBytes > 0) ? Math.round(field.maxSizeInBytes / (1024 * 1024)) : 5;
+    const extensions = field.allowedTypes?.length
+      ? field.allowedTypes.map((t) => t.extension.toUpperCase()).join(', ')
+      : 'PDF, DOC, DOCX, JPG, PNG';
+    const multiple = field.multiple ? ` • Up to ${field.maxFiles || 1} files` : '';
+    return `Max ${maxMb}MB per file • Formats: ${extensions}${multiple}`;
+  }
+
+  formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  onFileInputChange(field: FormField, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      this.handleFiles(field, Array.from(input.files));
+      input.value = '';
+    }
+  }
+
+  onFileDrop(field: FormField, event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer?.files) {
+      this.handleFiles(field, Array.from(event.dataTransfer.files));
+    }
+  }
+
+  private handleFiles(field: FormField, newFiles: File[]): void {
+    const control = this.form.get(field.name);
+    if (!control) return;
+
+    control.markAsTouched();
+
+    const isMultiple = field.multiple ?? false;
+    const maxFiles = isMultiple ? (field.maxFiles || 1) : 1;
+    const maxSize = (field.maxSizeInBytes && field.maxSizeInBytes > 0) ? field.maxSizeInBytes : 5242880;
+    const allowedExts = field.allowedTypes?.length
+      ? field.allowedTypes.map((t) => t.extension.toLowerCase())
+      : ['.pdf', '.doc', '.docx', '.jpg', '.png'];
+
+    const currentFiles = isMultiple ? (this.selectedFilesMap()[field.name] ?? []) : [];
+    const combinedFiles = isMultiple ? [...currentFiles, ...newFiles] : newFiles.slice(0, 1);
+
+    if (combinedFiles.length > maxFiles) {
+      control.setErrors({ maxFiles: `Maximum of ${maxFiles} file(s) allowed.` });
+      return;
+    }
+
+    for (const f of combinedFiles) {
+      const ext = '.' + f.name.split('.').pop()?.toLowerCase();
+      if (!allowedExts.includes(ext)) {
+        control.setErrors({ fileType: `File "${f.name}" has an unsupported format. Allowed: ${allowedExts.join(', ')}` });
+        return;
+      }
+      if (f.size > maxSize) {
+        const mb = Math.round(maxSize / (1024 * 1024));
+        control.setErrors({ fileSize: `File "${f.name}" exceeds the ${mb}MB size limit.` });
+        return;
+      }
+    }
+
+    control.setErrors(null);
+
+    this.selectedFilesMap.update((map) => ({
+      ...map,
+      [field.name]: combinedFiles,
+    }));
+
+    if (combinedFiles.length === 0) {
+      control.setValue(null);
+    } else {
+      const summary = combinedFiles.map((f) => f.name).join(', ');
+      control.setValue(summary);
+    }
+    control.updateValueAndValidity();
+  }
+
+  removeSelectedFile(field: FormField, index: number): void {
+    const control = this.form.get(field.name);
+    const currentFiles = [...(this.selectedFilesMap()[field.name] ?? [])];
+    currentFiles.splice(index, 1);
+
+    this.selectedFilesMap.update((map) => ({
+      ...map,
+      [field.name]: currentFiles,
+    }));
+
+    if (control) {
+      control.markAsTouched();
+      control.setErrors(null);
+      if (currentFiles.length === 0) {
+        control.setValue(null);
+      } else {
+        control.setValue(currentFiles.map((f) => f.name).join(', '));
+      }
+      control.updateValueAndValidity();
+    }
   }
 
   submit(): void {

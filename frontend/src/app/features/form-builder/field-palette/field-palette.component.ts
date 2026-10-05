@@ -1,7 +1,8 @@
 import { Component, inject } from '@angular/core';
-import { fieldPalette, FieldPaletteItem } from '../../../core/models/field-palette-item';
+import { fieldPalette } from '../../../core/models/field-palette-item';
 import { FormBuilderState } from '../../../core/services/form-builder-state';
 import { CdkDrag, CdkDropList, CdkDragHandle } from '@angular/cdk/drag-drop';
+import { FieldTypes } from '../../../core/models/field-types';
 
 @Component({
   imports: [CdkDrag, CdkDropList, CdkDragHandle],
@@ -17,7 +18,7 @@ export class FieldPaletteComponent {
     return this.formBuilderState.form()?.sections.map((s) => `section-fields-${s.id}`) ?? [];
   }
 
-  selectField(field: FieldPaletteItem): void {
-    this.formBuilderState.addFieldToSelectedSection(field.type);
+  selectField(fieldType: FieldTypes): void {
+    this.formBuilderState.addFieldToSelectedSection(fieldType);
   }
 }

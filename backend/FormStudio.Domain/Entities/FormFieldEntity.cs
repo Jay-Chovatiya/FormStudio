@@ -19,8 +19,12 @@ namespace FormStudio.Domain.Entities
         public string? DefaultValue { get; set; }
         public string? Icon { get; set; }
         public int DisplayOrder { get; set; }
+        public bool Multiple { get; set; } = false;
+        public int? MaxFiles { get; set; }
+        public long MaxSizeInBytes { get; set; } = 0;
 
         public ICollection<FieldOptionEntity> Options { get; set; } = new List<FieldOptionEntity>();
         public ICollection<FieldValidationEntity> Validations { get; set; } = new List<FieldValidationEntity>();
+        public ICollection<FileTypeConfigEntity> AllowedTypes { get; set; } = new List<FileTypeConfigEntity>();
     }
 }

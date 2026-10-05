@@ -19,6 +19,8 @@ import { DatePickerComponent } from '../../../shared/components/date-picker/date
 import { duplicateValueValidator } from '../../../shared/validators/duplicate-value.validator';
 import { uniqueOptionValueValidator } from '../../../shared/validators/unique-option-value.validator';
 import { FormSection } from '../../../core/models/form-section';
+import { fileTypeConfig } from '../../../core/utils/file-type.constants';
+import { FileTypeConfig } from '../../../core/models/file-type-config';
 
 @Component({
   imports: [
@@ -36,7 +38,7 @@ import { FormSection } from '../../../core/models/form-section';
 })
 export class PropertiesPanelComponent {
   private formBuilderState = inject(FormBuilderState);
-
+  defaultFileTypes = fileTypeConfig;
   selectedField = this.formBuilderState.selectedField;
   activeTab = this.formBuilderState.activeTab;
   form = this.formBuilderState.form;
@@ -245,6 +247,10 @@ export class PropertiesPanelComponent {
       default: new FormControl<string | number | boolean>('', {
         nonNullable: true,
       }),
+      multiple: new FormControl<boolean>(false, { nonNullable: true }),
+      maxFiles: new FormControl<number>(1, { nonNullable: true }),
+      maxSizeInBytes: new FormControl<number>(5242880, { nonNullable: true }),
+      allowedTypes: new FormControl<FileTypeConfig[]>([], { nonNullable: true }),
     },
     {
       validators: [defaultValueValidator(() => this.currentValidations())],
@@ -281,6 +287,28 @@ export class PropertiesPanelComponent {
         },
         { emitEvent: false },
       );
+
+      if (currentField.type === 'File') {
+        this.fieldForm.patchValue(
+          {
+            allowedTypes: currentField.allowedTypes ? [...currentField.allowedTypes] : [],
+            multiple: currentField.multiple ?? false,
+            maxFiles: currentField.maxFiles ?? 1,
+            maxSizeInBytes: (currentField.maxSizeInBytes && currentField.maxSizeInBytes > 0) ? currentField.maxSizeInBytes : 5242880,
+          },
+          { emitEvent: false },
+        );
+      } else {
+        this.fieldForm.patchValue(
+          {
+            allowedTypes: [],
+            multiple: false,
+            maxFiles: 1,
+            maxSizeInBytes: 0,
+          },
+          { emitEvent: false },
+        );
+      }
 
       this.currentValidations.set(currentField.validations ? [...currentField.validations] : []);
     });
@@ -370,9 +398,52 @@ export class PropertiesPanelComponent {
       options: currentOptions,
       default: defaultValue,
       validations: this.currentValidations(),
+      multiple: field.type === 'File' ? (currentValue.multiple ?? false) : false,
+      maxFiles: field.type === 'File' ? (currentValue.multiple ? (Number(currentValue.maxFiles) || 1) : 1) : undefined,
+      maxSizeInBytes: field.type === 'File' ? (Number(currentValue.maxSizeInBytes) || 5242880) : 0,
+      allowedTypes: field.type === 'File' ? (currentValue.allowedTypes ?? []) : undefined,
     };
 
     this.formBuilderState.updateSelectedField(updatedValue);
+  }
+
+  isFileTypeSelected(type: FileTypeConfig): boolean {
+    const currentTypes = this.fieldForm.controls.allowedTypes.value ?? [];
+    return currentTypes.some((t) => t.extension.toLowerCase() === type.extension.toLowerCase());
+  }
+
+  toggleFileType(type: FileTypeConfig): void {
+    const currentTypes = [...(this.fieldForm.controls.allowedTypes.value ?? [])];
+    const index = currentTypes.findIndex((t) => t.extension.toLowerCase() === type.extension.toLowerCase());
+    if (index > -1) {
+      currentTypes.splice(index, 1);
+    } else {
+      currentTypes.push(type);
+    }
+    this.fieldForm.controls.allowedTypes.setValue(currentTypes);
+    this.fieldForm.controls.allowedTypes.markAsDirty();
+  }
+
+  selectAllFileTypes(): void {
+    this.fieldForm.controls.allowedTypes.setValue([...this.defaultFileTypes]);
+    this.fieldForm.controls.allowedTypes.markAsDirty();
+  }
+
+  clearAllFileTypes(): void {
+    this.fieldForm.controls.allowedTypes.setValue([]);
+    this.fieldForm.controls.allowedTypes.markAsDirty();
+  }
+
+  getMaxSizeInMB(): number {
+    const bytes = this.fieldForm.controls.maxSizeInBytes.value || 5242880;
+    return Math.max(1, Math.round(bytes / (1024 * 1024)));
+  }
+
+  setMaxSizeInMB(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const mb = Math.max(1, Number(input.value) || 5);
+    this.fieldForm.controls.maxSizeInBytes.setValue(mb * 1024 * 1024);
+    this.fieldForm.controls.maxSizeInBytes.markAsDirty();
   }
 
   createOptionForm(option: FieldOption): FormGroup {

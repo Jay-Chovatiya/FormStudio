@@ -161,6 +161,14 @@ namespace FormStudio.Application.Services
                         DefaultValue = f.DefaultValue,
                         Icon = f.Icon,
                         DisplayOrder = f.DisplayOrder,
+                        Multiple = f.Multiple,
+                        MaxFiles = f.MaxFiles,
+                        MaxSizeInBytes = f.MaxSizeInBytes,
+                        AllowedTypes = f.AllowedTypes.Select(a => new FileTypeConfigEntity
+                        {
+                            Extension = a.Extension,
+                            MimeType = a.MimeType
+                        }).ToList(),
                         Options = f.Options.Select(o => new FieldOptionEntity
                         {
                             Label = o.Label,
@@ -227,6 +235,14 @@ namespace FormStudio.Application.Services
                             Default = field.DefaultValue,
                             Icon = field.Icon,
                             DisplayOrder = field.DisplayOrder,
+                            Multiple = field.Multiple,
+                            MaxFiles = field.MaxFiles,
+                            MaxSizeInBytes = field.MaxSizeInBytes,
+                            AllowedTypes = field.AllowedTypes.Select(a => new FileTypeConfigDto
+                            {
+                                Extension = a.Extension,
+                                MimeType = a.MimeType
+                            }).ToList(),
                             Options = field.Options.OrderBy(option => option.DisplayOrder).Select(option => new FieldOptionDto
                             {
                                 Id = option.Id,
@@ -290,6 +306,14 @@ namespace FormStudio.Application.Services
                             Default = field.DefaultValue,
                             Icon = field.Icon,
                             DisplayOrder = field.DisplayOrder,
+                            Multiple = field.Multiple,
+                            MaxFiles = field.MaxFiles,
+                            MaxSizeInBytes = field.MaxSizeInBytes,
+                            AllowedTypes = field.AllowedTypes.Select(a => new FileTypeConfigDto
+                            {
+                                Extension = a.Extension,
+                                MimeType = a.MimeType
+                            }).ToList(),
                             Options = field.Options.OrderBy(option => option.DisplayOrder).Select(option => new FieldOptionDto
                             {
                                 Id = option.Id,
@@ -318,6 +342,9 @@ namespace FormStudio.Application.Services
                 .Include(f => f.Sections)
                     .ThenInclude(s => s.Fields)
                         .ThenInclude(field => field.Validations)
+                .Include(f => f.Sections)
+                    .ThenInclude(s => s.Fields)
+                        .ThenInclude(field => field.AllowedTypes)
                 .FirstOrDefaultAsync(predicate);
         }
 
@@ -395,9 +422,13 @@ namespace FormStudio.Application.Services
                     existingField.DefaultValue = updatedField.DefaultValue;
                     existingField.Icon = updatedField.Icon;
                     existingField.DisplayOrder = updatedField.DisplayOrder;
+                    existingField.Multiple = updatedField.Multiple;
+                    existingField.MaxFiles = updatedField.MaxFiles;
+                    existingField.MaxSizeInBytes = updatedField.MaxSizeInBytes;
 
                     SynchronizeOptions(existingField, updatedField.Options?.ToList() ?? new List<FieldOptionEntity>());
                     SynchronizeValidations(existingField, updatedField.Validations?.ToList() ?? new List<FieldValidationEntity>());
+                    SynchronizeAllowedTypes(existingField, updatedField.AllowedTypes?.ToList() ?? new List<FileTypeConfigEntity>());
                 }
                 else
                 {
@@ -453,6 +484,32 @@ namespace FormStudio.Application.Services
                 else
                 {
                     existingField.Validations.Add(updatedVal);
+                }
+            }
+        }
+
+        private void SynchronizeAllowedTypes(FormFieldEntity existingField, List<FileTypeConfigEntity> updatedAllowedTypes)
+        {
+            HashSet<int> existingIds = existingField.AllowedTypes.Where(t => t.Id > 0).Select(t => t.Id).ToHashSet();
+            HashSet<int> updatedIds = updatedAllowedTypes.Where(t => t.Id > 0 && existingIds.Contains(t.Id)).Select(t => t.Id).ToHashSet();
+            List<FileTypeConfigEntity> removed = existingField.AllowedTypes.Where(t => t.Id > 0 && !updatedIds.Contains(t.Id)).ToList();
+
+            if (removed.Any())
+            {
+                _unitOfWork.Repository<FileTypeConfigEntity>().RemoveRange(removed);
+            }
+
+            foreach (FileTypeConfigEntity updatedType in updatedAllowedTypes)
+            {
+                FileTypeConfigEntity? existingType = existingField.AllowedTypes.FirstOrDefault(t => t.Id > 0 && t.Id == updatedType.Id);
+                if (existingType != null)
+                {
+                    existingType.Extension = updatedType.Extension;
+                    existingType.MimeType = updatedType.MimeType;
+                }
+                else
+                {
+                    existingField.AllowedTypes.Add(updatedType);
                 }
             }
         }

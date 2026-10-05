@@ -218,6 +218,10 @@ export class FormBuilderState {
       visibility: true,
       validations: type === 'Email' ? [{ type: 'email' }] : [],
       options: this.getDefaultOptions(type),
+      multiple: false,
+      maxFiles: type === 'File' ? 1 : undefined,
+      maxSizeInBytes: type === 'File' ? 5242880 : 0,
+      allowedTypes: type === 'File' ? [] : undefined
     };
 
     sections = sections.map((section) => {
@@ -239,6 +243,8 @@ export class FormBuilderState {
       sections,
       updatedAt: new Date().toISOString(),
     });
+
+    console.log(this.form());
 
     this.selectField(sectionId, guid);
     return true;
@@ -323,6 +329,7 @@ export class FormBuilderState {
       label: `${field.label} (Copy)`,
       options: field.options?.map((opt) => ({ ...opt, id: 0, guid: generateGuid() })),
       validations: field.validations ? structuredClone(field.validations) : [],
+      allowedTypes: field.allowedTypes ? structuredClone(field.allowedTypes) : undefined,
     };
 
     this.recordState();
@@ -451,6 +458,7 @@ export class FormBuilderState {
       case 'Dropdown': return 'Choose Option';
       case 'RadioButton': return 'Select One';
       case 'Checkbox': return 'Select Items';
+      case 'File': return 'File Upload';
       default: return 'Field Label';
     }
   }
@@ -463,6 +471,7 @@ export class FormBuilderState {
       case 'Email': return 'user@example.com';
       case 'Date': return 'YYYY-MM-DD';
       case 'Dropdown': return 'Select from list...';
+      case 'File': return 'Choose file to upload...';
       default: return '';
     }
   }
@@ -489,6 +498,7 @@ export class FormBuilderState {
       case 'Dropdown': return '🔽';
       case 'RadioButton': return '🔘';
       case 'Checkbox': return '☑️';
+      case 'File': return '📎';
       default: return '';
     }
   }

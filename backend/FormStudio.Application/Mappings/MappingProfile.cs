@@ -8,43 +8,46 @@ namespace FormStudio.Application.Mappings
     {
         public MappingProfile()
         {
-            // 1. FormDefinition <-> FormDefinitionDto
+            // FormDefinition <-> FormDefinitionDto
             CreateMap<FormDefinitionEntity, FormDefinitionDto>()
                 .ForMember(dest => dest.Sections, opt => opt.MapFrom(src => src.Sections.OrderBy(s => s.DisplayOrder)))
                 .ReverseMap()
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.Now));
 
-            // 2. FormSection <-> FormSectionDto
+            // FormSection <-> FormSectionDto
             CreateMap<FormSectionEntity, FormSectionDto>()
                 .ForMember(dest => dest.Fields, opt => opt.MapFrom(src => src.Fields.OrderBy(f => f.DisplayOrder)))
                 .ReverseMap();
 
-            // 3. FormField <-> FormFieldDto
+            // FormField <-> FormFieldDto
             CreateMap<FormFieldEntity, FormFieldDto>()
                 .ForMember(dest => dest.Default, opt => opt.MapFrom(src => src.DefaultValue))
                 .ForMember(dest => dest.Options, opt => opt.MapFrom(src => src.Options.OrderBy(o => o.DisplayOrder)))
                 .ReverseMap()
                 .ForMember(dest => dest.DefaultValue, opt => opt.MapFrom(src => src.Default));
 
-            // 4. FieldOption <-> FieldOptionDto
+            // FileTypeConfig <-> FileTypeConfigDto
+            CreateMap<FileTypeConfigEntity, FileTypeConfigDto>().ReverseMap();
+
+            // FieldOption <-> FieldOptionDto
             CreateMap<FieldOptionEntity, FieldOptionDto>().ReverseMap();
 
-            // 5. FieldValidation <-> FieldValidationDto
+            // FieldValidation <-> FieldValidationDto
             CreateMap<FieldValidationEntity, FieldValidationDto>()
                 .ForMember(dest => dest.Value, opt => opt.MapFrom(src => ParseValidationValue(src.Value)))
                 .ReverseMap()
                 .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.Value != null ? src.Value.ToString() : null));
 
-            // 6. FormSubmission <-> FormSubmissionDto
+            // FormSubmission <-> FormSubmissionDto
             CreateMap<FormSubmissionEntity, FormSubmissionDto>().ReverseMap();
 
-            // 7. FormResponse <-> FormResponseDto
+            // FormResponse <-> FormResponseDto
             CreateMap<FormResponseEntity, FormResponseDto>()
                 .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.ValueJson))
                 .ReverseMap()
                 .ForMember(dest => dest.ValueJson, opt => opt.MapFrom(src => src.Value != null ? src.Value.ToString() : null));
 
-            // 8. User <-> UserDto
+            // User <-> UserDto
             CreateMap<UserEntity, UserDto>().ReverseMap();
         }
 

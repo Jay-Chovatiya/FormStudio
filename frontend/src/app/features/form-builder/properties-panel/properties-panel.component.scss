@@ -359,6 +359,84 @@
   }
 }
 
+// File Upload Settings
+.file-settings-group {
+  .file-types-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--fs-space-xs);
+
+    .fs-label {
+      margin-bottom: 0;
+    }
+
+    .file-types-actions {
+      display: flex;
+      gap: 6px;
+
+      .btn-quick-action {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: var(--fs-radius-sm);
+        color: var(--fs-text-muted);
+
+        &:hover {
+          color: var(--fs-primary);
+          background-color: var(--fs-primary-light);
+        }
+      }
+    }
+  }
+
+  .file-types-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--fs-space-xs);
+  }
+
+  .file-type-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: var(--fs-radius-sm);
+    border: 1px solid var(--fs-border);
+    background-color: var(--fs-surface);
+    color: var(--fs-text-main);
+    font-size: var(--fs-font-size-xs);
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+
+    input[type='checkbox'] {
+      cursor: pointer;
+      accent-color: var(--fs-primary);
+    }
+
+    &:hover {
+      border-color: var(--fs-primary-border);
+      background-color: var(--fs-primary-light);
+    }
+
+    &.selected {
+      border-color: var(--fs-primary);
+      background-color: var(--fs-primary-light);
+      color: var(--fs-primary);
+      font-weight: 600;
+    }
+  }
+
+  .file-settings-hint {
+    display: block;
+    font-size: var(--fs-font-size-xs);
+    color: var(--fs-text-muted);
+    margin-top: var(--fs-space-2xs);
+    line-height: 1.4;
+  }
+}
+
 @media (max-width: 1024px) {
   .panel-header,
   .panel-body,

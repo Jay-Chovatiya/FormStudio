@@ -1,2 +1,2 @@
 export type FieldTypes =
-  'Textbox' | 'Email' | 'Number' | 'Checkbox' | 'RadioButton' | 'Dropdown' | 'Textarea' | 'Date' | 'DateTime';
+  'Textbox' | 'Email' | 'Number' | 'Checkbox' | 'RadioButton' | 'Dropdown' | 'Textarea' | 'Date' | 'DateTime' | 'File';

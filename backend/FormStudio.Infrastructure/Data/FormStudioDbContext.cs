@@ -14,6 +14,7 @@ namespace FormStudio.Infrastructure.Data
         public DbSet<FormFieldEntity> Fields => Set<FormFieldEntity>();
         public DbSet<FieldOptionEntity> FieldOptions => Set<FieldOptionEntity>();
         public DbSet<FieldValidationEntity> FieldValidations => Set<FieldValidationEntity>();
+        public DbSet<FileTypeConfigEntity> FileTypeConfigs => Set<FileTypeConfigEntity>();
         public DbSet<FormSubmissionEntity> FormSubmissions => Set<FormSubmissionEntity>();
         public DbSet<FormResponseEntity> FormResponses => Set<FormResponseEntity>();
         public DbSet<UserEntity> Users => Set<UserEntity>();
@@ -28,6 +29,7 @@ namespace FormStudio.Infrastructure.Data
             modelBuilder.Entity<FormFieldEntity>().ToTable("fields");
             modelBuilder.Entity<FieldOptionEntity>().ToTable("field_options");
             modelBuilder.Entity<FieldValidationEntity>().ToTable("field_validations");
+            modelBuilder.Entity<FileTypeConfigEntity>().ToTable("file_type_configs");
             modelBuilder.Entity<FormSubmissionEntity>().ToTable("form_submissions");
             modelBuilder.Entity<FormResponseEntity>().ToTable("form_responses");
             modelBuilder.Entity<UserEntity>().ToTable("users");
@@ -83,6 +85,8 @@ namespace FormStudio.Infrastructure.Data
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Label).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Multiple).IsRequired().HasDefaultValue(false);
+                entity.Property(e => e.MaxSizeInBytes).IsRequired().HasDefaultValue(0L);
                 entity.HasOne(e => e.FormSection)
                     .WithMany(s => s.Fields)
                     .HasForeignKey(e => e.FormSectionId)
@@ -110,6 +114,19 @@ namespace FormStudio.Infrastructure.Data
                 entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
                 entity.HasOne(e => e.FormField)
                     .WithMany(f => f.Validations)
+                    .HasForeignKey(e => e.FormFieldId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // FileTypeConfig Configuration
+            modelBuilder.Entity<FileTypeConfigEntity>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.Extension).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.MimeType).IsRequired().HasMaxLength(200);
+                entity.HasOne(e => e.FormField)
+                    .WithMany(f => f.AllowedTypes)
                     .HasForeignKey(e => e.FormFieldId)
                     .OnDelete(DeleteBehavior.Cascade);
             });

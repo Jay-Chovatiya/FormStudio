@@ -225,6 +225,56 @@
                             [placeholder]="field.placeholder ?? ''"
                             [mode]="field.type"
                           ></app-date-picker>
+                        } @else if (field.type === 'File') {
+                          <div class="df-file-upload-wrap">
+                            <label
+                              class="df-file-dropzone"
+                              [for]="field.name + '-file-input'"
+                              (dragover)="$event.preventDefault()"
+                              (drop)="onFileDrop(field, $event)"
+                            >
+                              <div class="dropzone-content">
+                                <span class="dropzone-icon">📁</span>
+                                <div class="dropzone-text">
+                                  <strong>Click to browse</strong> or drag & drop files here
+                                </div>
+                                <span class="dropzone-hint">
+                                  {{ getFileConstraintsHint(field) }}
+                                </span>
+                              </div>
+                              <input
+                                [id]="field.name + '-file-input'"
+                                type="file"
+                                class="hidden-file-input"
+                                [multiple]="field.multiple ?? false"
+                                [accept]="getAcceptedExtensions(field)"
+                                (change)="onFileInputChange(field, $event)"
+                              />
+                            </label>
+
+                            @let files = getSelectedFiles(field.name);
+                            @if (files.length > 0) {
+                              <div class="selected-files-list">
+                                @for (file of files; track file.name; let fileIdx = $index) {
+                                  <div class="selected-file-chip">
+                                    <span class="file-icon">📄</span>
+                                    <div class="file-info">
+                                      <span class="file-name" [title]="file.name">{{ file.name }}</span>
+                                      <span class="file-size">{{ formatBytes(file.size) }}</span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      class="file-remove-btn"
+                                      (click)="removeSelectedFile(field, fileIdx)"
+                                      title="Remove file"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
                         } @else {
                           <input
                             [id]="field.name"

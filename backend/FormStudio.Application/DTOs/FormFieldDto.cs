@@ -39,6 +39,11 @@ namespace FormStudio.Application.DTOs
 
         public List<FieldOptionDto>? Options { get; set; }
 
+        public bool Multiple { get; set; } = false;
+        public int? MaxFiles { get; set; }
+        public long MaxSizeInBytes { get; set; } = 0;
+        public List<FileTypeConfigDto>? AllowedTypes { get; set; }
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (string.IsNullOrWhiteSpace(Default)) yield break;
