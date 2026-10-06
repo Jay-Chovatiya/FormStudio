@@ -95,6 +95,12 @@ export class FormBuilderComponent implements OnInit {
     const currentForm = this.form();
     if (!currentForm) return;
 
+    const fileValidationError = this.validateFileFields(currentForm);
+    if (fileValidationError) {
+      this.toastService.error(fileValidationError, 'Validation Error');
+      return;
+    }
+
     this.saving.set(true);
 
     if (currentForm.id && typeof currentForm.id === 'number' && currentForm.id < 1000000000) {
@@ -123,6 +129,22 @@ export class FormBuilderComponent implements OnInit {
         }
       });
     }
+  }
+
+  private validateFileFields(form: FormDefinition): string | null {
+    for (const section of form.sections ?? []) {
+      for (const field of section.fields ?? []) {
+        if (field.type === 'File') {
+          if (!field.allowedTypes || field.allowedTypes.length === 0) {
+            const fieldLabel = field.label?.trim() || field.name?.trim() || 'File';
+            this.formBuilderState.selectField(section.guid ?? section.id, field.guid ?? field.id);
+            return `Please select at least one allowed file type for field '${fieldLabel}'.`;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
 

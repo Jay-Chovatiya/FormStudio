@@ -166,8 +166,8 @@ namespace FormStudio.Application.Services
                         MaxSizeInBytes = f.MaxSizeInBytes,
                         AllowedTypes = f.AllowedTypes.Select(a => new FileTypeConfigEntity
                         {
-                            Extension = a.Extension,
-                            MimeType = a.MimeType
+                            Extension = a.Extension.Trim().ToLower(),
+                            MimeType = a.MimeType.Trim().ToLower()
                         }).ToList(),
                         Options = f.Options.Select(o => new FieldOptionEntity
                         {
@@ -490,9 +490,13 @@ namespace FormStudio.Application.Services
 
         private void SynchronizeAllowedTypes(FormFieldEntity existingField, List<FileTypeConfigEntity> updatedAllowedTypes)
         {
-            HashSet<int> existingIds = existingField.AllowedTypes.Where(t => t.Id > 0).Select(t => t.Id).ToHashSet();
-            HashSet<int> updatedIds = updatedAllowedTypes.Where(t => t.Id > 0 && existingIds.Contains(t.Id)).Select(t => t.Id).ToHashSet();
-            List<FileTypeConfigEntity> removed = existingField.AllowedTypes.Where(t => t.Id > 0 && !updatedIds.Contains(t.Id)).ToList();
+            HashSet<string> updatedExtensions = updatedAllowedTypes
+                .Select(t => t.Extension)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            List<FileTypeConfigEntity> removed = existingField.AllowedTypes
+                .Where(t => !updatedExtensions.Contains(t.Extension))
+                .ToList();
 
             if (removed.Any())
             {
@@ -501,7 +505,9 @@ namespace FormStudio.Application.Services
 
             foreach (FileTypeConfigEntity updatedType in updatedAllowedTypes)
             {
-                FileTypeConfigEntity? existingType = existingField.AllowedTypes.FirstOrDefault(t => t.Id > 0 && t.Id == updatedType.Id);
+                FileTypeConfigEntity? existingType = existingField.AllowedTypes
+                    .FirstOrDefault(t => string.Equals(t.Extension, updatedType.Extension, StringComparison.OrdinalIgnoreCase));
+
                 if (existingType != null)
                 {
                     existingType.Extension = updatedType.Extension;

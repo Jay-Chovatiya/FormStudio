@@ -172,7 +172,10 @@
                 </div>
                 <div class="option-input-wrap">
                   <input class="fs-input" formControlName="value" placeholder="option_value" />
-                  @if (option.controls['value'].invalid && option.controls['value'].touched) {
+                  @if (
+                    option.controls['value'].hasError('requiredTrimmed') &&
+                    option.controls['value'].touched
+                  ) {
                     <span class="fs-error-message">Value required</span>
                   }
                 </div>
@@ -277,13 +280,87 @@
               }
             </div>
 
-            <span class="file-settings-hint">
-              @if (fieldForm.controls.allowedTypes.value.length === 0) {
-                Any supported file format (.pdf, .doc, .docx, .jpg, .png) will be accepted.
-              } @else {
-                Only selected extensions will be accepted.
+            <div class="custom-types-list">
+              @for (ctrl of fieldForm.controls.allowedTypes.controls; track ctrl; let i = $index) {
+                @if (isCustomFileType(ctrl.get('extension')?.value)) {
+                  <div class="custom-type-chip">
+                    <span class="custom-type-ext">{{ ctrl.get('extension')?.value | uppercase }}</span>
+                    <span class="custom-type-mime">({{ ctrl.get('mimeType')?.value }})</span>
+                    <button
+                      type="button"
+                      class="custom-type-remove"
+                      (click)="removeFileType(i)"
+                      title="Remove file type"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                }
               }
-            </span>
+            </div>
+
+            <!-- Add Custom File Type Inputs -->
+            <div class="custom-file-type-add-box" [formGroup]="customFileTypeForm">
+              <label class="custom-type-title">Add Custom Type</label>
+              <div class="custom-type-inputs-row">
+                <div class="custom-input-col custom-col-ext">
+                  <input
+                    class="fs-input custom-input-ext"
+                    formControlName="extension"
+                    placeholder=".ext"
+                  />
+                  @if (
+                    customFileTypeForm.controls.extension.hasError('requiredTrimmed') &&
+                    customFileTypeForm.controls.extension.touched
+                  ) {
+                    <span class="fs-error-message">Extension required</span>
+                  } @else if (
+                    customFileTypeForm.controls.extension.hasError('pattern') &&
+                    customFileTypeForm.controls.extension.touched
+                  ) {
+                    <span class="fs-error-message">Invalid extension</span>
+                  }
+                </div>
+                <div class="custom-input-col custom-col-mime">
+                  <input
+                    class="fs-input custom-input-mime"
+                    formControlName="mimeType"
+                    placeholder="mime/type (e.g. text/csv)"
+                  />
+                  @if (
+                    customFileTypeForm.controls.mimeType.hasError('requiredTrimmed') &&
+                    customFileTypeForm.controls.mimeType.touched
+                  ) {
+                    <span class="fs-error-message">MIME type required</span>
+                  } @else if (
+                    customFileTypeForm.controls.mimeType.hasError('pattern') &&
+                    customFileTypeForm.controls.mimeType.touched
+                  ) {
+                    <span class="fs-error-message">e.g. type/subtype</span>
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="fs-btn fs-btn-outline fs-btn-sm btn-add-custom-type"
+                  (click)="addCustomFileType()"
+                >
+                  + Add
+                </button>
+              </div>
+            </div>
+
+            @if (fieldForm.controls.allowedTypes.touched) {
+              <span
+                class="file-settings-hint"
+                [class.file-settings-error]="fieldForm.controls.allowedTypes.length === 0"
+              >
+                @if (fieldForm.controls.allowedTypes.length === 0) {
+                  Please select at least one allowed file type.
+                } @else {
+                  Only selected extensions will be accepted.
+                }
+              </span>
+            }
           </div>
         </div>
       }

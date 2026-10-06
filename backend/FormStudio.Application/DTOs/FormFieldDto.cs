@@ -46,10 +46,63 @@ namespace FormStudio.Application.DTOs
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            string fieldDisplayName = !string.IsNullOrWhiteSpace(Label) ? Label.Trim() : Name?.Trim() ?? "Field";
+
+            if (string.Equals(Type, "File", StringComparison.OrdinalIgnoreCase))
+            {
+                if (AllowedTypes == null || !AllowedTypes.Any())
+                {
+                    yield return new ValidationResult(
+                        $"Please select at least one allowed file type for field '{fieldDisplayName}'.",
+                        new[] { nameof(AllowedTypes) });
+                }
+                else
+                {
+                    HashSet<string> seenExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (FileTypeConfigDto ft in AllowedTypes)
+                    {
+                        if (string.IsNullOrWhiteSpace(ft.Extension))
+                        {
+                            yield return new ValidationResult(
+                                $"File extension cannot be empty for field '{fieldDisplayName}'.",
+                                new[] { nameof(AllowedTypes) });
+                        }
+                        else
+                        {
+                            string ext = ft.Extension.Trim();
+                            if (!ext.StartsWith(".") || ext.Length < 2)
+                            {
+                                yield return new ValidationResult(
+                                    $"File extension '{ext}' for field '{fieldDisplayName}' must start with '.' followed by extension name.",
+                                    new[] { nameof(AllowedTypes) });
+                            }
+                            else if (!seenExtensions.Add(ext))
+                            {
+                                yield return new ValidationResult(
+                                    $"Duplicate file extension '{ext}' specified for field '{fieldDisplayName}'.",
+                                    new[] { nameof(AllowedTypes) });
+                            }
+                        }
+
+                        if (string.IsNullOrWhiteSpace(ft.MimeType))
+                        {
+                            yield return new ValidationResult(
+                                $"MIME type cannot be empty for file extension '{ft.Extension}' in field '{fieldDisplayName}'.",
+                                new[] { nameof(AllowedTypes) });
+                        }
+                        else if (!System.Text.RegularExpressions.Regex.IsMatch(ft.MimeType.Trim(), @"^[a-zA-Z0-9!#$&^_\.\+-]+/[a-zA-Z0-9!#$&^_\.\+-]+$"))
+                        {
+                            yield return new ValidationResult(
+                                $"Invalid MIME type '{ft.MimeType}' specified for field '{fieldDisplayName}'.",
+                                new[] { nameof(AllowedTypes) });
+                        }
+                    }
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(Default)) yield break;
 
             string trimmedDefault = Default.Trim();
-            string fieldDisplayName = !string.IsNullOrWhiteSpace(Label) ? Label.Trim() : Name?.Trim() ?? "Field";
 
             if (string.Equals(Type, "Date", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(Type, "DateTime", StringComparison.OrdinalIgnoreCase))

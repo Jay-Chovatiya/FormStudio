@@ -27,7 +27,10 @@ namespace FormStudio.Application.Mappings
                 .ForMember(dest => dest.DefaultValue, opt => opt.MapFrom(src => src.Default));
 
             // FileTypeConfig <-> FileTypeConfigDto
-            CreateMap<FileTypeConfigEntity, FileTypeConfigDto>().ReverseMap();
+            CreateMap<FileTypeConfigEntity, FileTypeConfigDto>();
+            CreateMap<FileTypeConfigDto, FileTypeConfigEntity>()
+                .ForMember(dest => dest.Extension, opt => opt.MapFrom(src => src.Extension != null ? src.Extension.Trim().ToLower() : string.Empty))
+                .ForMember(dest => dest.MimeType, opt => opt.MapFrom(src => src.MimeType != null ? src.MimeType.Trim().ToLower() : string.Empty));
 
             // FieldOption <-> FieldOptionDto
             CreateMap<FieldOptionEntity, FieldOptionDto>().ReverseMap();

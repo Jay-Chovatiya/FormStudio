@@ -291,14 +291,14 @@ export class DynamicFormComponent implements OnInit {
     if (allowed && allowed.length > 0) {
       return allowed.map((t) => t.extension.toLowerCase()).join(',');
     }
-    return '.pdf,.doc,.docx,.jpg,.png';
+    return '';
   }
 
   getFileConstraintsHint(field: FormField): string {
     const maxMb = (field.maxSizeInBytes && field.maxSizeInBytes > 0) ? Math.round(field.maxSizeInBytes / (1024 * 1024)) : 5;
     const extensions = field.allowedTypes?.length
       ? field.allowedTypes.map((t) => t.extension.toUpperCase()).join(', ')
-      : 'PDF, DOC, DOCX, JPG, PNG';
+      : 'None';
     const multiple = field.multiple ? ` • Up to ${field.maxFiles || 1} files` : '';
     return `Max ${maxMb}MB per file • Formats: ${extensions}${multiple}`;
   }
@@ -327,7 +327,7 @@ export class DynamicFormComponent implements OnInit {
   }
 
   private handleFiles(field: FormField, newFiles: File[]): void {
-    const control = this.form.get(field.name);
+    const control = this.getControl(field.name);
     if (!control) return;
 
     control.markAsTouched();
@@ -337,28 +337,33 @@ export class DynamicFormComponent implements OnInit {
     const maxSize = (field.maxSizeInBytes && field.maxSizeInBytes > 0) ? field.maxSizeInBytes : 5242880;
     const allowedExts = field.allowedTypes?.length
       ? field.allowedTypes.map((t) => t.extension.toLowerCase())
-      : ['.pdf', '.doc', '.docx', '.jpg', '.png'];
+      : [];
+
+    // if (allowedExts.length === 0) {
+    //   control.setErrors({ fileType: 'No allowed file types configured for this field.' });
+    //   return;
+    // }
 
     const currentFiles = isMultiple ? (this.selectedFilesMap()[field.name] ?? []) : [];
     const combinedFiles = isMultiple ? [...currentFiles, ...newFiles] : newFiles.slice(0, 1);
 
-    if (combinedFiles.length > maxFiles) {
-      control.setErrors({ maxFiles: `Maximum of ${maxFiles} file(s) allowed.` });
-      return;
-    }
+    // if (combinedFiles.length > maxFiles) {
+    //   control.setErrors({ maxFiles: `Maximum of ${maxFiles} file(s) allowed.` });
+    //   return;
+    // }
 
-    for (const f of combinedFiles) {
-      const ext = '.' + f.name.split('.').pop()?.toLowerCase();
-      if (!allowedExts.includes(ext)) {
-        control.setErrors({ fileType: `File "${f.name}" has an unsupported format. Allowed: ${allowedExts.join(', ')}` });
-        return;
-      }
-      if (f.size > maxSize) {
-        const mb = Math.round(maxSize / (1024 * 1024));
-        control.setErrors({ fileSize: `File "${f.name}" exceeds the ${mb}MB size limit.` });
-        return;
-      }
-    }
+    // for (const f of combinedFiles) {
+    //   const ext = '.' + f.name.split('.').pop()?.toLowerCase();
+    //   if (!allowedExts.includes(ext)) {
+    //     control.setErrors({ fileType: `File "${f.name}" has an unsupported format. Allowed: ${allowedExts.join(', ')}` });
+    //     return;
+    //   }
+    //   if (f.size > maxSize) {
+    //     const mb = Math.round(maxSize / (1024 * 1024));
+    //     control.setErrors({ fileSize: `File "${f.name}" exceeds the ${mb}MB size limit.` });
+    //     return;
+    //   }
+    // }
 
     control.setErrors(null);
 

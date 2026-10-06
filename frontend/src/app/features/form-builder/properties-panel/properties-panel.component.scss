@@ -428,12 +428,123 @@
     }
   }
 
+  .custom-types-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--fs-space-xs);
+    margin-top: var(--fs-space-xs);
+  }
+
+  .custom-type-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: var(--fs-radius-sm);
+    border: 1px solid var(--fs-primary-border, #bfdbfe);
+    background-color: var(--fs-primary-light, #eff6ff);
+    color: var(--fs-primary, #2563eb);
+    font-size: var(--fs-font-size-xs);
+    font-weight: 500;
+
+    .custom-type-ext {
+      font-weight: 600;
+    }
+
+    .custom-type-mime {
+      font-size: 11px;
+      color: var(--fs-text-muted, #64748b);
+    }
+
+    .custom-type-remove {
+      background: none;
+      border: none;
+      color: var(--fs-text-muted, #64748b);
+      cursor: pointer;
+      font-size: 11px;
+      padding: 0 2px;
+      line-height: 1;
+
+      &:hover {
+        color: var(--fs-danger, #ef4444);
+      }
+    }
+  }
+
+  .custom-file-type-add-box {
+    margin-top: var(--fs-space-sm);
+    padding: var(--fs-space-xs);
+    background-color: var(--fs-surface-alt, #f8fafc);
+    border: 1px dashed var(--fs-border, #e2e8f0);
+    border-radius: var(--fs-radius-sm);
+
+    .custom-type-title {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--fs-text-muted, #64748b);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--fs-space-2xs);
+    }
+
+    .custom-type-inputs-row {
+      display: flex;
+      gap: var(--fs-space-xs);
+      align-items: flex-start;
+
+      .custom-input-col {
+        display: flex;
+        flex-direction: column;
+
+        .fs-error-message {
+          font-size: 11px;
+          margin-top: 2px;
+        }
+
+        &.custom-col-ext {
+          width: 90px;
+          flex-shrink: 0;
+        }
+
+        &.custom-col-mime {
+          flex: 1;
+          min-width: 0;
+        }
+      }
+
+      .custom-input-ext {
+        width: 100%;
+        padding: 4px 8px;
+        font-size: var(--fs-font-size-xs);
+      }
+
+      .custom-input-mime {
+        width: 100%;
+        padding: 4px 8px;
+        font-size: var(--fs-font-size-xs);
+      }
+
+      .btn-add-custom-type {
+        white-space: nowrap;
+        padding: 6px 12px;
+        font-size: var(--fs-font-size-xs);
+        align-self: flex-start;
+      }
+    }
+  }
+
   .file-settings-hint {
     display: block;
     font-size: var(--fs-font-size-xs);
     color: var(--fs-text-muted);
     margin-top: var(--fs-space-2xs);
     line-height: 1.4;
+
+    &.file-settings-error {
+      color: var(--fs-danger, #ef4444);
+      font-weight: 500;
+    }
   }
 }
 

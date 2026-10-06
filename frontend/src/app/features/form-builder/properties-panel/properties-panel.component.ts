@@ -8,7 +8,7 @@ import { PropertyError, PropertyName } from './property-error';
 import { FormStatus } from '../../../core/models/form-status';
 import { generateGuid } from '../../../core/utils/guid';
 import { UpperCasePipe, TitleCasePipe } from '@angular/common';
-import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { requiredTrimmedValidator } from '../../../shared/validators/required-trimmed.validator';
 import { identifierValidator } from '../../../shared/validators/identifier.validator';
 import { defaultValueValidator } from '../../../shared/validators/default-value.validator';
@@ -250,12 +250,29 @@ export class PropertiesPanelComponent {
       multiple: new FormControl<boolean>(false, { nonNullable: true }),
       maxFiles: new FormControl<number>(1, { nonNullable: true }),
       maxSizeInBytes: new FormControl<number>(5242880, { nonNullable: true }),
-      allowedTypes: new FormControl<FileTypeConfig[]>([], { nonNullable: true }),
+      allowedTypes: new FormArray<FormGroup>([]),
     },
     {
       validators: [defaultValueValidator(() => this.currentValidations())],
     },
   );
+
+  customFileTypeForm = new FormGroup({
+    extension: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        requiredTrimmedValidator,
+        Validators.pattern(/^\.?[a-zA-Z0-9]+$/),
+      ],
+    }),
+    mimeType: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        requiredTrimmedValidator,
+        Validators.pattern(/^[a-zA-Z0-9!#$&^_\.\+-]+[\/][a-zA-Z0-9!#$&^_\.\+-]+$/),
+      ],
+    }),
+  });
 
   selectedFieldRef = effect(() => {
     const fieldId = this.formBuilderState.selectedFieldId();
@@ -288,10 +305,16 @@ export class PropertiesPanelComponent {
         { emitEvent: false },
       );
 
+      const allowedTypesArray = this.fieldForm.controls.allowedTypes;
+      allowedTypesArray.clear({ emitEvent: false });
+
       if (currentField.type === 'File') {
+        for (const ft of currentField.allowedTypes ?? []) {
+          allowedTypesArray.push(this.createFileTypeForm(ft), { emitEvent: false });
+        }
+
         this.fieldForm.patchValue(
           {
-            allowedTypes: currentField.allowedTypes ? [...currentField.allowedTypes] : [],
             multiple: currentField.multiple ?? false,
             maxFiles: currentField.maxFiles ?? 1,
             maxSizeInBytes: (currentField.maxSizeInBytes && currentField.maxSizeInBytes > 0) ? currentField.maxSizeInBytes : 5242880,
@@ -301,7 +324,6 @@ export class PropertiesPanelComponent {
       } else {
         this.fieldForm.patchValue(
           {
-            allowedTypes: [],
             multiple: false,
             maxFiles: 1,
             maxSizeInBytes: 0,
@@ -401,10 +423,21 @@ export class PropertiesPanelComponent {
       multiple: field.type === 'File' ? (currentValue.multiple ?? false) : false,
       maxFiles: field.type === 'File' ? (currentValue.multiple ? (Number(currentValue.maxFiles) || 1) : 1) : undefined,
       maxSizeInBytes: field.type === 'File' ? (Number(currentValue.maxSizeInBytes) || 5242880) : 0,
-      allowedTypes: field.type === 'File' ? (currentValue.allowedTypes ?? []) : undefined,
+      allowedTypes: field.type === 'File' ? ((currentValue.allowedTypes as FileTypeConfig[]) ?? []) : undefined,
     };
 
     this.formBuilderState.updateSelectedField(updatedValue);
+  }
+
+  createFileTypeForm(type: FileTypeConfig): FormGroup {
+    return new FormGroup({
+      extension: new FormControl(type.extension, {
+        nonNullable: true,
+      }),
+      mimeType: new FormControl(type.mimeType, {
+        nonNullable: true,
+      }),
+    });
   }
 
   isFileTypeSelected(type: FileTypeConfig): boolean {
@@ -425,13 +458,57 @@ export class PropertiesPanelComponent {
   }
 
   selectAllFileTypes(): void {
-    this.fieldForm.controls.allowedTypes.setValue([...this.defaultFileTypes]);
-    this.fieldForm.controls.allowedTypes.markAsDirty();
+    const allowedTypesArray = this.fieldForm.controls.allowedTypes;
+    for (const dft of this.defaultFileTypes) {
+      const exists = allowedTypesArray.controls.some(
+        (ctrl) =>
+          (ctrl.get('extension')?.value ?? '').toLowerCase() === dft.extension.toLowerCase(),
+      );
+      if (!exists) {
+        allowedTypesArray.push(this.createFileTypeForm(dft));
+      }
+    }
+    allowedTypesArray.markAsDirty();
   }
 
   clearAllFileTypes(): void {
-    this.fieldForm.controls.allowedTypes.setValue([]);
-    this.fieldForm.controls.allowedTypes.markAsDirty();
+    const allowedTypesArray = this.fieldForm.controls.allowedTypes;
+    allowedTypesArray.clear();
+    allowedTypesArray.markAsDirty();
+  }
+
+  addCustomFileType(): void {
+    this.customFileTypeForm.markAllAsTouched();
+    if (this.customFileTypeForm.invalid) {
+      return;
+    }
+
+    let ext = this.customFileTypeForm.controls.extension.value.trim().toLowerCase();
+    const mime = this.customFileTypeForm.controls.mimeType.value.trim().toLowerCase();
+
+    if (!ext.startsWith('.')) {
+      ext = '.' + ext;
+    }
+
+    const allowedTypesArray = this.fieldForm.controls.allowedTypes;
+    allowedTypesArray.push(this.createFileTypeForm({ extension: ext, mimeType: mime }));
+    allowedTypesArray.markAsDirty();
+
+    this.customFileTypeForm.reset({ extension: '', mimeType: '' });
+  }
+
+  removeFileType(index: number): void {
+    const allowedTypesArray = this.fieldForm.controls.allowedTypes;
+    if (index >= 0 && index < allowedTypesArray.length) {
+      allowedTypesArray.removeAt(index);
+      allowedTypesArray.markAsDirty();
+    }
+  }
+
+  isCustomFileType(extension: string): boolean {
+    return !this.defaultFileTypes.some(
+      (dft) => dft.extension.toLowerCase() === extension.toLowerCase(),
+    );
   }
 
   getMaxSizeInMB(): number {

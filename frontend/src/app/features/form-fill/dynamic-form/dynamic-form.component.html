@@ -229,7 +229,7 @@
                           <div class="df-file-upload-wrap">
                             <label
                               class="df-file-dropzone"
-                              [for]="field.name + '-file-input'"
+                              [for]="field.name"
                               (dragover)="$event.preventDefault()"
                               (drop)="onFileDrop(field, $event)"
                             >
@@ -243,7 +243,7 @@
                                 </span>
                               </div>
                               <input
-                                [id]="field.name + '-file-input'"
+                                [id]="field.name"
                                 type="file"
                                 class="hidden-file-input"
                                 [multiple]="field.multiple ?? false"
@@ -329,6 +329,15 @@
                               <span class="fs-error-message"
                                 >{{ field.label }} has an invalid format.</span
                               >
+                            }
+                            @if (control?.errors?.['fileSize']) {
+                              <span class="fs-error-message">{{ control?.errors?.['fileSize'] }}</span>
+                            }
+                            @if (control?.errors?.['fileType']) {
+                              <span class="fs-error-message">{{ control?.errors?.['fileType'] }}</span>
+                            }
+                            @if (control?.errors?.['maxFiles']) {
+                              <span class="fs-error-message">{{ control?.errors?.['maxFiles'] }}</span>
                             }
                           </div>
                         }
