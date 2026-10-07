@@ -8,5 +8,6 @@ export interface FormSection {
   theme?: string;
   visibility: boolean;
   displayOrder?: number;
+  isDeleted?: boolean;
   fields: FormField[];
 }

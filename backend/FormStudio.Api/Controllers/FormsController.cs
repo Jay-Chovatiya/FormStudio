@@ -25,9 +25,9 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<FormDefinitionDto>> GetFormById(int id)
+        public async Task<ActionResult<FormDefinitionDto>> GetFormById(int id, [FromQuery] bool includeDeleted = false)
         {
-            FormDefinitionDto? form = await _formService.GetFormByIdAsync(id);
+            FormDefinitionDto? form = await _formService.GetFormByIdAsync(id, includeDeleted);
             if (form == null) return NotFound(new { message = $"Form with ID {id} was not found." });
             return Ok(form);
         }

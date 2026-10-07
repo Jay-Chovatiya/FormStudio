@@ -3,6 +3,7 @@ using System;
 using FormStudio.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FormStudio.Infrastructure.Migrations
 {
     [DbContext(typeof(FormStudioDbContext))]
-    partial class FormStudioDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261007040439_AddIsDeletedToSectionsAndFields")]
+    partial class AddIsDeletedToSectionsAndFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

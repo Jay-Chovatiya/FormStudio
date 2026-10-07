@@ -42,6 +42,7 @@ namespace FormStudio.Application.DTOs
         public bool Multiple { get; set; } = false;
         public int? MaxFiles { get; set; }
         public long MaxSizeInBytes { get; set; } = 0;
+        public bool IsDeleted { get; set; } = false;
         public List<FileTypeConfigDto>? AllowedTypes { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

@@ -15,6 +15,7 @@ namespace FormStudio.Domain.Entities
         public string? Theme { get; set; }
         public bool Visibility { get; set; } = true;
         public int DisplayOrder { get; set; }
+        public bool IsDeleted { get; set; } = false;
 
         public ICollection<FormFieldEntity> Fields { get; set; } = new List<FormFieldEntity>();
     }

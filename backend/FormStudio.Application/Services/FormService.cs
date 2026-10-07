@@ -22,9 +22,9 @@ namespace FormStudio.Application.Services
             return await GetFormListWithDetailsAsync(f => true);
         }
 
-        public async Task<FormDefinitionDto?> GetFormByIdAsync(int id)
+        public async Task<FormDefinitionDto?> GetFormByIdAsync(int id, bool includeDeleted = false)
         {
-            return await GetFormWithDetailsAsync(f => f.Id == id);
+            return await GetFormWithDetailsAsync(f => f.Id == id, includeDeleted);
         }
 
         public async Task<FormDefinitionDto?> GetPublishedFormByCodeAsync(string code)
@@ -190,7 +190,7 @@ namespace FormStudio.Application.Services
             return duplicatedForm.ToDto();
         }
 
-        private Task<FormDefinitionDto?> GetFormWithDetailsAsync(Expression<Func<FormDefinitionEntity, bool>> predicate)
+        private Task<FormDefinitionDto?> GetFormWithDetailsAsync(Expression<Func<FormDefinitionEntity, bool>> predicate, bool includeDeleted = false)
         {
             return _unitOfWork.Repository<FormDefinitionEntity>().GetFirstOrDefaultAsync(
                 predicate,
@@ -215,7 +215,10 @@ namespace FormStudio.Application.Services
                     FooterText = form.FooterText,
                     CreatedAt = form.CreatedAt,
                     UpdatedAt = form.UpdatedAt,
-                    Sections = form.Sections.OrderBy(section => section.DisplayOrder).Select(section => new FormSectionDto
+                    Sections = form.Sections
+                        .Where(section => includeDeleted || !section.IsDeleted)
+                        .OrderBy(section => section.DisplayOrder)
+                        .Select(section => new FormSectionDto
                     {
                         Id = section.Id,
                         Title = section.Title,
@@ -223,7 +226,11 @@ namespace FormStudio.Application.Services
                         Theme = section.Theme,
                         Visibility = section.Visibility,
                         DisplayOrder = section.DisplayOrder,
-                        Fields = section.Fields.OrderBy(field => field.DisplayOrder).Select(field => new FormFieldDto
+                        IsDeleted = section.IsDeleted,
+                        Fields = section.Fields
+                            .Where(field => includeDeleted || !field.IsDeleted)
+                            .OrderBy(field => field.DisplayOrder)
+                            .Select(field => new FormFieldDto
                         {
                             Id = field.Id,
                             Name = field.Name,
@@ -238,6 +245,7 @@ namespace FormStudio.Application.Services
                             Multiple = field.Multiple,
                             MaxFiles = field.MaxFiles,
                             MaxSizeInBytes = field.MaxSizeInBytes,
+                            IsDeleted = field.IsDeleted,
                             AllowedTypes = field.AllowedTypes.Select(a => new FileTypeConfigDto
                             {
                                 Extension = a.Extension,
@@ -286,7 +294,10 @@ namespace FormStudio.Application.Services
                     FooterText = form.FooterText,
                     CreatedAt = form.CreatedAt,
                     UpdatedAt = form.UpdatedAt,
-                    Sections = form.Sections.OrderBy(section => section.DisplayOrder).Select(section => new FormSectionDto
+                    Sections = form.Sections
+                        .Where(section => !section.IsDeleted)
+                        .OrderBy(section => section.DisplayOrder)
+                        .Select(section => new FormSectionDto
                     {
                         Id = section.Id,
                         Title = section.Title,
@@ -294,7 +305,11 @@ namespace FormStudio.Application.Services
                         Theme = section.Theme,
                         Visibility = section.Visibility,
                         DisplayOrder = section.DisplayOrder,
-                        Fields = section.Fields.OrderBy(field => field.DisplayOrder).Select(field => new FormFieldDto
+                        IsDeleted = section.IsDeleted,
+                        Fields = section.Fields
+                            .Where(field => !field.IsDeleted)
+                            .OrderBy(field => field.DisplayOrder)
+                            .Select(field => new FormFieldDto
                         {
                             Id = field.Id,
                             Name = field.Name,
@@ -309,6 +324,7 @@ namespace FormStudio.Application.Services
                             Multiple = field.Multiple,
                             MaxFiles = field.MaxFiles,
                             MaxSizeInBytes = field.MaxSizeInBytes,
+                            IsDeleted = field.IsDeleted,
                             AllowedTypes = field.AllowedTypes.Select(a => new FileTypeConfigDto
                             {
                                 Extension = a.Extension,
@@ -374,7 +390,14 @@ namespace FormStudio.Application.Services
 
             if (removedSections.Any())
             {
-                _unitOfWork.Repository<FormSectionEntity>().RemoveRange(removedSections);
+                foreach (FormSectionEntity sec in removedSections)
+                {
+                    sec.IsDeleted = true;
+                    foreach (FormFieldEntity f in sec.Fields)
+                    {
+                        f.IsDeleted = true;
+                    }
+                }
             }
 
             foreach (FormSectionEntity updatedSec in updatedForm.Sections)
@@ -387,11 +410,13 @@ namespace FormStudio.Application.Services
                     existingSec.Theme = updatedSec.Theme;
                     existingSec.Visibility = updatedSec.Visibility;
                     existingSec.DisplayOrder = updatedSec.DisplayOrder;
+                    existingSec.IsDeleted = false;
 
                     SynchronizeFields(existingSec, updatedSec.Fields?.ToList() ?? new List<FormFieldEntity>());
                 }
                 else
                 {
+                    updatedSec.IsDeleted = false;
                     existingForm.Sections.Add(updatedSec);
                 }
             }
@@ -405,7 +430,10 @@ namespace FormStudio.Application.Services
 
             if (removedFields.Any())
             {
-                _unitOfWork.Repository<FormFieldEntity>().RemoveRange(removedFields);
+                foreach (FormFieldEntity f in removedFields)
+                {
+                    f.IsDeleted = true;
+                }
             }
 
             foreach (FormFieldEntity updatedField in updatedFields)
@@ -425,6 +453,7 @@ namespace FormStudio.Application.Services
                     existingField.Multiple = updatedField.Multiple;
                     existingField.MaxFiles = updatedField.MaxFiles;
                     existingField.MaxSizeInBytes = updatedField.MaxSizeInBytes;
+                    existingField.IsDeleted = false;
 
                     SynchronizeOptions(existingField, updatedField.Options?.ToList() ?? new List<FieldOptionEntity>());
                     SynchronizeValidations(existingField, updatedField.Validations?.ToList() ?? new List<FieldValidationEntity>());
@@ -432,6 +461,7 @@ namespace FormStudio.Application.Services
                 }
                 else
                 {
+                    updatedField.IsDeleted = false;
                     existingSec.Fields.Add(updatedField);
                 }
             }

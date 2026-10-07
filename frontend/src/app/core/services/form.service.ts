@@ -14,8 +14,9 @@ export class FormService {
     return this.http.get<FormDefinition[]>(this.baseUrl);
   }
 
-  getFormById(id: number): Observable<FormDefinition | null> {
-    return this.http.get<FormDefinition>(`${this.baseUrl}/${id}`);
+  getFormById(id: number, includeDeleted: boolean = false): Observable<FormDefinition | null> {
+    const url = includeDeleted ? `${this.baseUrl}/${id}?includeDeleted=true` : `${this.baseUrl}/${id}`;
+    return this.http.get<FormDefinition>(url);
   }
 
   getFormByCode(code: string): Observable<FormDefinition | null> {

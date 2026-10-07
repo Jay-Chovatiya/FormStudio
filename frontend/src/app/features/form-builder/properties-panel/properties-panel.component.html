@@ -299,6 +299,13 @@
               }
             </div>
 
+            @if (fieldForm.controls.allowedTypes.hasError('duplicateExtension')) {
+              <span class="fs-error-message">File type extensions must be unique.</span>
+            }
+            @if (fieldForm.controls.allowedTypes.hasError('duplicateMimeType')) {
+              <span class="fs-error-message">File type MIME types must be unique.</span>
+            }
+
             <!-- Add Custom File Type Inputs -->
             <div class="custom-file-type-add-box" [formGroup]="customFileTypeForm">
               <label class="custom-type-title">Add Custom Type</label>
@@ -319,6 +326,11 @@
                     customFileTypeForm.controls.extension.touched
                   ) {
                     <span class="fs-error-message">Invalid extension</span>
+                  } @else if (
+                    customFileTypeForm.controls.extension.hasError('duplicateExtension') &&
+                    customFileTypeForm.controls.extension.touched
+                  ) {
+                    <span class="fs-error-message">Extension already added</span>
                   }
                 </div>
                 <div class="custom-input-col custom-col-mime">
@@ -337,6 +349,11 @@
                     customFileTypeForm.controls.mimeType.touched
                   ) {
                     <span class="fs-error-message">e.g. type/subtype</span>
+                  } @else if (
+                    customFileTypeForm.controls.mimeType.hasError('duplicateMimeType') &&
+                    customFileTypeForm.controls.mimeType.touched
+                  ) {
+                    <span class="fs-error-message">MIME type already added</span>
                   }
                 </div>
                 <button

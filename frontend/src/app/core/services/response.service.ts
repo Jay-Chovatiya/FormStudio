@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { FormSubmission } from '../models/form-submission';
 import { FormDefinition } from '../models/form-definition';
+import { FormField } from '../models/form-field';
 import { environment } from '../../../environment/environment';
 
 @Service()
@@ -22,19 +23,19 @@ export class ResponseService {
     return this.http.delete(`${this.baseUrl}/${formId}/submissions/${submissionId}`).pipe(map(() => true));
   }
 
-  exportToCsv(form: FormDefinition, submissions: FormSubmission[]): void {
+  exportToCsv(form: FormDefinition, submissions: FormSubmission[], targetFields?: FormField[]): void {
     if (!submissions || submissions.length === 0) return;
 
     // Collect all field headers
-    const allFields = form.sections.flatMap((s) => s.fields);
-    const headers = ['Submission ID', 'Submitted At', ...allFields.map((f) => f.label)];
+    const allFields = targetFields && targetFields.length > 0 ? targetFields : form.sections.flatMap((s) => s.fields);
+    const headers = ['Submission ID', 'Submitted At', ...allFields.map((f) => f.label + (f.isDeleted ? ' (Archived)' : ''))];
 
     const rows = submissions.map((sub, index) => {
-      const responseMap = new Map<number, unknown>();
-      sub.responses.forEach((r) => responseMap.set(r.fieldId, r.value));
+      const responseMap = new Map<string, unknown>();
+      sub.responses.forEach((r) => responseMap.set(String(r.fieldId), r.value));
 
       const fieldValues = allFields.map((field) => {
-        const val = responseMap.get(field.id);
+        const val = responseMap.get(String(field.id));
         if (val === undefined || val === null) return '""';
         if (Array.isArray(val)) return `"${val.join('; ').replace(/"/g, '""')}"`;
         return `"${String(val).replace(/"/g, '""')}"`;

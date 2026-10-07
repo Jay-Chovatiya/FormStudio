@@ -9,6 +9,7 @@ import { NavigationHistoryService } from '../../core/services/navigation-history
 import { FormDefinition } from '../../core/models/form-definition';
 import { FormSubmission } from '../../core/models/form-submission';
 import { FormField } from '../../core/models/form-field';
+import { FormSection } from '../../core/models/form-section';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
@@ -48,8 +49,30 @@ export class FormResponsesComponent implements OnInit {
     return f.sections.flatMap((s) => s.fields || []);
   });
 
+  responseFields = computed<FormField[]>(() => {
+    const subs = this.submissions();
+    const fields = this.allFields();
+    if (!subs.length) {
+      return fields.filter((f) => !f.isDeleted);
+    }
+
+    const answeredFieldIds = new Set<string>();
+    for (const sub of subs) {
+      if (sub.responses) {
+        for (const r of sub.responses) {
+          if (this.isFieldValueProvided(r.value)) {
+            answeredFieldIds.add(String(r.fieldId));
+          }
+        }
+      }
+    }
+
+    const matched = fields.filter((f) => answeredFieldIds.has(String(f.id)));
+    return matched.length > 0 ? matched : fields.filter((f) => !f.isDeleted);
+  });
+
   tablePreviewFields = computed<FormField[]>(() => {
-    return this.allFields().slice(0, 4);
+    return this.responseFields();
   });
 
   filteredSubmissions = computed<FormSubmission[]>(() => {
@@ -124,7 +147,7 @@ export class FormResponsesComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.formService.getFormById(formId).subscribe({
+    this.formService.getFormById(formId, true).subscribe({
       next: (formDef) => {
         if (!formDef) {
           this.error.set('Form definition not found.');
@@ -155,9 +178,35 @@ export class FormResponsesComponent implements OnInit {
     });
   }
 
+  isFieldValueProvided(value: unknown): boolean {
+    if (value === null || value === undefined || value === '') return false;
+    if (Array.isArray(value) && value.length === 0) return false;
+    return true;
+  }
+
+  isFieldAnswered(sub: FormSubmission, fieldId: number | string): boolean {
+    if (!sub || !sub.responses) return false;
+    const resp = sub.responses.find((r) => String(r.fieldId) === String(fieldId));
+    return !!resp && this.isFieldValueProvided(resp.value);
+  }
+
+  getAnsweredFieldsForSection(sub: FormSubmission, section: FormSection): FormField[] {
+    if (!section || !section.fields) return [];
+    return section.fields.filter((field) => this.isFieldAnswered(sub, field.id));
+  }
+
+  hasAnsweredFields(sub: FormSubmission, section: FormSection): boolean {
+    return this.getAnsweredFieldsForSection(sub, section).length > 0;
+  }
+
+  hasAnyAnswers(sub: FormSubmission): boolean {
+    if (!sub || !sub.responses) return false;
+    return sub.responses.some((r) => this.isFieldValueProvided(r.value));
+  }
+
   getFieldValue(sub: FormSubmission, fieldId: number): string {
     const resp = sub.responses?.find((r) => r.fieldId === fieldId || String(r.fieldId) === String(fieldId));
-    if (!resp || resp.value === null || resp.value === undefined || resp.value === '') {
+    if (!resp || !this.isFieldValueProvided(resp.value)) {
       return '—';
     }
     if (Array.isArray(resp.value)) {
@@ -171,7 +220,7 @@ export class FormResponsesComponent implements OnInit {
 
   getDetailedValue(sub: FormSubmission, field: FormField): { display: string; isPlaceholder: boolean } {
     const resp = sub.responses?.find((r) => r.fieldId === field.id || String(r.fieldId) === String(field.id));
-    if (!resp || resp.value === null || resp.value === undefined || resp.value === '') {
+    if (!resp || !this.isFieldValueProvided(resp.value)) {
       return { display: '— (No answer provided)', isPlaceholder: true };
     }
     if (Array.isArray(resp.value)) {
@@ -193,7 +242,7 @@ export class FormResponsesComponent implements OnInit {
       return;
     }
 
-    this.responseService.exportToCsv(currentForm, currentSubmissions);
+    this.responseService.exportToCsv(currentForm, currentSubmissions, this.responseFields());
     this.toastService.success('Responses exported to CSV successfully!');
   }
 

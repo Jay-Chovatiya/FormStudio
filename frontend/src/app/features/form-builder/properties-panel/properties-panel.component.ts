@@ -17,7 +17,7 @@ import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/d
 import { dateRangeValidator } from '../../../shared/validators/date-range.validator';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { duplicateValueValidator } from '../../../shared/validators/duplicate-value.validator';
-import { uniqueOptionValueValidator } from '../../../shared/validators/unique-option-value.validator';
+import { uniqueValueValidator } from '../../../shared/validators/unique-value.validator';
 import { FormSection } from '../../../core/models/form-section';
 import { fileTypeConfig } from '../../../core/utils/file-type.constants';
 import { FileTypeConfig } from '../../../core/models/file-type-config';
@@ -242,7 +242,13 @@ export class PropertiesPanelComponent {
         nonNullable: true,
       }),
       options: new FormArray<FormGroup>([], {
-        validators: [uniqueOptionValueValidator],
+        validators: [
+          uniqueValueValidator({
+            property: 'value',
+            errorKey: 'duplicateOptionValue',
+            trim: true,
+          }),
+        ],
       }),
       default: new FormControl<string | number | boolean>('', {
         nonNullable: true,
@@ -250,7 +256,29 @@ export class PropertiesPanelComponent {
       multiple: new FormControl<boolean>(false, { nonNullable: true }),
       maxFiles: new FormControl<number>(1, { nonNullable: true }),
       maxSizeInBytes: new FormControl<number>(5242880, { nonNullable: true }),
-      allowedTypes: new FormArray<FormGroup>([]),
+      allowedTypes: new FormArray<FormGroup>([], {
+        validators: [
+          uniqueValueValidator({
+            property: 'extension',
+            errorKey: 'duplicateExtension',
+            caseSensitive: false,
+            normalize: (ext: unknown) =>
+              typeof ext === 'string'
+                ? ext.trim().toLowerCase().startsWith('.')
+                  ? ext.trim().toLowerCase()
+                  : '.' + ext.trim().toLowerCase()
+                : ext,
+          }),
+          uniqueValueValidator({
+            property: 'mimeType',
+            errorKey: 'duplicateMimeType',
+            caseSensitive: false,
+            trim: true,
+            normalize: (mime: unknown) =>
+              typeof mime === 'string' ? mime.trim().toLowerCase() : mime,
+          }),
+        ],
+      }),
     },
     {
       validators: [defaultValueValidator(() => this.currentValidations())],
@@ -263,6 +291,18 @@ export class PropertiesPanelComponent {
       validators: [
         requiredTrimmedValidator,
         Validators.pattern(/^\.?[a-zA-Z0-9]+$/),
+        uniqueValueValidator({
+          getItems: () => this.fieldForm.controls.allowedTypes.controls,
+          property: 'extension',
+          errorKey: 'duplicateExtension',
+          caseSensitive: false,
+          normalize: (ext: unknown) =>
+            typeof ext === 'string'
+              ? ext.trim().toLowerCase().startsWith('.')
+                ? ext.trim().toLowerCase()
+                : '.' + ext.trim().toLowerCase()
+              : ext,
+        }),
       ],
     }),
     mimeType: new FormControl('', {
@@ -270,6 +310,15 @@ export class PropertiesPanelComponent {
       validators: [
         requiredTrimmedValidator,
         Validators.pattern(/^[a-zA-Z0-9!#$&^_\.\+-]+[\/][a-zA-Z0-9!#$&^_\.\+-]+$/),
+        uniqueValueValidator({
+          getItems: () => this.fieldForm.controls.allowedTypes.controls,
+          property: 'mimeType',
+          errorKey: 'duplicateMimeType',
+          caseSensitive: false,
+          trim: true,
+          normalize: (mime: unknown) =>
+            typeof mime === 'string' ? mime.trim().toLowerCase() : mime,
+        }),
       ],
     }),
   });
@@ -446,15 +495,16 @@ export class PropertiesPanelComponent {
   }
 
   toggleFileType(type: FileTypeConfig): void {
-    const currentTypes = [...(this.fieldForm.controls.allowedTypes.value ?? [])];
-    const index = currentTypes.findIndex((t) => t.extension.toLowerCase() === type.extension.toLowerCase());
+    const allowedTypesArray = this.fieldForm.controls.allowedTypes;
+    const index = allowedTypesArray.controls.findIndex(
+      (ctrl) => (ctrl.get('extension')?.value ?? '').toLowerCase() === type.extension.toLowerCase(),
+    );
     if (index > -1) {
-      currentTypes.splice(index, 1);
+      allowedTypesArray.removeAt(index);
     } else {
-      currentTypes.push(type);
+      allowedTypesArray.push(this.createFileTypeForm(type));
     }
-    this.fieldForm.controls.allowedTypes.setValue(currentTypes);
-    this.fieldForm.controls.allowedTypes.markAsDirty();
+    allowedTypesArray.markAsDirty();
   }
 
   selectAllFileTypes(): void {

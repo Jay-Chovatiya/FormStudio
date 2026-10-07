@@ -171,7 +171,11 @@
               <th class="col-id"># Submission ID</th>
               <th class="col-date">Submitted At</th>
               @for (field of tablePreviewFields(); track field.id) {
-                <th class="col-field">{{ field.label }}</th>
+                <th class="col-field" [title]="field.label + (field.isDeleted ? ' (Archived)' : '')">
+                  <div class="col-header-content">
+                    <span class="header-label-text">{{ field.label }}</span>
+                  </div>
+                </th>
               }
               <th class="col-actions">Actions</th>
             </tr>
@@ -192,9 +196,6 @@
                 }
                 <td class="col-actions" (click)="$event.stopPropagation()">
                   <div class="action-btn-group">
-                    <button type="button" class="btn-row-action view" (click)="onViewDetails(sub)" title="View Details">
-                      👁️ View
-                    </button>
                     <button type="button" class="btn-row-action delete" (click)="confirmDelete(sub, $event)" title="Delete">
                       🗑️
                     </button>
@@ -239,30 +240,48 @@
 
         <div class="modal-body">
           @if (form(); as f) {
-            @for (section of f.sections; track section.id) {
-              <div class="detail-section">
-                <div class="detail-section-header">
-                  <h3 class="section-title">{{ section.title }}</h3>
-                  @if (section.description) {
-                    <p class="section-desc">{{ section.description }}</p>
-                  }
-                </div>
-
-                <div class="detail-fields-grid">
-                  @for (field of section.fields; track field.id) {
-                    @let valueInfo = getDetailedValue(currentSub, field);
-                    <div class="detail-field-card">
-                      <div class="field-meta">
-                        <span class="field-label">{{ field.label }}</span>
-                        <span class="field-type-pill">{{ field.type }}</span>
-                      </div>
-                      <div class="field-value" [class.is-placeholder]="valueInfo.isPlaceholder">
-                        {{ valueInfo.display }}
-                      </div>
-                    </div>
-                  }
-                </div>
+            @if (!hasAnyAnswers(currentSub)) {
+              <div class="detail-empty-state">
+                <p>No answers were provided for this submission.</p>
               </div>
+            }
+
+            @for (section of f.sections; track section.id) {
+              @if (hasAnsweredFields(currentSub, section)) {
+                <div class="detail-section" [class.is-archived]="section.isDeleted">
+                  <div class="detail-section-header">
+                    <h3 class="section-title">
+                      {{ section.title }}
+                      @if (section.isDeleted) {
+                        <span class="badge-archived">(Archived)</span>
+                      }
+                    </h3>
+                    @if (section.description) {
+                      <p class="section-desc">{{ section.description }}</p>
+                    }
+                  </div>
+
+                  <div class="detail-fields-grid">
+                    @for (field of getAnsweredFieldsForSection(currentSub, section); track field.id) {
+                      @let valueInfo = getDetailedValue(currentSub, field);
+                      <div class="detail-field-card" [class.is-archived]="field.isDeleted">
+                        <div class="field-meta">
+                          <span class="field-label">{{ field.label }}</span>
+                          <div class="field-badges">
+                            @if (field.isDeleted) {
+                              <span class="field-archived-pill">Archived</span>
+                            }
+                            <span class="field-type-pill">{{ field.type }}</span>
+                          </div>
+                        </div>
+                        <div class="field-value" [class.is-placeholder]="valueInfo.isPlaceholder">
+                          {{ valueInfo.display }}
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
             }
           }
         </div>

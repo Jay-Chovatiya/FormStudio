@@ -21,4 +21,5 @@ export interface FormField {
   maxFiles?: number;
   maxSizeInBytes?: number;
   allowedTypes?: FileTypeConfig[];
+  isDeleted?: boolean;
 }

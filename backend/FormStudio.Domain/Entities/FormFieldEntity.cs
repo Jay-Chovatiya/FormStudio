@@ -22,6 +22,7 @@ namespace FormStudio.Domain.Entities
         public bool Multiple { get; set; } = false;
         public int? MaxFiles { get; set; }
         public long MaxSizeInBytes { get; set; } = 0;
+        public bool IsDeleted { get; set; } = false;
 
         public ICollection<FieldOptionEntity> Options { get; set; } = new List<FieldOptionEntity>();
         public ICollection<FieldValidationEntity> Validations { get; set; } = new List<FieldValidationEntity>();

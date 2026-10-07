@@ -71,6 +71,7 @@ namespace FormStudio.Infrastructure.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
                 entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.IsDeleted).IsRequired().HasDefaultValue(false);
                 entity.HasOne(e => e.FormDefinition)
                     .WithMany(f => f.Sections)
                     .HasForeignKey(e => e.FormDefinitionId)
@@ -87,6 +88,7 @@ namespace FormStudio.Infrastructure.Data
                 entity.Property(e => e.Label).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Multiple).IsRequired().HasDefaultValue(false);
                 entity.Property(e => e.MaxSizeInBytes).IsRequired().HasDefaultValue(0L);
+                entity.Property(e => e.IsDeleted).IsRequired().HasDefaultValue(false);
                 entity.HasOne(e => e.FormSection)
                     .WithMany(s => s.Fields)
                     .HasForeignKey(e => e.FormSectionId)
