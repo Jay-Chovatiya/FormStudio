@@ -190,8 +190,24 @@
                   <span class="date-text">{{ sub.submittedAt | date:'medium' }}</span>
                 </td>
                 @for (field of tablePreviewFields(); track field.id) {
+                  @let fileInfo = getFileDetails(sub, field.id);
                   <td class="col-field" [title]="getFieldValue(sub, field.id)">
-                    <span class="field-val-truncate">{{ getFieldValue(sub, field.id) }}</span>
+                    @if (field.type === 'File' && fileInfo.length > 0) {
+                      <div class="field-file-table-wrap">
+                        @for (f of fileInfo; track f.url || f.name) {
+                          <button
+                            type="button"
+                            class="file-link-chip"
+                            (click)="onDownloadFile(f.url, f.name, $event)"
+                            [title]="'Download ' + f.name"
+                          >
+                            📎 {{ f.name }}
+                          </button>
+                        }
+                      </div>
+                    } @else {
+                      <span class="field-val-truncate">{{ getFieldValue(sub, field.id) }}</span>
+                    }
                   </td>
                 }
                 <td class="col-actions" (click)="$event.stopPropagation()">
@@ -264,6 +280,7 @@
                   <div class="detail-fields-grid">
                     @for (field of getAnsweredFieldsForSection(currentSub, section); track field.id) {
                       @let valueInfo = getDetailedValue(currentSub, field);
+                      @let modalFiles = getFileDetails(currentSub, field.id);
                       <div class="detail-field-card" [class.is-archived]="field.isDeleted">
                         <div class="field-meta">
                           <span class="field-label">{{ field.label }}</span>
@@ -274,9 +291,24 @@
                             <span class="field-type-pill">{{ field.type }}</span>
                           </div>
                         </div>
-                        <div class="field-value" [class.is-placeholder]="valueInfo.isPlaceholder">
-                          {{ valueInfo.display }}
-                        </div>
+                        @if (field.type === 'File' && modalFiles.length > 0) {
+                          <div class="modal-files-list">
+                            @for (f of modalFiles; track f.url || f.name) {
+                              <button
+                                type="button"
+                                class="file-modal-link"
+                                (click)="onDownloadFile(f.url, f.name, $event)"
+                                [title]="'Download ' + f.name"
+                              >
+                                📎 {{ f.name }}
+                              </button>
+                            }
+                          </div>
+                        } @else {
+                          <div class="field-value" [class.is-placeholder]="valueInfo.isPlaceholder">
+                            {{ valueInfo.display }}
+                          </div>
+                        }
                       </div>
                     }
                   </div>

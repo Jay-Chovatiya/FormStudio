@@ -11,6 +11,8 @@ import { FormSubmission } from '../../core/models/form-submission';
 import { FormField } from '../../core/models/form-field';
 import { FormSection } from '../../core/models/form-section';
 import { ToastService } from '../../core/services/toast.service';
+import { UploadService } from '../../core/services/upload.service';
+import { environment } from '../../../environment/environment';
 
 @Component({
   selector: 'app-form-responses',
@@ -24,6 +26,7 @@ export class FormResponsesComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly formService = inject(FormService);
   private readonly responseService = inject(ResponseService);
+  private readonly uploadService = inject(UploadService);
   private readonly navHistory = inject(NavigationHistoryService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toastService = inject(ToastService);
@@ -204,6 +207,98 @@ export class FormResponsesComponent implements OnInit {
     return sub.responses.some((r) => this.isFieldValueProvided(r.value));
   }
 
+  private resolveFileUrl(fileUrl?: string): string {
+    if (!fileUrl) return '';
+    
+    return fileUrl.startsWith('/') ? fileUrl : '/' + fileUrl;
+  }
+
+  private stripGuidFromFileName(rawNameOrUrl: string): string {
+    if (!rawNameOrUrl) return 'Download file';
+    const filename = rawNameOrUrl.split('/').pop() || rawNameOrUrl;
+    const lastDot = filename.lastIndexOf('.');
+    const ext = lastDot !== -1 ? filename.substring(lastDot) : '';
+    const base = lastDot !== -1 ? filename.substring(0, lastDot) : filename;
+
+    const lastUnderscore = base.lastIndexOf('_');
+    if (lastUnderscore !== -1) {
+      return `${base.substring(0, lastUnderscore)}${ext}`;
+    }
+    return filename;
+  }
+
+  getFileDetails(sub: FormSubmission, fieldId: number): { name: string; url: string }[] {
+    const resp = sub.responses?.find((r) => r.fieldId === fieldId || String(r.fieldId) === String(fieldId));
+    if (!resp || !resp.value) return [];
+    try {
+      if (typeof resp.value === 'string') {
+        const trimmed = resp.value.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            return parsed
+              .filter(Boolean)
+              .map((p) => {
+                const url = typeof p === 'string' ? p : p.fileUrl || '';
+                const original = typeof p === 'string' ? '' : p.originalName;
+                const name = original || this.stripGuidFromFileName(url);
+                return {
+                  name,
+                  url: this.resolveFileUrl(url),
+                };
+              });
+          } else if (parsed) {
+            const url = typeof parsed === 'string' ? parsed : parsed.fileUrl || '';
+            const original = typeof parsed === 'string' ? '' : parsed.originalName;
+            const name = original || this.stripGuidFromFileName(url);
+            return [
+              {
+                name,
+                url: this.resolveFileUrl(url),
+              },
+            ];
+          }
+        } else if (trimmed.includes('/files/')) {
+          return [
+            {
+              name: this.stripGuidFromFileName(trimmed),
+              url: this.resolveFileUrl(trimmed),
+            },
+          ];
+        }
+      }
+    } catch {}
+    return [];
+  }
+
+  onDownloadFile(url: string, fileName: string, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (!url) return;
+
+    this.uploadService.downloadFile(url).subscribe({
+      next: (blob) => {
+        const objectUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = fileName || 'download';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(objectUrl);
+      },
+      error: (err) => {
+        const msg = err?.status === 401 || err?.status === 403
+          ? 'You are not authorized to download this file.'
+          : 'Failed to download file. Please try again.';
+        this.toastService.error(msg);
+      }
+    });
+  }
+
   getFieldValue(sub: FormSubmission, fieldId: number): string {
     const resp = sub.responses?.find((r) => r.fieldId === fieldId || String(r.fieldId) === String(fieldId));
     if (!resp || !this.isFieldValueProvided(resp.value)) {
@@ -215,6 +310,28 @@ export class FormResponsesComponent implements OnInit {
     if (typeof resp.value === 'boolean') {
       return resp.value ? 'Yes' : 'No';
     }
+
+    try {
+      if (typeof resp.value === 'string') {
+        const trimmed = resp.value.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            const names = parsed
+              .map((p: any) => typeof p === 'string' ? this.stripGuidFromFileName(p) : (p.originalName || this.stripGuidFromFileName(p.fileUrl || p.storedName)))
+              .filter(Boolean);
+            if (names.length > 0) return names.join(', ');
+          } else if (parsed) {
+            return typeof parsed === 'string'
+              ? this.stripGuidFromFileName(parsed)
+              : (parsed.originalName || this.stripGuidFromFileName(parsed.fileUrl || parsed.storedName));
+          }
+        } else if (trimmed.includes('/files/')) {
+          return this.stripGuidFromFileName(trimmed);
+        }
+      }
+    } catch {}
+
     return String(resp.value);
   }
 
@@ -229,6 +346,29 @@ export class FormResponsesComponent implements OnInit {
     if (typeof resp.value === 'boolean') {
       return { display: resp.value ? 'Checked / Yes' : 'Unchecked / No', isPlaceholder: false };
     }
+
+    try {
+      if (typeof resp.value === 'string') {
+        const trimmed = resp.value.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            const names = parsed
+              .map((p: any) => typeof p === 'string' ? this.stripGuidFromFileName(p) : (p.originalName || this.stripGuidFromFileName(p.fileUrl || p.storedName)))
+              .filter(Boolean);
+            if (names.length > 0) return { display: names.join(', '), isPlaceholder: false };
+          } else if (parsed) {
+            const name = typeof parsed === 'string'
+              ? this.stripGuidFromFileName(parsed)
+              : (parsed.originalName || this.stripGuidFromFileName(parsed.fileUrl || parsed.storedName));
+            return { display: name, isPlaceholder: false };
+          }
+        } else if (trimmed.includes('/files/')) {
+          return { display: this.stripGuidFromFileName(trimmed), isPlaceholder: false };
+        }
+      }
+    } catch {}
+
     return { display: String(resp.value), isPlaceholder: false };
   }
 

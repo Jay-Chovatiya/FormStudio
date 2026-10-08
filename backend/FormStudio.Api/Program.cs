@@ -34,6 +34,7 @@ builder.Services.AddScoped<IFormService, FormService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
 // 6. Configure JWT Authentication & Authorization
 string jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"] ?? "FormStudio_SuperSecretKey_2026_SecureAuthenticationKey_AtLeast32Chars!";
@@ -159,4 +160,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+ 

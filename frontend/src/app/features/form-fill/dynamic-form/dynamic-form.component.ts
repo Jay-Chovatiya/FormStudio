@@ -28,10 +28,12 @@ import { FormSubmission } from '../../../core/models/form-submission';
 import { FormDefinition } from '../../../core/models/form-definition';
 import { FormService } from '../../../core/services/form.service';
 import { ResponseService } from '../../../core/services/response.service';
+import { UploadService } from '../../../core/services/upload.service';
 import { NavigationHistoryService } from '../../../core/services/navigation-history.service';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { emailValidator } from '../../../core/utils/regex.constants';
 import { ToastService } from '../../../core/services/toast.service';
+import { forkJoin, map } from 'rxjs';
 
 @Component({
   imports: [ReactiveFormsModule, TitleCasePipe, DatePickerComponent],
@@ -45,6 +47,7 @@ export class DynamicFormComponent implements OnInit {
 
   private readonly formService = inject(FormService);
   private readonly responseService = inject(ResponseService);
+  private readonly uploadService = inject(UploadService);
   private readonly navHistory = inject(NavigationHistoryService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -58,6 +61,7 @@ export class DynamicFormComponent implements OnInit {
   readonly draftSaved = signal<boolean>(false);
   readonly hasRestoredDraft = signal<boolean>(false);
   readonly selectedFilesMap = signal<Record<string, File[]>>({});
+  readonly uploadedFilesMap = signal<Record<string, string[]>>({});
 
   readonly activeForm = computed<FormDefinition | null>(() => {
     return this.formDefinition() || this.resolvedForm();
@@ -295,10 +299,13 @@ export class DynamicFormComponent implements OnInit {
   }
 
   getFileConstraintsHint(field: FormField): string {
+    if (!field.allowedTypes || field.allowedTypes.length === 0) {
+      return 'No file formats configured. Uploads are disabled.';
+    }
     const maxMb = (field.maxSizeInBytes && field.maxSizeInBytes > 0) ? Math.round(field.maxSizeInBytes / (1024 * 1024)) : 5;
-    const extensions = field.allowedTypes?.length
-      ? field.allowedTypes.map((t) => t.extension.toUpperCase()).join(', ')
-      : 'None';
+    const extensions = field.allowedTypes
+      .map((t) => t.extension.toUpperCase())
+      .join(', ');
     const multiple = field.multiple ? ` • Up to ${field.maxFiles || 1} files` : '';
     return `Max ${maxMb}MB per file • Formats: ${extensions}${multiple}`;
   }
@@ -332,38 +339,42 @@ export class DynamicFormComponent implements OnInit {
 
     control.markAsTouched();
 
+    if (!field.allowedTypes || field.allowedTypes.length === 0) {
+      control.setErrors({ noAllowedTypes: 'File uploads are not permitted because no allowed types are configured for this field.' });
+      return;
+    }
+
     const isMultiple = field.multiple ?? false;
     const maxFiles = isMultiple ? (field.maxFiles || 1) : 1;
     const maxSize = (field.maxSizeInBytes && field.maxSizeInBytes > 0) ? field.maxSizeInBytes : 5242880;
-    const allowedExts = field.allowedTypes?.length
-      ? field.allowedTypes.map((t) => t.extension.toLowerCase())
-      : [];
 
-    // if (allowedExts.length === 0) {
-    //   control.setErrors({ fileType: 'No allowed file types configured for this field.' });
-    //   return;
-    // }
+    const allowedExts = field.allowedTypes
+      .map((t) => t.extension.toLowerCase());
 
     const currentFiles = isMultiple ? (this.selectedFilesMap()[field.name] ?? []) : [];
     const combinedFiles = isMultiple ? [...currentFiles, ...newFiles] : newFiles.slice(0, 1);
 
-    // if (combinedFiles.length > maxFiles) {
-    //   control.setErrors({ maxFiles: `Maximum of ${maxFiles} file(s) allowed.` });
-    //   return;
-    // }
+    if (combinedFiles.length > maxFiles) {
+      control.setErrors({ maxFiles: `Maximum of ${maxFiles} file(s) allowed.` });
+      return;
+    }
 
-    // for (const f of combinedFiles) {
-    //   const ext = '.' + f.name.split('.').pop()?.toLowerCase();
-    //   if (!allowedExts.includes(ext)) {
-    //     control.setErrors({ fileType: `File "${f.name}" has an unsupported format. Allowed: ${allowedExts.join(', ')}` });
-    //     return;
-    //   }
-    //   if (f.size > maxSize) {
-    //     const mb = Math.round(maxSize / (1024 * 1024));
-    //     control.setErrors({ fileSize: `File "${f.name}" exceeds the ${mb}MB size limit.` });
-    //     return;
-    //   }
-    // }
+    for (const f of combinedFiles) {
+      const ext = '.' + f.name.split('.').pop()?.toLowerCase();
+
+      const extMatched = allowedExts.includes(ext);
+
+      if (!extMatched) {
+        control.setErrors({ fileType: `File "${f.name}" has an unsupported format. Allowed: ${allowedExts.join(', ')}` });
+        return;
+      }
+
+      if (f.size > maxSize) {
+        const mb = Math.round(maxSize / (1024 * 1024));
+        control.setErrors({ fileSize: `File "${f.name}" exceeds the ${mb}MB size limit.` });
+        return;
+      }
+    }
 
     control.setErrors(null);
 
@@ -410,6 +421,10 @@ export class DynamicFormComponent implements OnInit {
       return;
     }
 
+    if (this.isSubmitting()) {
+      return;
+    }
+
     this.form.markAllAsTouched();
     if (this.form.invalid) {
       if (typeof document !== 'undefined') {
@@ -427,22 +442,87 @@ export class DynamicFormComponent implements OnInit {
     const formDefinition = this.activeForm();
     if (!formDefinition) return;
 
+    if (this.isPreview()) {
+      this.submitted.set(true);
+      return;
+    }
+
+    // Collect all selected files across File fields
+    const filesToUpload: { field: FormField; file: File }[] = [];
+    for (const section of formDefinition.sections) {
+      for (const field of section.fields) {
+        if (field.type === 'File') {
+          const files = this.selectedFilesMap()[field.name] || [];
+          for (const f of files) {
+            filesToUpload.push({ field, file: f });
+          }
+        }
+      }
+    }
+
+    if (filesToUpload.length === 0) {
+      this.sendSubmission(formDefinition, {});
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    const uploadObservables = filesToUpload.map(({ field, file }) =>
+      this.uploadService.uploadFile(formDefinition.code, file, field.name).pipe(
+        map((res) => ({ fieldName: field.name, fileUrl: res.fileUrl }))
+      )
+    );
+
+    forkJoin(uploadObservables).subscribe({
+      next: (results) => {
+        const uploadedMap: Record<string, string[]> = {};
+        for (const r of results) {
+          if (!uploadedMap[r.fieldName]) {
+            uploadedMap[r.fieldName] = [];
+          }
+          uploadedMap[r.fieldName].push(r.fileUrl);
+        }
+        this.uploadedFilesMap.set(uploadedMap);
+        this.sendSubmission(formDefinition, uploadedMap);
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        const errMsg = err?.error?.message || err?.message || 'Failed to upload file(s). Please try again.';
+        this.toastService.error(errMsg);
+      },
+    });
+  }
+
+  private sendSubmission(formDefinition: FormDefinition, uploadedMap: Record<string, string[]>): void {
     const responses: FormResponse[] = formDefinition.sections
       .flatMap((section) => section.fields)
-      .map((field) => ({
-        fieldId: field.id,
-        value: this.getResponseValue(field),
-      }));
+      .map((field) => {
+        if (field.type === 'File') {
+          const files = uploadedMap[field.name];
+          if (files && files.length > 0) {
+            const val = field.multiple
+              ? JSON.stringify(files)
+              : files[0];
+            return {
+              fieldId: field.id,
+              value: val,
+            };
+          }
+          return {
+            fieldId: field.id,
+            value: null,
+          };
+        }
+
+        return {
+          fieldId: field.id,
+          value: this.getResponseValue(field),
+        };
+      });
 
     const payload: FormSubmission = {
       formId: formDefinition.id,
       responses: responses,
     };
-
-    if (this.isPreview()) {
-      this.submitted.set(true);
-      return;
-    }
 
     this.isSubmitting.set(true);
     this.responseService.submitForm(formDefinition.code, payload).subscribe({
@@ -454,8 +534,9 @@ export class DynamicFormComponent implements OnInit {
         }
         this.toastService.success('Form response submitted successfully!');
       },
-      error: () => {
+      error: (err) => {
         this.isSubmitting.set(false);
+        this.toastService.error(err?.error?.message || 'Failed to submit form response.');
       },
     });
   }

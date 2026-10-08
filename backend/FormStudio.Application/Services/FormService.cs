@@ -535,6 +535,12 @@ namespace FormStudio.Application.Services
 
             foreach (FileTypeConfigEntity updatedType in updatedAllowedTypes)
             {
+                if (!string.IsNullOrWhiteSpace(updatedType.Extension))
+                {
+                    string trimmedExt = updatedType.Extension.Trim().ToLowerInvariant();
+                    updatedType.Extension = trimmedExt.StartsWith(".") ? trimmedExt : "." + trimmedExt;
+                }
+
                 FileTypeConfigEntity? existingType = existingField.AllowedTypes
                     .FirstOrDefault(t => string.Equals(t.Extension, updatedType.Extension, StringComparison.OrdinalIgnoreCase));
 

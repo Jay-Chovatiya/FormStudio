@@ -324,6 +324,29 @@
     background-color: var(--fs-primary-light, #eff6ff);
   }
 
+  &.has-error {
+    border-color: var(--fs-danger, #ef4444);
+    background-color: #fef2f2;
+  }
+
+  &.is-disabled {
+    border-style: solid;
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+    cursor: not-allowed;
+    opacity: 0.9;
+
+    &:hover {
+      border-color: #cbd5e1;
+      background-color: #f8fafc;
+    }
+
+    .text-danger {
+      color: #dc2626 !important;
+      font-weight: 500;
+    }
+  }
+
   .hidden-file-input {
     display: none;
   }

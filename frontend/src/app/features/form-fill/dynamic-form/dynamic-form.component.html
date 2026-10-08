@@ -226,31 +226,47 @@
                             [mode]="field.type"
                           ></app-date-picker>
                         } @else if (field.type === 'File') {
+                          @let noTypesConfigured = !field.allowedTypes || field.allowedTypes.length === 0;
                           <div class="df-file-upload-wrap">
-                            <label
-                              class="df-file-dropzone"
-                              [for]="field.name"
-                              (dragover)="$event.preventDefault()"
-                              (drop)="onFileDrop(field, $event)"
-                            >
-                              <div class="dropzone-content">
-                                <span class="dropzone-icon">📁</span>
-                                <div class="dropzone-text">
-                                  <strong>Click to browse</strong> or drag & drop files here
+                            @if (noTypesConfigured) {
+                              <div class="df-file-dropzone is-disabled">
+                                <div class="dropzone-content">
+                                  <span class="dropzone-icon">🚫</span>
+                                  <div class="dropzone-text">
+                                    <strong>Uploads Disabled</strong>
+                                  </div>
+                                  <span class="dropzone-hint text-danger">
+                                    No allowed file types configured. Uploads are disabled for this field.
+                                  </span>
                                 </div>
-                                <span class="dropzone-hint">
-                                  {{ getFileConstraintsHint(field) }}
-                                </span>
                               </div>
-                              <input
-                                [id]="field.name"
-                                type="file"
-                                class="hidden-file-input"
-                                [multiple]="field.multiple ?? false"
-                                [accept]="getAcceptedExtensions(field)"
-                                (change)="onFileInputChange(field, $event)"
-                              />
-                            </label>
+                            } @else {
+                              <label
+                                class="df-file-dropzone"
+                                [class.has-error]="getControl(field.name)?.invalid && getControl(field.name)?.touched"
+                                [for]="field.name"
+                                (dragover)="$event.preventDefault()"
+                                (drop)="onFileDrop(field, $event)"
+                              >
+                                <div class="dropzone-content">
+                                  <span class="dropzone-icon">📁</span>
+                                  <div class="dropzone-text">
+                                    <strong>Click to browse</strong> or drag & drop files here
+                                  </div>
+                                  <span class="dropzone-hint">
+                                    {{ getFileConstraintsHint(field) }}
+                                  </span>
+                                </div>
+                                <input
+                                  [id]="field.name"
+                                  type="file"
+                                  class="hidden-file-input"
+                                  [multiple]="field.multiple ?? false"
+                                  [accept]="getAcceptedExtensions(field)"
+                                  (change)="onFileInputChange(field, $event)"
+                                />
+                              </label>
+                            }
 
                             @let files = getSelectedFiles(field.name);
                             @if (files.length > 0) {
@@ -338,6 +354,9 @@
                             }
                             @if (control?.errors?.['maxFiles']) {
                               <span class="fs-error-message">{{ control?.errors?.['maxFiles'] }}</span>
+                            }
+                            @if (control?.errors?.['noAllowedTypes']) {
+                              <span class="fs-error-message">{{ control?.errors?.['noAllowedTypes'] }}</span>
                             }
                           </div>
                         }

@@ -160,6 +160,61 @@ namespace FormStudio.Application.Services
                         throw new ArgumentException($"Selected option '{responseStr}' for '{field.Label}' is invalid.");
                     }
                 }
+
+                // Check File field restrictions
+                if (string.Equals(field.Type, "File", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (field.AllowedTypes == null || !field.AllowedTypes.Any())
+                    {
+                        throw new ArgumentException($"Field '{field.Label}' does not permit file uploads because no allowed types are configured.");
+                    }
+
+                    HashSet<string> allowedExtensions = field.AllowedTypes
+                        .Where(t => !string.IsNullOrWhiteSpace(t.Extension))
+                        .Select(t => (t.Extension.StartsWith(".") ? t.Extension : "." + t.Extension).Trim().ToLowerInvariant())
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                    List<string> fileUrls = [];
+
+                    if (responseStr.StartsWith("[") && responseStr.EndsWith("]"))
+                    {
+                        try
+                        {
+                            using var doc = System.Text.Json.JsonDocument.Parse(responseStr);
+                            foreach (var element in doc.RootElement.EnumerateArray())
+                            {
+                                if (element.ValueKind == System.Text.Json.JsonValueKind.String)
+                                {
+                                    string? url = element.GetString();
+                                    if (!string.IsNullOrWhiteSpace(url)) fileUrls.Add(url);
+                                }
+                                else if (element.ValueKind == System.Text.Json.JsonValueKind.Object && element.TryGetProperty("fileUrl", out var urlProp))
+                                {
+                                    string? url = urlProp.GetString();
+                                    if (!string.IsNullOrWhiteSpace(url)) fileUrls.Add(url);
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            fileUrls.Add(responseStr);
+                        }
+                    }
+                    else
+                    {
+                        fileUrls.Add(responseStr);
+                    }
+
+                    // Validate extension for every file
+                    foreach (string fileUrl in fileUrls)
+                    {
+                        string fileExtension = Path.GetExtension(fileUrl).ToLowerInvariant();
+                        if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
+                        {
+                            throw new ArgumentException($"Uploaded file format '{fileExtension}' for '{field.Label}' is not allowed.");
+                        }
+                    }
+                }
             }
 
             // 4. Save Submission

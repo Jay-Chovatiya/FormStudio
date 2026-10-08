@@ -11,10 +11,14 @@ namespace FormStudio.Api.Controllers
     public class SubmissionsController : ControllerBase
     {
         private readonly ISubmissionService _submissionService;
+        private readonly IFileStorageService _fileStorageService;
 
-        public SubmissionsController(ISubmissionService submissionService)
+        public SubmissionsController(
+            ISubmissionService submissionService,
+            IFileStorageService fileStorageService)
         {
             _submissionService = submissionService ?? throw new ArgumentNullException(nameof(submissionService));
+            _fileStorageService = fileStorageService ?? throw new ArgumentNullException(nameof(fileStorageService));
         }
 
         [HttpGet]
@@ -23,6 +27,45 @@ namespace FormStudio.Api.Controllers
         {
             IEnumerable<FormSubmissionDto> submissions = await _submissionService.GetSubmissionsAsync(formId);
             return Ok(submissions);
+        }
+
+        [HttpPost("~/api/forms/{code}/upload")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UploadFile(
+            [FromRoute] string code,
+            [FromForm] IFormFile file,
+            [FromQuery] string fieldName)
+        {
+            try
+            {
+                string fileUrl = await _fileStorageService.UploadFieldFileAsync(code, fieldName, file);
+                return Ok(new { fileUrl });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("~/api/forms/{code}/files/{fileName}")]
+        [Authorize]
+        public IActionResult GetFile([FromRoute] string code, [FromRoute] string fileName)
+        {
+            Stream? stream = _fileStorageService.GetFile(code, fileName);
+            if (stream == null)
+            {
+                return NotFound(new { message = "File not found." });
+            }
+
+            return File(stream, "application/octet-stream", fileName);
         }
 
         [HttpPost("~/api/forms/code/{code}/submissions")]
