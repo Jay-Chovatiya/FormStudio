@@ -290,12 +290,6 @@ export class FormResponsesComponent implements OnInit {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(objectUrl);
       },
-      error: (err) => {
-        const msg = err?.status === 401 || err?.status === 403
-          ? 'You are not authorized to download this file.'
-          : 'Failed to download file. Please try again.';
-        this.toastService.error(msg);
-      }
     });
   }
 

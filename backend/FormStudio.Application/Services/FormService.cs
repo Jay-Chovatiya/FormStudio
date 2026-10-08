@@ -79,6 +79,12 @@ namespace FormStudio.Application.Services
             FormDefinitionEntity? entity = await _unitOfWork.Repository<FormDefinitionEntity>().GetByIdAsync(id);
             if (entity == null) return false;
 
+            bool isSubmissionPresent = await _unitOfWork.Repository<FormSubmissionEntity>().ExistAsync(s => s.FormId == id);
+            if (isSubmissionPresent)
+            {
+                throw new InvalidOperationException("Cannot delete this form because it contains submissions. Please delete all form submissions before deleting the form.");
+            }
+
             _unitOfWork.Repository<FormDefinitionEntity>().Remove(entity);
             await _unitOfWork.CompleteAsync();
             return true;

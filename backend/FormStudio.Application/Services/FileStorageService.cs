@@ -116,10 +116,25 @@ namespace FormStudio.Application.Services
 
             if (!File.Exists(filePath))
             {
-                return null;
+                throw new KeyNotFoundException($"The requested file '{safeFileName}' was not found on the server.");
             }
 
             return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        }
+
+        public bool RemoveFile(string formCode, string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(formCode) || string.IsNullOrWhiteSpace(fileName)) return false;
+
+            string safeFileName = Path.GetFileName(fileName);
+            string contentRoot = _webHostEnvironment.ContentRootPath ?? Directory.GetCurrentDirectory();
+            string filePath = Path.Combine(contentRoot, "App_Data", "Uploads", formCode.Trim(), safeFileName);
+
+            if (!File.Exists(filePath))
+                return false;
+
+            File.Delete(filePath);
+            return true;
         }
     }
 }

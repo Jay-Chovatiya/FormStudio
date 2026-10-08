@@ -11,15 +11,17 @@ namespace FormStudio.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFormService _formService;
+        private readonly IFileStorageService _fileStorageService;
 
         private static readonly Regex EmailRegex = new Regex(
             @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public SubmissionService(IUnitOfWork unitOfWork, IFormService formService)
+        public SubmissionService(IUnitOfWork unitOfWork, IFormService formService, IFileStorageService fileStorageService)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _formService = formService ?? throw new ArgumentNullException(nameof(formService));
+            _fileStorageService = fileStorageService ?? throw new ArgumentNullException(nameof(fileStorageService));
         }
 
         public async Task<IEnumerable<FormSubmissionDto>> GetSubmissionsAsync(int formId)
@@ -174,36 +176,7 @@ namespace FormStudio.Application.Services
                         .Select(t => (t.Extension.StartsWith(".") ? t.Extension : "." + t.Extension).Trim().ToLowerInvariant())
                         .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                    List<string> fileUrls = [];
-
-                    if (responseStr.StartsWith("[") && responseStr.EndsWith("]"))
-                    {
-                        try
-                        {
-                            using var doc = System.Text.Json.JsonDocument.Parse(responseStr);
-                            foreach (var element in doc.RootElement.EnumerateArray())
-                            {
-                                if (element.ValueKind == System.Text.Json.JsonValueKind.String)
-                                {
-                                    string? url = element.GetString();
-                                    if (!string.IsNullOrWhiteSpace(url)) fileUrls.Add(url);
-                                }
-                                else if (element.ValueKind == System.Text.Json.JsonValueKind.Object && element.TryGetProperty("fileUrl", out var urlProp))
-                                {
-                                    string? url = urlProp.GetString();
-                                    if (!string.IsNullOrWhiteSpace(url)) fileUrls.Add(url);
-                                }
-                            }
-                        }
-                        catch
-                        {
-                            fileUrls.Add(responseStr);
-                        }
-                    }
-                    else
-                    {
-                        fileUrls.Add(responseStr);
-                    }
+                    List<string> fileUrls = ParseFileUrls(responseStr);
 
                     // Validate extension for every file
                     foreach (string fileUrl in fileUrls)
@@ -233,12 +206,74 @@ namespace FormStudio.Application.Services
             FormSubmissionEntity? submission = await _unitOfWork.Repository<FormSubmissionEntity>().GetByIdAsync(submissionId);
             if (submission == null || submission.FormId != formId) return false;
 
-            List<FormResponseEntity> responses = await _unitOfWork.Repository<FormResponseEntity>().GetListAsync(r => r.FormSubmissionId == submissionId);
-            _unitOfWork.Repository<FormResponseEntity>().RemoveRange(responses);
+            string formCode = await _unitOfWork.Repository<FormDefinitionEntity>().GetFirstOrDefaultAsync(f => f.Id == formId, f => f.Code) ?? throw new KeyNotFoundException($"Form with id {formId} not found");
 
+            List<int> fileTypeFieldIds = await _unitOfWork.Repository<FormFieldEntity>()
+                .GetListAsync<int>(
+                    f => f.Type == "File" && f.FormSection != null && f.FormSection.FormDefinitionId == formId,
+                    f => f.Id);
+            HashSet<int> fileFieldIdSet = fileTypeFieldIds.ToHashSet();
+
+            List<FormResponseEntity> responses = await _unitOfWork.Repository<FormResponseEntity>().GetListAsync(r => r.FormSubmissionId == submissionId);
+
+            foreach (var resp in responses.Where(r => fileFieldIdSet.Contains(r.FieldId)))
+            {
+                if (string.IsNullOrWhiteSpace(resp.ValueJson)) continue;
+
+                List<string> fileUrls = ParseFileUrls(resp.ValueJson);
+
+                foreach (string url in fileUrls)
+                {
+                    string fileName = Path.GetFileName(url);
+                    if (!string.IsNullOrWhiteSpace(fileName))
+                    {
+                        _fileStorageService.RemoveFile(formCode, fileName);
+                    }
+                }
+            }
+
+            _unitOfWork.Repository<FormResponseEntity>().RemoveRange(responses);
             _unitOfWork.Repository<FormSubmissionEntity>().Remove(submission);
             await _unitOfWork.CompleteAsync();
             return true;
+        }
+
+        private static List<string> ParseFileUrls(string? jsonOrUrl)
+        {
+            if (string.IsNullOrWhiteSpace(jsonOrUrl))
+            {
+                return [];
+            }
+
+            string trimmed = jsonOrUrl.Trim();
+            if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
+            {
+                try
+                {
+                    List<string> urls = [];
+                    using var doc = System.Text.Json.JsonDocument.Parse(trimmed);
+                    foreach (var element in doc.RootElement.EnumerateArray())
+                    {
+                        if (element.ValueKind == System.Text.Json.JsonValueKind.String)
+                        {
+                            string? url = element.GetString();
+                            if (!string.IsNullOrWhiteSpace(url)) urls.Add(url);
+                        }
+                        else if (element.ValueKind == System.Text.Json.JsonValueKind.Object && element.TryGetProperty("fileUrl", out var urlProp))
+                        {
+                            string? url = urlProp.GetString();
+                            if (!string.IsNullOrWhiteSpace(url)) urls.Add(url);
+                        }
+                    }
+                    return urls;
+                }
+                catch
+                {
+                    return [trimmed];
+                }
+            }
+
+            return [trimmed];
         }
     }
 }

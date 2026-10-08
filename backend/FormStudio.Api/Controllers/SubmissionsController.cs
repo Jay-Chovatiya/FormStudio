@@ -36,23 +36,8 @@ namespace FormStudio.Api.Controllers
             [FromForm] IFormFile file,
             [FromQuery] string fieldName)
         {
-            try
-            {
-                string fileUrl = await _fileStorageService.UploadFieldFileAsync(code, fieldName, file);
-                return Ok(new { fileUrl });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            string fileUrl = await _fileStorageService.UploadFieldFileAsync(code, fieldName, file);
+            return Ok(new { fileUrl });
         }
 
         [HttpGet("~/api/forms/{code}/files/{fileName}")]
@@ -62,7 +47,7 @@ namespace FormStudio.Api.Controllers
             Stream? stream = _fileStorageService.GetFile(code, fileName);
             if (stream == null)
             {
-                return NotFound(new { message = "File not found." });
+                throw new KeyNotFoundException($"The requested file '{fileName}' was not found for form '{code}'.");
             }
 
             return File(stream, "application/octet-stream", fileName);
@@ -75,23 +60,8 @@ namespace FormStudio.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            try
-            {
-                FormSubmissionDto createdSubmission = await _submissionService.SaveSubmissionAsync(code, dto);
-                return CreatedAtAction(nameof(GetSubmissions), new { formId = createdSubmission.FormId }, createdSubmission);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            FormSubmissionDto createdSubmission = await _submissionService.SaveSubmissionAsync(code, dto);
+            return CreatedAtAction(nameof(GetSubmissions), new { formId = createdSubmission.FormId }, createdSubmission);
         }
 
         [HttpDelete("{submissionId:int}")]

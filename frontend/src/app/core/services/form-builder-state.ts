@@ -214,7 +214,7 @@ export class FormBuilderState {
       placeholder: this.getDefaultPlaceholder(type),
       helperDescription: '',
       default: '',
-      icon: this.getDefaultIcon(type),
+      icon: '',
       visibility: true,
       validations: type === 'Email' ? [{ type: 'email' }] : [],
       options: this.getDefaultOptions(type),
@@ -485,21 +485,5 @@ export class FormBuilderState {
       ];
     }
     return undefined;
-  }
-
-  private getDefaultIcon(type: FieldTypes): string {
-    switch (type) {
-      case 'Textbox': return '📝';
-      case 'Textarea': return '📄';
-      case 'Number': return '🔢';
-      case 'Email': return '📧';
-      case 'Date': return '📅';
-      case 'DateTime': return '🕒';
-      case 'Dropdown': return '🔽';
-      case 'RadioButton': return '🔘';
-      case 'Checkbox': return '☑️';
-      case 'File': return '📎';
-      default: return '';
-    }
   }
 }
