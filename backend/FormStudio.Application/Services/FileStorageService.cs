@@ -11,11 +11,16 @@ namespace FormStudio.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IFileValidationPipeline _validationPipeline;
 
-        public FileStorageService(IUnitOfWork unitOfWork, IWebHostEnvironment webHostEnvironment)
+        public FileStorageService(
+            IUnitOfWork unitOfWork,
+            IWebHostEnvironment webHostEnvironment,
+            IFileValidationPipeline validationPipeline)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _webHostEnvironment = webHostEnvironment ?? throw new ArgumentNullException(nameof(webHostEnvironment));
+            _validationPipeline = validationPipeline ?? throw new ArgumentNullException(nameof(validationPipeline));
         }
 
         public async Task<string> UploadFieldFileAsync(string formCode, string fieldName, IFormFile file)
@@ -28,11 +33,6 @@ namespace FormStudio.Application.Services
             if (string.IsNullOrWhiteSpace(fieldName))
             {
                 throw new ArgumentException("Field name is required.", nameof(fieldName));
-            }
-
-            if (file == null || file.Length == 0)
-            {
-                throw new ArgumentException("No file was uploaded or file is empty.", nameof(file));
             }
 
             string trimmedCode = formCode.Trim();
@@ -61,26 +61,11 @@ namespace FormStudio.Application.Services
                 throw new InvalidOperationException($"File uploads are not permitted for field '{fieldEntity.Label}' because no allowed types are configured.");
             }
 
+            // Execute modular file validation pipeline
+            await _validationPipeline.ValidateAsync(file, fieldEntity);
+
             string originalName = Path.GetFileName(file.FileName);
             string extension = Path.GetExtension(originalName);
-            string fileExt = extension.ToLowerInvariant();
-
-            HashSet<string> allowedExtensions = fieldEntity.AllowedTypes
-                .Where(t => !string.IsNullOrWhiteSpace(t.Extension))
-                .Select(t => t.Extension.Trim().ToLowerInvariant())
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            if (!allowedExtensions.Contains(fileExt))
-            {
-                throw new ArgumentException($"File '{originalName}' has an unsupported format. Allowed formats: {string.Join(", ", allowedExtensions)}");
-            }
-
-            long maxSize = fieldEntity.MaxSizeInBytes > 0 ? fieldEntity.MaxSizeInBytes : 5242880;
-            if (file.Length > maxSize)
-            {
-                double maxMb = Math.Round((double)maxSize / (1024 * 1024), 1);
-                throw new ArgumentException($"File '{originalName}' exceeds the maximum allowed size of {maxMb} MB.");
-            }
 
             string contentRoot = _webHostEnvironment.ContentRootPath ?? Directory.GetCurrentDirectory();
             string uploadsRoot = Path.Combine(contentRoot, "App_Data", "Uploads");

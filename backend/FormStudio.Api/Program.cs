@@ -3,6 +3,7 @@ using FormStudio.Application.Interfaces.Repositories;
 using FormStudio.Application.Interfaces.Services;
 using FormStudio.Application.Mappings;
 using FormStudio.Application.Services;
+using FormStudio.Application.Services.FileValidation;
 using FormStudio.Infrastructure.Data;
 using FormStudio.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -35,6 +36,14 @@ builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+
+// File Validation Pipeline & Rules (Multi-Layer Security)
+builder.Services.AddScoped<IFileValidationRule, FileMetadataValidationRule>();
+builder.Services.AddScoped<IFileValidationRule, FileExtensionValidationRule>();
+builder.Services.AddScoped<IFileValidationRule, FileMimeTypeValidationRule>();
+builder.Services.AddScoped<IFileValidationRule, FileSignatureValidationRule>();
+builder.Services.AddScoped<IFileValidationRule, FileContentSanitizationRule>();
+builder.Services.AddScoped<IFileValidationPipeline, FileValidationPipeline>();
 
 // 6. Configure JWT Authentication & Authorization
 string jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"] ?? "FormStudio_SuperSecretKey_2026_SecureAuthenticationKey_AtLeast32Chars!";
