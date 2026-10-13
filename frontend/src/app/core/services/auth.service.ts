@@ -26,7 +26,19 @@ export class AuthService {
   });
 
   login(credentials: LoginDto): Observable<AuthResponseDto> {
-    return this.http.post<AuthResponseDto>(`${environment.apiBaseUrl}/auth/login`, credentials).pipe(
+    return this.http.post<AuthResponseDto>(`${environment.apiBaseUrl}/auth/login`, credentials, {
+      withCredentials: true
+    }).pipe(
+      tap((response) => {
+        this.setSession(response);
+      })
+    );
+  }
+
+  refreshToken(): Observable<AuthResponseDto> {
+    return this.http.post<AuthResponseDto>(`${environment.apiBaseUrl}/auth/refresh-token`, {}, {
+      withCredentials: true
+    }).pipe(
       tap((response) => {
         this.setSession(response);
       })
@@ -34,12 +46,21 @@ export class AuthService {
   }
 
   logout(): void {
+    this.http.post(`${environment.apiBaseUrl}/auth/revoke-token`, {}, {
+      withCredentials: true
+    }).subscribe({
+      next: () => {},
+      error: () => {}
+    });
+
     this.clearSession();
     this.router.navigate(['/login']);
   }
 
   getCurrentUser(): Observable<User> {
-    return this.http.get<User>(`${environment.apiBaseUrl}/auth/me`).pipe(
+    return this.http.get<User>(`${environment.apiBaseUrl}/auth/me`, {
+      withCredentials: true
+    }).pipe(
       tap((user) => {
         this.currentUser.set(user);
         if (typeof window !== 'undefined') {

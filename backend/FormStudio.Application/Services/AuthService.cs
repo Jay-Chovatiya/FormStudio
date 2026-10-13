@@ -1,12 +1,15 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
+using FormStudio.Application.Common;
 using FormStudio.Application.DTOs;
 using FormStudio.Application.Interfaces.Repositories;
 using FormStudio.Application.Interfaces.Services;
 using FormStudio.Application.Mappings;
 using FormStudio.Domain.Entities;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FormStudio.Application.Services
@@ -14,12 +17,12 @@ namespace FormStudio.Application.Services
     public class AuthService : IAuthService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IConfiguration _configuration;
+        private readonly JwtSettings _jwtSettings;
 
-        public AuthService(IUnitOfWork unitOfWork, IConfiguration configuration)
+        public AuthService(IUnitOfWork unitOfWork, IOptions<JwtSettings> jwtOptions)
         {
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _jwtSettings = jwtOptions?.Value ?? throw new ArgumentNullException(nameof(jwtOptions));
         }
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto request)
@@ -41,18 +44,30 @@ namespace FormStudio.Application.Services
                 return null;
             }
 
-            int expiryHours = int.TryParse(_configuration["JwtSettings:ExpiryHours"], out int hours) ? hours : 24;
-            if (request.RememberMe)
-            {
-                expiryHours = 24 * 7;
-            }
+            int refreshTokenExpiration = request.RememberMe
+                ? _jwtSettings.RefreshTokenExpiryHours * 7
+                : _jwtSettings.RefreshTokenExpiryHours;
 
-            DateTime expiresAt = DateTime.Now.AddHours(expiryHours);
+            DateTime expiresAt = DateTime.Now.AddMinutes(_jwtSettings.AccessTokenExpiryMinutes);
             string token = GenerateJwtToken(user, expiresAt);
+
+            string refreshToken = GenerateRefreshToken();
+            string hashRefreshToken = HashRefreshToken(refreshToken);
+
+            RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity{
+                UserId = user.Id,
+                TokenHash = hashRefreshToken,
+                CreatedAt = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddHours(refreshTokenExpiration),
+            };
+
+            await _unitOfWork.Repository<RefreshTokenEntity>().AddAsync(refreshTokenEntity);
+            await _unitOfWork.CompleteAsync();
 
             return new AuthResponseDto
             {
                 Token = token,
+                RefreshToken = refreshToken,
                 User = user.ToDto(),
                 ExpiresAt = expiresAt
             };
@@ -65,13 +80,102 @@ namespace FormStudio.Application.Services
             return user.ToDto();
         }
 
+        public async Task<AuthResponseDto?> RefreshTokenAsync(string refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return null;
+            }
+
+            string hashRefreshToken = HashRefreshToken(refreshToken.Trim());
+
+            RefreshTokenEntity? tokenEntity = await _unitOfWork.Repository<RefreshTokenEntity>()
+                .Query()
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.TokenHash == hashRefreshToken);
+
+            if (tokenEntity == null)
+            {
+                return null;
+            }
+
+            if (tokenEntity.RevokedAt != null)
+            {
+                return null;
+            }
+
+            if (tokenEntity.ExpiresAt <= DateTime.Now)
+            {
+                return null;
+            }
+
+            if (tokenEntity.User == null || !tokenEntity.User.IsActive)
+            {
+                return null;
+            }
+
+            string newRefreshToken = GenerateRefreshToken();
+            string newHashRefreshToken = HashRefreshToken(newRefreshToken);
+
+            int refreshTokenExpiration = _jwtSettings.RefreshTokenExpiryHours;
+
+            RefreshTokenEntity newRefreshTokenEntity = new RefreshTokenEntity
+            {
+                UserId = tokenEntity.UserId,
+                TokenHash = newHashRefreshToken,
+                CreatedAt = DateTime.Now,
+                ExpiresAt = tokenEntity.ExpiresAt,
+            };
+
+            await _unitOfWork.Repository<RefreshTokenEntity>().AddAsync(newRefreshTokenEntity);
+            await _unitOfWork.CompleteAsync();
+
+            tokenEntity.RevokedAt = DateTime.Now;
+            tokenEntity.ReplacedByTokenId = newRefreshTokenEntity.Id;
+            _unitOfWork.Repository<RefreshTokenEntity>().Update(tokenEntity);
+
+            DateTime expiresAt = DateTime.Now.AddMinutes(_jwtSettings.AccessTokenExpiryMinutes);
+            string token = GenerateJwtToken(tokenEntity.User, expiresAt);
+
+            await _unitOfWork.CompleteAsync();
+
+            return new AuthResponseDto
+            {
+                Token = token,
+                RefreshToken = newRefreshToken,
+                User = tokenEntity.User.ToDto(),
+                ExpiresAt = expiresAt
+            };
+        }
+
+        public async Task<bool> RevokeTokenAsync(string refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return false;
+            }
+
+            string hashRefreshToken = HashRefreshToken(refreshToken.Trim());
+
+            RefreshTokenEntity? tokenEntity = await _unitOfWork.Repository<RefreshTokenEntity>()
+                .Query()
+                .FirstOrDefaultAsync(r => r.TokenHash == hashRefreshToken);
+
+            if (tokenEntity == null || tokenEntity.RevokedAt != null)
+            {
+                return false;
+            }
+
+            tokenEntity.RevokedAt = DateTime.Now;
+            _unitOfWork.Repository<RefreshTokenEntity>().Update(tokenEntity);
+            await _unitOfWork.CompleteAsync();
+
+            return true;
+        }
+
         private string GenerateJwtToken(UserEntity user, DateTime expiresAt)
         {
-            string secretKey = _configuration["JwtSettings:SecretKey"] ?? "FormStudio_SuperSecretKey_2026_SecureAuthenticationKey_AtLeast32Chars!";
-            string issuer = _configuration["JwtSettings:Issuer"] ?? "FormStudioBackend";
-            string audience = _configuration["JwtSettings:Audience"] ?? "FormStudioFrontend";
-
-            byte[] keyBytes = Encoding.UTF8.GetBytes(secretKey);
+            byte[] keyBytes = Encoding.UTF8.GetBytes(_jwtSettings.SecretKey);
             SymmetricSecurityKey securityKey = new SymmetricSecurityKey(keyBytes);
             SigningCredentials credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
@@ -85,14 +189,29 @@ namespace FormStudio.Application.Services
             };
 
             JwtSecurityToken token = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
+                issuer: _jwtSettings.Issuer,
+                audience: _jwtSettings.Audience,
                 claims: claims,
                 expires: expiresAt,
                 signingCredentials: credentials);
 
             JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
             return tokenHandler.WriteToken(token);
+        }
+
+        private static string GenerateRefreshToken()
+        {
+            byte[] randomBytes = RandomNumberGenerator.GetBytes(32);
+
+            return Convert.ToBase64String(randomBytes);
+        }
+
+        private static string HashRefreshToken(string refreshToken)
+        {
+            byte[] tokenBytes = Encoding.UTF8.GetBytes(refreshToken);
+            byte[] hashBytes = SHA256.HashData(tokenBytes);
+
+            return Convert.ToHexString(hashBytes);
         }
     }
 }

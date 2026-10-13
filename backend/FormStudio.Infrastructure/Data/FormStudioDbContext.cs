@@ -18,6 +18,7 @@ namespace FormStudio.Infrastructure.Data
         public DbSet<FormSubmissionEntity> FormSubmissions => Set<FormSubmissionEntity>();
         public DbSet<FormResponseEntity> FormResponses => Set<FormResponseEntity>();
         public DbSet<UserEntity> Users => Set<UserEntity>();
+        public DbSet<RefreshTokenEntity> RefreshTokens => Set<RefreshTokenEntity>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -33,6 +34,7 @@ namespace FormStudio.Infrastructure.Data
             modelBuilder.Entity<FormSubmissionEntity>().ToTable("form_submissions");
             modelBuilder.Entity<FormResponseEntity>().ToTable("form_responses");
             modelBuilder.Entity<UserEntity>().ToTable("users");
+            modelBuilder.Entity<RefreshTokenEntity>().ToTable("refresh_tokens");
 
             // User Configuration
             modelBuilder.Entity<UserEntity>(entity =>
@@ -152,6 +154,21 @@ namespace FormStudio.Infrastructure.Data
                 entity.HasOne(e => e.FormSubmission)
                     .WithMany(s => s.Responses)
                     .HasForeignKey(e => e.FormSubmissionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<RefreshTokenEntity>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.TokenHash).HasMaxLength(64).IsRequired();
+                entity.HasIndex(e => e.TokenHash).IsUnique();
+                entity.Property(e => e.CreatedAt).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.ExpiresAt).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.RevokedAt).HasColumnType("timestamp without time zone");
+                entity.HasOne(e => e.User)
+                    .WithMany(r => r.RefreshTokens)
+                    .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }

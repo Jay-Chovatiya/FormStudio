@@ -1,4 +1,5 @@
 using FormStudio.Api.Middleware;
+using FormStudio.Application.Common;
 using FormStudio.Application.Interfaces.Repositories;
 using FormStudio.Application.Interfaces.Services;
 using FormStudio.Application.Mappings;
@@ -46,9 +47,8 @@ builder.Services.AddScoped<IFileValidationRule, FileContentSanitizationRule>();
 builder.Services.AddScoped<IFileValidationPipeline, FileValidationPipeline>();
 
 // 6. Configure JWT Authentication & Authorization
-string jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"] ?? "FormStudio_SuperSecretKey_2026_SecureAuthenticationKey_AtLeast32Chars!";
-string jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "FormStudioBackend";
-string jwtAudience = builder.Configuration["JwtSettings:Audience"] ?? "FormStudioFrontend";
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+JwtSettings jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? new JwtSettings();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -63,13 +63,23 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
         ClockSkew = TimeSpan.Zero
     };
 });
 builder.Services.AddAuthorization();
+
+// Add Anti-CSRF protection
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+    options.Cookie.Name = "FormStudio.Antiforgery";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+});
 
 // 7. Configure CORS for Angular Frontend
 builder.Services.AddCors(options =>

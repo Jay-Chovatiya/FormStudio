@@ -337,6 +337,44 @@ namespace FormStudio.Infrastructure.Migrations
                     b.ToTable("form_submissions", (string)null);
                 });
 
+            modelBuilder.Entity("FormStudio.Domain.Entities.RefreshTokenEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("ReplacedByTokenId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("refresh_tokens", (string)null);
+                });
+
             modelBuilder.Entity("FormStudio.Domain.Entities.UserEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -466,6 +504,17 @@ namespace FormStudio.Infrastructure.Migrations
                     b.Navigation("FormDefinition");
                 });
 
+            modelBuilder.Entity("FormStudio.Domain.Entities.RefreshTokenEntity", b =>
+                {
+                    b.HasOne("FormStudio.Domain.Entities.UserEntity", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("FormStudio.Domain.Entities.FormDefinitionEntity", b =>
                 {
                     b.Navigation("Sections");
@@ -490,6 +539,11 @@ namespace FormStudio.Infrastructure.Migrations
             modelBuilder.Entity("FormStudio.Domain.Entities.FormSubmissionEntity", b =>
                 {
                     b.Navigation("Responses");
+                });
+
+            modelBuilder.Entity("FormStudio.Domain.Entities.UserEntity", b =>
+                {
+                    b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618
         }

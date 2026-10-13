@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.AspNetCore.Antiforgery;
 
 namespace FormStudio.Api.Middleware
 {
@@ -33,7 +34,7 @@ namespace FormStudio.Api.Middleware
 
             int statusCode = exception switch
             {
-                ArgumentException or InvalidOperationException => (int)HttpStatusCode.BadRequest,
+                AntiforgeryValidationException or ArgumentException or InvalidOperationException => (int)HttpStatusCode.BadRequest,
                 KeyNotFoundException => (int)HttpStatusCode.NotFound,
                 _ => (int)HttpStatusCode.InternalServerError
             };
