@@ -1,9 +1,10 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { environment } from '../../../environment/environment';
 import { User, LoginDto, AuthResponseDto } from '../models/user';
+import { ApiResponse } from '../models/api-response';
 
 @Injectable({
   providedIn: 'root'
@@ -26,9 +27,10 @@ export class AuthService {
   });
 
   login(credentials: LoginDto): Observable<AuthResponseDto> {
-    return this.http.post<AuthResponseDto>(`${environment.apiBaseUrl}/auth/login`, credentials, {
+    return this.http.post<ApiResponse<AuthResponseDto>>(`${environment.apiBaseUrl}/auth/login`, credentials, {
       withCredentials: true
     }).pipe(
+      map(response => response.data),
       tap((response) => {
         this.setSession(response);
       })
@@ -36,9 +38,10 @@ export class AuthService {
   }
 
   refreshToken(): Observable<AuthResponseDto> {
-    return this.http.post<AuthResponseDto>(`${environment.apiBaseUrl}/auth/refresh-token`, {}, {
+    return this.http.post<ApiResponse<AuthResponseDto>>(`${environment.apiBaseUrl}/auth/refresh-token`, {}, {
       withCredentials: true
     }).pipe(
+      map(response => response.data),
       tap((response) => {
         this.setSession(response);
       })
@@ -58,9 +61,10 @@ export class AuthService {
   }
 
   getCurrentUser(): Observable<User> {
-    return this.http.get<User>(`${environment.apiBaseUrl}/auth/me`, {
+    return this.http.get<ApiResponse<User>>(`${environment.apiBaseUrl}/auth/me`, {
       withCredentials: true
     }).pipe(
+      map(response => response.data),
       tap((user) => {
         this.currentUser.set(user);
         if (typeof window !== 'undefined') {

@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { FormSubmission } from '../models/form-submission';
 import { FormDefinition } from '../models/form-definition';
 import { FormField } from '../models/form-field';
+import { ApiResponse } from '../models/api-response';
 import { environment } from '../../../environment/environment';
 
 @Service()
@@ -12,15 +13,15 @@ export class ResponseService {
   private baseUrl = environment.formsEndpoint;
 
   getSubmissions(formId: number): Observable<FormSubmission[]> {
-    return this.http.get<FormSubmission[]>(`${this.baseUrl}/${formId}/submissions`);
+    return this.http.get<ApiResponse<FormSubmission[]>>(`${this.baseUrl}/${formId}/submissions`).pipe(map(res => res.data));
   }
 
   submitForm(code: string, submission: FormSubmission): Observable<FormSubmission> {
-    return this.http.post<FormSubmission>(`${this.baseUrl}/code/${code}/submissions`, submission);
+    return this.http.post<ApiResponse<FormSubmission>>(`${this.baseUrl}/code/${code}/submissions`, submission).pipe(map(res => res.data));
   }
 
   deleteSubmission(formId: number, submissionId: string | number): Observable<boolean> {
-    return this.http.delete(`${this.baseUrl}/${formId}/submissions/${submissionId}`).pipe(map(() => true));
+    return this.http.delete<ApiResponse<unknown>>(`${this.baseUrl}/${formId}/submissions/${submissionId}`).pipe(map(() => true));
   }
 
   exportToCsv(form: FormDefinition, submissions: FormSubmission[], targetFields?: FormField[]): void {

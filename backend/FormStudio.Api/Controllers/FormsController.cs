@@ -1,3 +1,4 @@
+using FormStudio.Application.Common;
 using FormStudio.Application.DTOs;
 using FormStudio.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -18,34 +19,34 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<FormDefinitionDto>>> GetForms()
+        public async Task<ActionResult<ApiResponse<IEnumerable<FormDefinitionDto>>>> GetForms()
         {
             IEnumerable<FormDefinitionDto> forms = await _formService.GetFormsAsync();
-            return Ok(forms);
+            return Ok(ApiResponse<IEnumerable<FormDefinitionDto>>.Ok(forms, "Forms retrieved successfully"));
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<FormDefinitionDto>> GetFormById(int id, [FromQuery] bool includeDeleted = false)
+        public async Task<ActionResult<ApiResponse<FormDefinitionDto>>> GetFormById(int id, [FromQuery] bool includeDeleted = false)
         {
             FormDefinitionDto? form = await _formService.GetFormByIdAsync(id, includeDeleted);
             if (form == null) return NotFound(new { message = $"Form with ID {id} was not found." });
-            return Ok(form);
+            return Ok(ApiResponse<FormDefinitionDto>.Ok(form, "Form retrieved successfully"));
         }
 
         [HttpGet("code/{code}")]
         [AllowAnonymous]
-        public async Task<ActionResult<FormDefinitionDto>> GetPublishedFormByCode(string code)
+        public async Task<ActionResult<ApiResponse<FormDefinitionDto>>> GetPublishedFormByCode(string code)
         {
             FormDefinitionDto? form = await _formService.GetPublishedFormByCodeAsync(code);
             if (form == null)
             {
                 return NotFound(new { message = "Invalid form URL or form is not currently active." });
             }
-            return Ok(form);
+            return Ok(ApiResponse<FormDefinitionDto>.Ok(form, "Form retrieved successfully"));
         }
 
         [HttpGet("check-code")]
-        public async Task<ActionResult<object>> CheckCodeUnique([FromQuery] string code, [FromQuery] int? excludeId = null)
+        public async Task<ActionResult<ApiResponse<object>>> CheckCodeUnique([FromQuery] string code, [FromQuery] int? excludeId = null)
         {
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -53,11 +54,11 @@ namespace FormStudio.Api.Controllers
             }
 
             bool isUnique = await _formService.IsFormCodeUniqueAsync(code.Trim(), excludeId);
-            return Ok(new { code = code.Trim(), isUnique });
+            return Ok(ApiResponse<object>.Ok(new { code = code.Trim(), isUnique }, "Code uniqueness checked successfully"));
         }
 
         [HttpPost]
-        public async Task<ActionResult<FormDefinitionDto>> CreateForm([FromBody] FormDefinitionDto dto)
+        public async Task<ActionResult<ApiResponse<FormDefinitionDto>>> CreateForm([FromBody] FormDefinitionDto dto)
         {
             if (dto == null) return BadRequest(new { message = "Form data is required." });
 
@@ -71,11 +72,11 @@ namespace FormStudio.Api.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             FormDefinitionDto createdForm = await _formService.CreateFormAsync(dto);
-            return CreatedAtAction(nameof(GetFormById), new { id = createdForm.Id }, createdForm);
+            return CreatedAtAction(nameof(GetFormById), new { id = createdForm.Id }, ApiResponse<FormDefinitionDto>.Ok(createdForm, "Form created successfully", 201));
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<FormDefinitionDto>> UpdateForm(int id, [FromBody] FormDefinitionDto dto)
+        public async Task<ActionResult<ApiResponse<FormDefinitionDto>>> UpdateForm(int id, [FromBody] FormDefinitionDto dto)
         {
             if (dto == null) return BadRequest(new { message = "Form data is required." });
 
@@ -90,7 +91,7 @@ namespace FormStudio.Api.Controllers
 
             FormDefinitionDto? updatedForm = await _formService.UpdateFormAsync(id, dto);
             if (updatedForm == null) return NotFound(new { message = $"Form with ID {id} was not found." });
-            return Ok(updatedForm);
+            return Ok(ApiResponse<FormDefinitionDto>.Ok(updatedForm, "Form updated successfully"));
         }
 
         private void ValidateStructureUniqueness(FormDefinitionDto dto)
@@ -141,44 +142,44 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteForm(int id)
+        public async Task<ActionResult<ApiResponse<object?>>> DeleteForm(int id)
         {
             bool deleted = await _formService.DeleteFormAsync(id);
             if (!deleted) return NotFound(new { message = $"Form with ID {id} was not found." });
-            return NoContent();
+            return Ok(ApiResponse<object?>.Ok(null, "Form deleted successfully"));
         }
 
         [HttpPatch("{id:int}/status/{status}")]
-        public async Task<ActionResult<FormDefinitionDto>> UpdateFormStatus(int id, string status)
+        public async Task<ActionResult<ApiResponse<FormDefinitionDto>>> UpdateFormStatus(int id, string status)
         {
             if (string.IsNullOrWhiteSpace(status)) return BadRequest(new { message = "Status parameter is required." });
             FormDefinitionDto? updatedForm = await _formService.UpdateFormStatusAsync(id, status);
             if (updatedForm == null) return NotFound(new { message = $"Form with ID {id} was not found." });
-            return Ok(updatedForm);
+            return Ok(ApiResponse<FormDefinitionDto>.Ok(updatedForm, "Form status updated successfully"));
         }
 
         [HttpPost("{id:int}/publish")]
-        public async Task<ActionResult<FormDefinitionDto>> PublishForm(int id)
+        public async Task<ActionResult<ApiResponse<FormDefinitionDto>>> PublishForm(int id)
         {
             FormDefinitionDto? publishedForm = await _formService.PublishFormAsync(id);
             if (publishedForm == null) return NotFound(new { message = $"Form with ID {id} was not found." });
-            return Ok(publishedForm);
+            return Ok(ApiResponse<FormDefinitionDto>.Ok(publishedForm, "Form published successfully"));
         }
 
         [HttpPost("{id:int}/unpublish")]
-        public async Task<ActionResult<FormDefinitionDto>> UnpublishForm(int id)
+        public async Task<ActionResult<ApiResponse<FormDefinitionDto>>> UnpublishForm(int id)
         {
             FormDefinitionDto? unpublishedForm = await _formService.UnpublishFormAsync(id);
             if (unpublishedForm == null) return NotFound(new { message = $"Form with ID {id} was not found." });
-            return Ok(unpublishedForm);
+            return Ok(ApiResponse<FormDefinitionDto>.Ok(unpublishedForm, "Form unpublished successfully"));
         }
 
         [HttpPost("{id:int}/duplicate")]
-        public async Task<ActionResult<FormDefinitionDto>> DuplicateForm(int id)
+        public async Task<ActionResult<ApiResponse<FormDefinitionDto>>> DuplicateForm(int id)
         {
             FormDefinitionDto? duplicatedForm = await _formService.DuplicateFormAsync(id);
             if (duplicatedForm == null) return NotFound(new { message = $"Form with ID {id} was not found." });
-            return Ok(duplicatedForm);
+            return Ok(ApiResponse<FormDefinitionDto>.Ok(duplicatedForm, "Form duplicated successfully"));
         }
     }
 }

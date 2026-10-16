@@ -1,3 +1,4 @@
+using FormStudio.Application.Common;
 using FormStudio.Application.DTOs;
 using FormStudio.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -18,25 +19,25 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
+        public async Task<ActionResult<ApiResponse<IEnumerable<UserDto>>>> GetUsers()
         {
             IEnumerable<UserDto> users = await _userService.GetUsersAsync();
-            return Ok(users);
+            return Ok(ApiResponse<IEnumerable<UserDto>>.Ok(users, "Users retrieved successfully"));
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<UserDto>> GetUserById(int id)
+        public async Task<ActionResult<ApiResponse<UserDto>>> GetUserById(int id)
         {
             UserDto? user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { message = $"User with ID {id} was not found." });
             }
-            return Ok(user);
+            return Ok(ApiResponse<UserDto>.Ok(user, "User retrieved successfully"));
         }
 
         [HttpPost]
-        public async Task<ActionResult<UserDto>> CreateUser([FromBody] UserUpsertDto dto)
+        public async Task<ActionResult<ApiResponse<UserDto>>> CreateUser([FromBody] UserUpsertDto dto)
         {
             if (!ModelState.IsValid)
             {
@@ -64,11 +65,11 @@ namespace FormStudio.Api.Controllers
             }
 
             UserDto createdUser = await _userService.CreateUserAsync(dto);
-            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
+            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, ApiResponse<UserDto>.Ok(createdUser, "User created successfully", 201));
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<UserDto>> UpdateUser(int id, [FromBody] UserUpsertDto dto)
+        public async Task<ActionResult<ApiResponse<UserDto>>> UpdateUser(int id, [FromBody] UserUpsertDto dto)
         {
             if (!ModelState.IsValid)
             {
@@ -95,29 +96,29 @@ namespace FormStudio.Api.Controllers
                 return NotFound(new { message = $"User with ID {id} was not found." });
             }
 
-            return Ok(updatedUser);
+            return Ok(ApiResponse<UserDto>.Ok(updatedUser, "User updated successfully"));
         }
 
         [HttpPatch("{id:int}/toggle-status")]
-        public async Task<IActionResult> ToggleUserStatus(int id)
+        public async Task<ActionResult<ApiResponse<object?>>> ToggleUserStatus(int id)
         {
             bool success = await _userService.ToggleUserStatusAsync(id);
             if (!success)
             {
                 return NotFound(new { message = $"User with ID {id} was not found." });
             }
-            return NoContent();
+            return Ok(ApiResponse<object?>.Ok(null, "User status updated successfully"));
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<ActionResult<ApiResponse<object?>>> DeleteUser(int id)
         {
             bool success = await _userService.DeleteUserAsync(id);
             if (!success)
             {
                 return NotFound(new { message = $"User with ID {id} was not found." });
             }
-            return NoContent();
+            return Ok(ApiResponse<object?>.Ok(null, "User deleted successfully"));
         }
     }
 }

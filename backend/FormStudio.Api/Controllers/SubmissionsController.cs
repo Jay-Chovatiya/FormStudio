@@ -1,3 +1,4 @@
+using FormStudio.Application.Common;
 using FormStudio.Application.DTOs;
 using FormStudio.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -23,21 +24,21 @@ namespace FormStudio.Api.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Administrator,SuperAdministrator")]
-        public async Task<ActionResult<IEnumerable<FormSubmissionDto>>> GetSubmissions(int formId)
+        public async Task<ActionResult<ApiResponse<IEnumerable<FormSubmissionDto>>>> GetSubmissions(int formId)
         {
             IEnumerable<FormSubmissionDto> submissions = await _submissionService.GetSubmissionsAsync(formId);
-            return Ok(submissions);
+            return Ok(ApiResponse<IEnumerable<FormSubmissionDto>>.Ok(submissions, "Submissions retrieved successfully"));
         }
 
         [HttpPost("~/api/forms/{code}/upload")]
         [AllowAnonymous]
-        public async Task<IActionResult> UploadFile(
+        public async Task<ActionResult<ApiResponse<object>>> UploadFile(
             [FromRoute] string code,
             [FromForm] IFormFile file,
             [FromQuery] string fieldName)
         {
             string fileUrl = await _fileStorageService.UploadFieldFileAsync(code, fieldName, file);
-            return Ok(new { fileUrl });
+            return Ok(ApiResponse<object>.Ok(new { fileUrl }, "File uploaded successfully"));
         }
 
         [HttpGet("~/api/forms/{code}/files/{fileName}")]
@@ -56,21 +57,21 @@ namespace FormStudio.Api.Controllers
         [HttpPost("~/api/forms/code/{code}/submissions")]
         [AllowAnonymous]
         [EnableRateLimiting("public-form-submission")]
-        public async Task<ActionResult<FormSubmissionDto>> SubmitForm(string code, [FromBody] FormSubmissionDto dto)
+        public async Task<ActionResult<ApiResponse<FormSubmissionDto>>> SubmitForm(string code, [FromBody] FormSubmissionDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             FormSubmissionDto createdSubmission = await _submissionService.SaveSubmissionAsync(code, dto);
-            return CreatedAtAction(nameof(GetSubmissions), new { formId = createdSubmission.FormId }, createdSubmission);
+            return CreatedAtAction(nameof(GetSubmissions), new { formId = createdSubmission.FormId }, ApiResponse<FormSubmissionDto>.Ok(createdSubmission, "Form submitted successfully", 201));
         }
 
         [HttpDelete("{submissionId:int}")]
         [Authorize(Roles = "Administrator,SuperAdministrator")]
-        public async Task<IActionResult> DeleteSubmission(int formId, int submissionId)
+        public async Task<ActionResult<ApiResponse<object?>>> DeleteSubmission(int formId, int submissionId)
         {
             bool deleted = await _submissionService.DeleteSubmissionAsync(formId, submissionId);
             if (!deleted) return NotFound(new { message = $"Submission with ID {submissionId} was not found." });
-            return NoContent();
+            return Ok(ApiResponse<object?>.Ok(null, "Submission deleted successfully"));
         }
     }
 }

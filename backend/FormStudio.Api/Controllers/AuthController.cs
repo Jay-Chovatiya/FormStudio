@@ -29,7 +29,7 @@ namespace FormStudio.Api.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginDto request)
+        public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Login([FromBody] LoginDto request)
         {
             if (!ModelState.IsValid)
             {
@@ -47,12 +47,12 @@ namespace FormStudio.Api.Controllers
 
             response.RefreshToken = string.Empty;
 
-            return Ok(response);
+            return Ok(ApiResponse<AuthResponseDto>.Ok(response, "Login successful"));
         }
 
         [HttpGet("me")]
         [Authorize]
-        public async Task<ActionResult<UserDto>> GetCurrentUser()
+        public async Task<ActionResult<ApiResponse<UserDto>>> GetCurrentUser()
         {
             string? userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdStr, out int userId))
@@ -66,12 +66,12 @@ namespace FormStudio.Api.Controllers
                 return NotFound(new { message = "User account not found or disabled." });
             }
 
-            return Ok(user);
+            return Ok(ApiResponse<UserDto>.Ok(user, "User retrieved successfully"));
         }
 
         [HttpPost("refresh-token")]
         [AllowAnonymous]
-        public async Task<ActionResult<AuthResponseDto>> RefreshToken()
+        public async Task<ActionResult<ApiResponse<AuthResponseDto>>> RefreshToken()
         {
             await _antiforgery.ValidateRequestAsync(HttpContext);
 
@@ -92,12 +92,12 @@ namespace FormStudio.Api.Controllers
             SetAntiforgeryCookie();
             response.RefreshToken = string.Empty;
 
-            return Ok(response);
+            return Ok(ApiResponse<AuthResponseDto>.Ok(response, "Token refreshed successfully"));
         }
 
         [HttpPost("revoke-token")]
         [AllowAnonymous]
-        public async Task<IActionResult> RevokeToken()
+        public async Task<ActionResult<ApiResponse<object?>>> RevokeToken()
         {
             await _antiforgery.ValidateRequestAsync(HttpContext);
 
@@ -109,7 +109,7 @@ namespace FormStudio.Api.Controllers
 
             DeleteRefreshTokenCookie();
 
-            return Ok(new { message = "Token revoked successfully." });
+            return Ok(ApiResponse<object?>.Ok(null, "Token revoked successfully."));
         }
 
         private void SetRefreshTokenCookie(string refreshToken)
@@ -120,7 +120,7 @@ namespace FormStudio.Api.Controllers
                 Secure = Request.IsHttps,
                 SameSite = SameSiteMode.Lax,
                 Path = "/api/auth",
-                Expires = DateTimeOffset.UtcNow.AddHours(_jwtSettings.RefreshTokenExpiryHours)
+                Expires = DateTimeOffset.Now.AddHours(_jwtSettings.RefreshTokenExpiryHours)
             };
 
             Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);

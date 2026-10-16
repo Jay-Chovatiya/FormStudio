@@ -1,6 +1,7 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { ApiResponse } from '../models/api-response';
 import { environment } from '../../../environment/environment';
 
 @Service()
@@ -13,7 +14,7 @@ export class UploadService {
     formData.append('file', file, file.name);
 
     const url = `${this.formsBaseUrl}/${code}/upload?fieldName=${encodeURIComponent(fieldName)}`;
-    return this.http.post<{ fileUrl: string }>(url, formData);
+    return this.http.post<ApiResponse<{ fileUrl: string }>>(url, formData).pipe(map(res => res.data));
   }
 
   downloadFile(fullOrRelativeUrl: string): Observable<Blob> {
