@@ -279,9 +279,8 @@ export class FormBuilderState {
     this.form.set({ ...current, sections, updatedAt: new Date().toISOString() });
   }
 
-  removeField(fieldId: string | number): void {
+  removeField(fieldId: string | number, sectionId: string | number): void {
     const current = this.form();
-    const sectionId = this.selectedSectionId();
     if (!current || sectionId === null) return;
     this.recordState();
     const sections = current.sections.map((s) => {

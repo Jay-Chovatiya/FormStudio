@@ -67,8 +67,8 @@ export class FormCanvasComponent {
     this.formBuilderState.removeSection(sectionId);
   }
 
-  removeField(fieldId: string | number): void {
-    this.formBuilderState.removeField(fieldId);
+  removeField(fieldId: string | number, sectionId: string | number): void {
+    this.formBuilderState.removeField(fieldId, sectionId);
   }
 
   dropSection(event: CdkDragDrop<FormSection[]>): void {
