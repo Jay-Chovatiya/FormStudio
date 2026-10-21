@@ -425,6 +425,30 @@ export class PropertiesPanelComponent {
     this.sectionForm.patchValue({ theme: color });
   }
 
+  getActiveForm(): FormGroup | null {
+    const tab = this.activeTab();
+    if (tab === 'form') return this.formForm;
+    if (tab === 'section') return this.sectionForm;
+    if (tab === 'field') return this.fieldForm;
+    return null;
+  }
+
+  hasErrors(): boolean {
+    const form = this.getActiveForm();
+    if (form) {
+      form.markAllAsTouched();
+      if (form.invalid) return true;
+    }
+    return this.propertyErrors().length > 0;
+  }
+
+  applyActiveChanges(): void {
+    const tab = this.activeTab();
+    if (tab === 'form') this.applyFormChanges();
+    else if (tab === 'section') this.applySectionChanges();
+    else if (tab === 'field') this.applyFieldChanges();
+  }
+
   applyFormChanges(): void {
     this.formForm.markAllAsTouched();
     if (this.formForm.invalid) {

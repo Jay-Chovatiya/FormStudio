@@ -64,12 +64,12 @@ export class FormBuilderState {
   }
 
   setForm(formDefinition: FormDefinition): void {
-    this.recordState();
     const normalized = normalizeFormGuids(formDefinition);
     this.form.set(normalized);
     this.selectedSectionId.set(null);
     this.selectedFieldId.set(null);
     this.activeTab.set('form');
+    this.resetHistory();
   }
 
   createNewForm(name: string = 'Untitled Form', description: string = ''): void {
@@ -95,6 +95,7 @@ export class FormBuilderState {
     this.selectedSectionId.set(null);
     this.selectedFieldId.set(null);
     this.activeTab.set('form');
+    this.resetHistory();
   }
 
   updateFormMetadata(updates: Partial<FormDefinition>): void {
@@ -420,6 +421,13 @@ export class FormBuilderState {
 
     this.futureStack = [];
     this.canUndo.set(true);
+    this.canRedo.set(false);
+  }
+
+  resetHistory(): void {
+    this.historyStack = [];
+    this.futureStack = [];
+    this.canUndo.set(false);
     this.canRedo.set(false);
   }
 
