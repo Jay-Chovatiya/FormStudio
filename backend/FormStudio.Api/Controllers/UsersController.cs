@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FormStudio.Application.Common;
 using FormStudio.Application.DTOs;
 using FormStudio.Application.Interfaces.Services;
@@ -8,7 +9,7 @@ namespace FormStudio.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "SuperAdministrator")]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -19,6 +20,7 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "SuperAdministrator")]
         public async Task<ActionResult<ApiResponse<IEnumerable<UserDto>>>> GetUsers()
         {
             IEnumerable<UserDto> users = await _userService.GetUsersAsync();
@@ -28,6 +30,15 @@ namespace FormStudio.Api.Controllers
         [HttpGet("{id:int}")]
         public async Task<ActionResult<ApiResponse<UserDto>>> GetUserById(int id)
         {
+            string? currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            bool isSelf = int.TryParse(currentUserIdStr, out int currentUserId) && currentUserId == id;
+            bool isSuperAdmin = User.IsInRole("SuperAdministrator");
+
+            if (!isSuperAdmin && !isSelf)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Access denied." });
+            }
+
             UserDto? user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
@@ -37,6 +48,7 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "SuperAdministrator")]
         public async Task<ActionResult<ApiResponse<UserDto>>> CreateUser([FromBody] UserUpsertDto dto)
         {
             if (!ModelState.IsValid)
@@ -71,9 +83,38 @@ namespace FormStudio.Api.Controllers
         [HttpPut("{id:int}")]
         public async Task<ActionResult<ApiResponse<UserDto>>> UpdateUser(int id, [FromBody] UserUpsertDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Password))
+            {
+                ModelState.Remove(nameof(dto.Password));
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            string? currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            bool isSelf = int.TryParse(currentUserIdStr, out int currentUserId) && currentUserId == id;
+            bool isSuperAdmin = User.IsInRole("SuperAdministrator");
+
+            if (!isSuperAdmin && !isSelf)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "You are only allowed to edit your own profile." });
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Password) && !isSelf)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "You are only allowed to change your own password. Password cannot be changed for other users." });
+            }
+
+            if (!isSuperAdmin)
+            {
+                UserDto? existing = await _userService.GetUserByIdAsync(id);
+                if (existing != null)
+                {
+                    dto.Role = existing.Role;
+                    dto.IsActive = existing.IsActive;
+                }
             }
 
             bool isUsernameUnique = await _userService.IsUsernameUniqueAsync(dto.Username, id);
@@ -100,6 +141,7 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpPatch("{id:int}/toggle-status")]
+        [Authorize(Roles = "SuperAdministrator")]
         public async Task<ActionResult<ApiResponse<object?>>> ToggleUserStatus(int id)
         {
             bool success = await _userService.ToggleUserStatusAsync(id);
@@ -111,6 +153,7 @@ namespace FormStudio.Api.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "SuperAdministrator")]
         public async Task<ActionResult<ApiResponse<object?>>> DeleteUser(int id)
         {
             bool success = await _userService.DeleteUserAsync(id);

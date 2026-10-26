@@ -2,7 +2,7 @@
   display: block;
   height: 100vh;
   overflow: hidden;
-  background-color: var(--fs-bg);
+  background-color: transparent;
 }
 
 .builder-container {
@@ -14,14 +14,16 @@
 .builder-header {
   height: 56px;
   min-height: 56px;
-  background-color: var(--fs-surface);
-  border-bottom: 1px solid var(--fs-border);
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--fs-space-md);
   z-index: 10;
-  box-shadow: var(--fs-shadow-xs);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 .header-brand {
@@ -426,8 +428,10 @@
   width: 270px;
   min-width: 270px;
   height: 100%;
-  border-right: 1px solid var(--fs-border);
-  background-color: var(--fs-surface);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   overflow-y: auto;
 }
 
@@ -435,15 +439,17 @@
   flex: 1;
   height: 100%;
   overflow-y: auto;
-  background-color: var(--fs-bg);
+  background-color: transparent;
 }
 
 .workspace-properties {
   width: 340px;
   min-width: 340px;
   height: 100%;
-  border-left: 1px solid var(--fs-border);
-  background-color: var(--fs-surface);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   overflow-y: auto;
 }
 

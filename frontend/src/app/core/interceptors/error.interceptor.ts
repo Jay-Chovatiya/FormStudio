@@ -44,6 +44,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       let title = 'Error';
 
       if (error instanceof HttpErrorResponse) {
+        if (error.status === 401 && !req.url.includes('/auth/login')) {
+          return throwError(() => error);
+        }
         message = extractErrorMessage(error);
         title = getStatusTitle(error.status);
 

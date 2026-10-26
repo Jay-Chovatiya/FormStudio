@@ -7,11 +7,12 @@ import { FormDefinition } from '../../core/models/form-definition';
 import { FormSection } from '../../core/models/form-section';
 import { FormStatus } from '../../core/models/form-status';
 import { ToastService } from '../../core/services/toast.service';
+import { UserEditModalComponent } from '../../shared/components/user-edit-modal/user-edit-modal.component';
 
 @Component({
   selector: 'app-form-list',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, UserEditModalComponent],
   templateUrl: './form-list.component.html',
   styleUrl: './form-list.component.scss'
 })
@@ -20,6 +21,8 @@ export class FormListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
   readonly authService = inject(AuthService);
+
+  readonly isProfileModalOpen = signal<boolean>(false);
 
   readonly forms = signal<FormDefinition[]>([]);
   readonly loading = signal<boolean>(true);
@@ -146,6 +149,14 @@ export class FormListComponent implements OnInit {
 
   goToUsers(): void {
     this.router.navigate(['/users']);
+  }
+
+  openEditProfileModal(): void {
+    this.isProfileModalOpen.set(true);
+  }
+
+  closeProfileModal(): void {
+    this.isProfileModalOpen.set(false);
   }
 
   logout(): void {

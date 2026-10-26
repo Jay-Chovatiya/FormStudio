@@ -1,18 +1,18 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UserManagementService } from '../../core/services/user-management.service';
 import { AuthService } from '../../core/services/auth.service';
-import { User, UserUpsertRequest, UserRole } from '../../core/models/user';
+import { User } from '../../core/models/user';
 import { NavigationHistoryService } from '../../core/services/navigation-history.service';
-import { emailValidator } from '../../core/utils/regex.constants';
 import { ToastService } from '../../core/services/toast.service';
+import { UserEditModalComponent } from '../../shared/components/user-edit-modal/user-edit-modal.component';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, UserEditModalComponent],
   templateUrl: './user-management.component.html',
   styleUrl: './user-management.component.scss'
 })
@@ -21,32 +21,18 @@ export class UserManagementComponent implements OnInit {
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly navHistory = inject(NavigationHistoryService);
-  private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
   readonly users = signal<User[]>([]);
   readonly loading = signal<boolean>(true);
   readonly error = signal<string | null>(null);
-  readonly actionError = signal<string | null>(null);
 
   readonly searchTerm = signal<string>('');
   readonly selectedRole = signal<string>('ALL');
   readonly selectedStatus = signal<string>('ALL');
 
-  // Modal state
   readonly isModalOpen = signal<boolean>(false);
-  readonly isEditing = signal<boolean>(false);
-  readonly currentUserId = signal<number | null>(null);
-  readonly isSaving = signal<boolean>(false);
-
-  userForm: FormGroup = this.fb.group({
-    username: ['', [Validators.required, Validators.minLength(3)]],
-    email: ['', [Validators.required, emailValidator]],
-    fullName: ['', [Validators.required]],
-    role: ['Administrator', [Validators.required]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    isActive: [true]
-  });
+  readonly selectedUser = signal<User | null>(null);
 
   readonly filteredUsers = computed(() => {
     const search = this.searchTerm().toLowerCase().trim();
@@ -93,100 +79,25 @@ export class UserManagementComponent implements OnInit {
   }
 
   openCreateModal(): void {
-    this.isEditing.set(false);
-    this.currentUserId.set(null);
-    this.actionError.set(null);
-
-    const passwordControl = this.userForm.get('password');
-    passwordControl?.enable();
-    passwordControl?.setValidators([Validators.required, Validators.minLength(6)]);
-
-    this.userForm.reset({
-      username: '',
-      email: '',
-      fullName: '',
-      role: 'Administrator',
-      password: '',
-      isActive: true
-    });
-    passwordControl?.updateValueAndValidity();
-
+    this.selectedUser.set(null);
     this.isModalOpen.set(true);
   }
 
   openEditModal(user: User): void {
-    this.isEditing.set(true);
-    this.currentUserId.set(user.id);
-    this.actionError.set(null);
-
-    const passwordControl = this.userForm.get('password');
-    passwordControl?.clearValidators();
-    passwordControl?.disable();
-    passwordControl?.updateValueAndValidity();
-
-    this.userForm.reset();
-    this.userForm.patchValue({
-      username: user.username,
-      email: user.email,
-      fullName: user.fullName || '',
-      role: user.role,
-      isActive: user.isActive
-    });
-
+    this.selectedUser.set(user);
     this.isModalOpen.set(true);
   }
 
   closeModal(): void {
     this.isModalOpen.set(false);
-    this.actionError.set(null);
   }
 
-  saveUser(): void {
-    if (this.userForm.invalid) {
-      this.userForm.markAllAsTouched();
-      return;
-    }
-
-    this.isSaving.set(true);
-    this.actionError.set(null);
-
-    const formVal = this.userForm.getRawValue();
-    const payload: UserUpsertRequest = {
-      username: formVal.username,
-      email: formVal.email,
-      fullName: formVal.fullName || '',
-      role: formVal.role as UserRole,
-      isActive: formVal.isActive ?? true,
-      password: formVal.password || undefined
-    };
-
-    if (this.isEditing()) {
-      const id = this.currentUserId()!;
-      this.userService.updateUser(id, payload).subscribe({
-        next: (updatedUser) => {
-          this.users.update((list) => list.map((u) => (u.id === id ? updatedUser : u)));
-          this.isSaving.set(false);
-          this.closeModal();
-          this.toastService.success('User updated successfully!');
-        },
-        error: (err) => {
-          this.isSaving.set(false);
-          this.actionError.set(err.error?.message || 'Failed to update user.');
-        }
-      });
+  onUserSaved(savedUser: User): void {
+    const isEdit = this.users().some((u) => u.id === savedUser.id);
+    if (isEdit) {
+      this.users.update((list) => list.map((u) => (u.id === savedUser.id ? savedUser : u)));
     } else {
-      this.userService.createUser(payload).subscribe({
-        next: (newUser) => {
-          this.users.update((list) => [newUser, ...list]);
-          this.isSaving.set(false);
-          this.closeModal();
-          this.toastService.success('User created successfully!');
-        },
-        error: (err) => {
-          this.isSaving.set(false);
-          this.actionError.set(err.error?.message || 'Failed to create user.');
-        }
-      });
+      this.users.update((list) => [savedUser, ...list]);
     }
   }
 

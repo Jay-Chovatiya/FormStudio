@@ -68,6 +68,11 @@ namespace FormStudio.Application.Services
             user.IsActive = dto.IsActive;
             user.UpdatedAt = DateTime.Now;
 
+            if (!string.IsNullOrWhiteSpace(dto.Password))
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password.Trim());
+            }
+
             _unitOfWork.Repository<UserEntity>().Update(user);
             await _unitOfWork.CompleteAsync();
 

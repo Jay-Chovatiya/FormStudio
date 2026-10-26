@@ -11,8 +11,10 @@
 
 .panel-header {
   padding: var(--fs-space-md);
-  border-bottom: 1px solid var(--fs-border);
-  background-color: var(--fs-surface);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -50,7 +52,8 @@
     font-size: var(--fs-font-size-xs);
     font-family: monospace;
     color: var(--fs-text-muted);
-    background-color: var(--fs-surface-alt);
+    background-color: rgba(30, 41, 59, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 2px 6px;
     border-radius: 4px;
     margin-top: 4px;
@@ -66,11 +69,12 @@
 }
 
 .prop-group {
-  background-color: var(--fs-surface);
-  border: 1px solid var(--fs-border);
+  background-color: rgba(30, 41, 59, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--fs-radius-md);
   padding: var(--fs-space-md);
-  box-shadow: var(--fs-shadow-xs);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 
   .group-header-row {
     display: flex;

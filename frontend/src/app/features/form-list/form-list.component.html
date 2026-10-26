@@ -9,7 +9,7 @@
     </div>
     <div class="header-actions">
       @if (authService.currentUser(); as me) {
-        <div class="current-user-badge">
+        <div class="current-user-badge" (click)="openEditProfileModal()" title="Click to edit your profile & password">
           <div class="user-avatar-sm">{{ me.username.charAt(0).toUpperCase() }}</div>
           <div class="user-meta">
             <span class="user-name">{{ me.fullName || me.username }}</span>
@@ -87,7 +87,12 @@
   @if (!loading() && !error() && filteredForms().length > 0) {
     <div class="forms-grid">
       @for (form of filteredForms(); track form.id || form.code) {
-        <div class="form-card" (click)="onEditForm(form)">
+        <div
+          class="form-card"
+          [class.has-custom-theme]="!!form.theme"
+          [style.borderTopColor]="form.theme || null"
+          (click)="onEditForm(form)"
+        >
           <div class="card-header">
             <div class="title-section">
               <h3 class="form-title">{{ form.name }}</h3>
@@ -112,6 +117,12 @@
           </p>
 
           <div class="card-metadata">
+            @if (form.theme) {
+              <span class="meta-tag theme-tag" [title]="'Selected Theme: ' + form.theme">
+                <span class="theme-color-dot" [style.backgroundColor]="form.theme"></span>
+                Theme
+              </span>
+            }
             @if (form.category) {
               <span class="meta-tag category">
                 📁 {{ form.category }}
@@ -164,4 +175,11 @@
       }
     </div>
   }
+
+  <!-- Shared Edit Profile Modal -->
+  <app-user-edit-modal
+    [isOpen]="isProfileModalOpen()"
+    [user]="authService.currentUser()"
+    (closed)="closeProfileModal()"
+  />
 </div>

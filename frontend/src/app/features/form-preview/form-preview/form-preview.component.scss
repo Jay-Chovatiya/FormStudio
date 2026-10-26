@@ -1,7 +1,7 @@
 :host {
   display: block;
   min-height: 100vh;
-  background-color: var(--fs-bg);
+  background-color: transparent;
 }
 
 .preview-page-wrapper {
@@ -12,13 +12,15 @@
 
 .preview-navbar {
   height: 56px;
-  background-color: var(--fs-surface);
-  border-bottom: 1px solid var(--fs-border);
+  background-color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--fs-space-lg);
-  box-shadow: var(--fs-shadow-xs);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 50;

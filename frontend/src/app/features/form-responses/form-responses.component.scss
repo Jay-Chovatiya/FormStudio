@@ -1,7 +1,7 @@
 :host {
   display: block;
   min-height: 100vh;
-  background-color: var(--fs-bg);
+  background-color: transparent;
 }
 
 .responses-page {
@@ -13,8 +13,10 @@
 .responses-header {
   height: 56px;
   min-height: 56px;
-  background-color: var(--fs-surface);
-  border-bottom: 1px solid var(--fs-border);
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -22,7 +24,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  box-shadow: var(--fs-shadow-xs);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 .header-brand {
@@ -205,9 +207,12 @@
 .state-card {
   text-align: center;
   padding: 48px 20px;
-  background: var(--fs-surface);
-  border-radius: 8px;
-  border: 1px solid var(--fs-border);
+  background: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
   margin-bottom: 24px;
 
   .spinner {
@@ -229,11 +234,13 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .table-card {
-  background: var(--fs-surface);
-  border-radius: 8px;
-  border: 1px solid var(--fs-border);
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   overflow: hidden;
-  box-shadow: var(--fs-shadow-xs);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
 
   .table-responsive { overflow-x: auto; }
 }
@@ -243,22 +250,23 @@
   border-collapse: collapse;
   font-size: 13px;
   text-align: left;
+  color: #f1f5f9;
 
   th {
-    background: var(--fs-surface-alt);
-    border-bottom: 1px solid var(--fs-border);
+    background: rgba(30, 41, 59, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     padding: 12px 14px;
     font-weight: 600;
-    color: var(--fs-text-muted);
+    color: #94a3b8;
     font-size: 12px;
     text-transform: uppercase;
     white-space: nowrap;
   }
 
   tr.table-row {
-    border-bottom: 1px solid var(--fs-border);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     cursor: pointer;
-    &:hover { background: #f8fafc; }
+    &:hover { background: rgba(51, 65, 85, 0.45); }
     &:last-child { border-bottom: none; }
   }
 

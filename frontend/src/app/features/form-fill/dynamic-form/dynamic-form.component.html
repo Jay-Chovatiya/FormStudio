@@ -27,7 +27,13 @@
   </div>
 } @else if (activeForm(); as currentForm) {
   <div class="public-form-shell" [class.is-preview-shell]="isPreview()">
-    <div class="public-form-card" [style.backgroundColor]="currentForm.theme || null">
+    <div
+      class="public-form-card"
+      [class.has-custom-theme]="!!currentForm.theme"
+      [class.theme-light]="isThemeLight(currentForm.theme)"
+      [class.theme-dark]="currentForm.theme && !isThemeLight(currentForm.theme)"
+      [style.backgroundColor]="currentForm.theme || null"
+    >
       @if (currentForm.logoUrl) {
         <div class="public-logo-wrapper">
           <img [src]="currentForm.logoUrl" alt="Form Logo" class="public-logo" />
@@ -149,7 +155,9 @@
             @if (section.visibility) {
               <section
                 class="df-section"
-                [class.has-custom-theme]="!!section.theme"
+                [class.has-custom-theme]="!!(section.theme || currentForm.theme)"
+                [class.theme-light]="isThemeLight(section.theme || currentForm.theme)"
+                [class.theme-dark]="(section.theme || currentForm.theme) && !isThemeLight(section.theme || currentForm.theme)"
                 [style.backgroundColor]="section.theme || null"
               >
                 <h2 class="df-section-title">{{ section.title }}</h2>
@@ -387,6 +395,7 @@
                 class="fs-btn fs-btn-secondary btn-save-draft"
                 (click)="saveAsDraft()"
                 title="Save draft to finish later"
+                [disabled]="isSubmitting() || (statusWarning()?.isBlocked ?? false)"
               >
                 💾 Save Draft
               </button>

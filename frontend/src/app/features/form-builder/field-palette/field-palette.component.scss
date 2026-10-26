@@ -35,21 +35,23 @@
   align-items: center;
   gap: var(--fs-space-sm);
   padding: 0.65rem var(--fs-space-sm);
-  background-color: var(--fs-surface);
-  border: 1px solid var(--fs-border);
+  background-color: rgba(30, 41, 59, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--fs-radius-sm);
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
+  color: #f1f5f9;
 
   &:hover {
-    border-color: var(--fs-primary-border);
-    background-color: var(--fs-primary-light);
+    border-color: rgba(129, 140, 248, 0.5);
+    background-color: rgba(99, 102, 241, 0.25);
     transform: translateY(-1px);
-    box-shadow: var(--fs-shadow-xs);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 15px rgba(99, 102, 241, 0.25);
 
     .drag-grip {
-      color: var(--fs-primary);
+      color: #818cf8;
     }
   }
 

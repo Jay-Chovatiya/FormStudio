@@ -394,6 +394,10 @@ export class PropertiesPanelComponent {
     '#f0fdf4',
     '#eff6ff',
     '#faf5ff',
+    '#0f172a',
+    '#1e1b4b',
+    '#1e293b',
+    '#2e1065',
   ];
 
   presetFieldIcons: string[] = ['📝', '👤', '📧', '📞', '📅', '🕒', '🏢', '📍', '🔢', '💬', '⭐', '🏷️', '🌐', '🔒'];

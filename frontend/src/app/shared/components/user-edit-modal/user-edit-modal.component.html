@@ -1,0 +1,159 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ modalTitle() }}</h2>
+        <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      @if (actionError()) {
+        <div class="modal-alert alert-danger">
+          {{ actionError() }}
+        </div>
+      }
+
+      <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="modal-form" autocomplete="off">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="modal-username">Username *</label>
+            <input
+              id="modal-username"
+              type="text"
+              formControlName="username"
+              placeholder="e.g. jdoe"
+              autocomplete="off"
+              [class.is-invalid]="userForm.get('username')?.touched && userForm.get('username')?.invalid"
+            />
+            @if (userForm.get('username')?.touched && userForm.get('username')?.hasError('required')) {
+              <span class="field-error">Username is required.</span>
+            }
+            @if (userForm.get('username')?.touched && userForm.get('username')?.hasError('minlength')) {
+              <span class="field-error">Minimum 3 characters.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="modal-fullname">Full Name</label>
+            <input
+              id="modal-fullname"
+              type="text"
+              formControlName="fullName"
+              placeholder="e.g. John Doe"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="modal-email">Email Address *</label>
+          <input
+            id="modal-email"
+            type="email"
+            formControlName="email"
+            placeholder="e.g. john@formstudio.com"
+            [class.is-invalid]="userForm.get('email')?.touched && userForm.get('email')?.invalid"
+          />
+          @if (userForm.get('email')?.touched && userForm.get('email')?.hasError('required')) {
+            <span class="field-error">Email is required.</span>
+          }
+          @if (userForm.get('email')?.touched && userForm.get('email')?.hasError('email')) {
+            <span class="field-error">Valid email format required.</span>
+          }
+        </div>
+
+        <!-- Role & Status Row -->
+        <div class="form-row">
+          <div class="form-group" [class.form-group-disabled]="!canEditRoleAndStatus()">
+            <label for="modal-role">
+              Role {{ canEditRoleAndStatus() ? '*' : '(Managed by Admin)' }}
+            </label>
+            <select id="modal-role" formControlName="role">
+              <option value="Administrator">Administrator</option>
+              <option value="SuperAdministrator">Super Administrator</option>
+            </select>
+          </div>
+
+          <div class="form-group" [class.form-group-disabled]="!canEditRoleAndStatus()">
+            <label for="modal-status">
+              Account Status {{ canEditRoleAndStatus() ? '' : '(Managed by Admin)' }}
+            </label>
+            <select id="modal-status" formControlName="isActive">
+              <option [ngValue]="true">Active</option>
+              <option [ngValue]="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group" [class.form-group-disabled]="isEditing() && !isEditingSelf()">
+          <label for="modal-password">
+            @if (!isEditing()) {
+              Password *
+            } @else if (isEditingSelf()) {
+              New Password (Optional)
+            } @else {
+              Password (Disabled)
+            }
+          </label>
+          <div class="input-password-wrapper">
+            <input
+              id="modal-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              [placeholder]="!isEditing() ? 'Min. 6 characters' : isEditingSelf() ? 'Leave blank to keep current password' : 'Only account holder can change password'"
+              [class.is-invalid]="userForm.get('password')?.touched && userForm.get('password')?.invalid"
+            />
+            @if (!isEditing() || isEditingSelf()) {
+              <button
+                type="button"
+                class="btn-toggle-password"
+                (click)="togglePasswordVisibility()"
+                [title]="showPassword() ? 'Hide password' : 'Show password'"
+                tabindex="-1"
+              >
+                @if (showPassword()) {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                } @else {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                }
+              </button>
+            }
+          </div>
+          @if (isEditing()) {
+            @if (isEditingSelf()) {
+              <span class="field-hint">Leave blank if you do not want to change your password.</span>
+            } @else {
+              <span class="field-hint">Only the account holder can change their password.</span>
+            }
+          }
+          @if (!isEditing() && userForm.get('password')?.touched && userForm.get('password')?.hasError('required')) {
+            <span class="field-error">Password is required.</span>
+          }
+          @if (userForm.get('password')?.touched && userForm.get('password')?.hasError('minlength')) {
+            <span class="field-error">Minimum 6 characters.</span>
+          }
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSaving()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+            @if (isSaving()) {
+              <span class="spinner-sm"></span>
+              <span>Saving...</span>
+            } @else {
+              <span>{{ isEditing() ? 'Save Changes' : 'Create User' }}</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

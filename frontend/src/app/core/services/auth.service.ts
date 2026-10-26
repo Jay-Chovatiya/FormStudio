@@ -74,6 +74,13 @@ export class AuthService {
     );
   }
 
+  updateCurrentUser(user: User): void {
+    this.currentUser.set(user);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    }
+  }
+
   private setSession(authResult: AuthResponseDto): void {
     this.token.set(authResult.token);
     this.currentUser.set(authResult.user);

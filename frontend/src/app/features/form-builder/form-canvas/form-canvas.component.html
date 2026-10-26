@@ -5,6 +5,10 @@
       <div
         class="form-header-card"
         [class.selected]="activeTab() === 'form'"
+        [class.has-custom-theme]="!!currentForm.theme"
+        [class.theme-light]="isThemeLight(currentForm.theme)"
+        [class.theme-dark]="currentForm.theme && !isThemeLight(currentForm.theme)"
+        [style.backgroundColor]="currentForm.theme || null"
         (click)="openFormProperties()"
         role="button"
         tabindex="0"
@@ -45,7 +49,10 @@
             class="canvas-section"
             [class.selected]="isSectionSelected(section.guid || section.id)"
             [class.section-hidden]="!section.visibility"
-            [style.backgroundColor]="section.theme || null"
+            [class.has-custom-theme]="!!(section.theme || currentForm.theme)"
+            [class.theme-light]="isThemeLight(section.theme || currentForm.theme)"
+            [class.theme-dark]="(section.theme || currentForm.theme) && !isThemeLight(section.theme || currentForm.theme)"
+            [style.backgroundColor]="section.theme || currentForm.theme || null"
           >
             <div class="section-header">
               <div class="section-drag-handle" cdkDragHandle title="Drag section to reorder">
