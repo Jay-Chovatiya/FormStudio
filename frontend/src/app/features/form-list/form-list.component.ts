@@ -11,7 +11,6 @@ import { UserEditModalComponent } from '../../shared/components/user-edit-modal/
 
 @Component({
   selector: 'app-form-list',
-  standalone: true,
   imports: [FormsModule, UserEditModalComponent],
   templateUrl: './form-list.component.html',
   styleUrl: './form-list.component.scss'
@@ -64,7 +63,6 @@ export class FormListComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err: unknown) => {
-        console.error('Failed to load forms:', err);
         this.error.set((err as any)?.message || 'Failed to connect to backend server. Please ensure the backend is running.');
         this.loading.set(false);
       }

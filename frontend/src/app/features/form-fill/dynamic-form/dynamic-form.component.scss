@@ -23,79 +23,15 @@
   background-color: rgba(15, 23, 42, 0.82);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--fs-border);
   border-radius: var(--fs-radius-lg);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55), 0 0 35px rgba(99, 102, 241, 0.25);
   padding: 32px;
   display: flex;
   flex-direction: column;
   gap: var(--fs-space-lg);
-  color: #f8fafc;
+  color: var(--fs-text-main);
   transition: all 0.2s ease;
-
-  &.theme-light {
-    color: #0f172a;
-    border-color: rgba(0, 0, 0, 0.12);
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
-
-    .public-title {
-      color: #0f172a !important;
-    }
-
-    .public-desc {
-      color: #475569 !important;
-    }
-
-    .df-section-title {
-      color: #0f172a !important;
-    }
-
-    .df-section-desc {
-      color: #475569 !important;
-    }
-
-    .df-field-label {
-      color: #0f172a !important;
-    }
-
-    .fs-input,
-    .fs-select,
-    .fs-textarea {
-      background-color: rgba(255, 255, 255, 0.95);
-      color: #0f172a;
-      border-color: #cbd5e1;
-
-      &:focus {
-        border-color: #4f46e5;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-      }
-    }
-  }
-
-  &.theme-dark {
-    color: #f8fafc;
-    border-color: rgba(255, 255, 255, 0.15);
-
-    .public-title {
-      color: #ffffff !important;
-    }
-
-    .public-desc {
-      color: #94a3b8 !important;
-    }
-
-    .df-section-title {
-      color: #ffffff !important;
-    }
-
-    .df-section-desc {
-      color: #94a3b8 !important;
-    }
-
-    .df-field-label {
-      color: #f1f5f9 !important;
-    }
-  }
 }
 
 .public-logo-wrapper {

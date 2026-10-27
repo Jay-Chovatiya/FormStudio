@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UserManagementService } from '../../core/services/user-management.service';
@@ -11,8 +11,7 @@ import { UserEditModalComponent } from '../../shared/components/user-edit-modal/
 
 @Component({
   selector: 'app-user-management',
-  standalone: true,
-  imports: [CommonModule, FormsModule, UserEditModalComponent],
+  imports: [DatePipe, FormsModule, UserEditModalComponent],
   templateUrl: './user-management.component.html',
   styleUrl: './user-management.component.scss'
 })
@@ -71,7 +70,6 @@ export class UserManagementComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        console.error('Failed to load users:', err);
         this.error.set('Failed to load users from the server.');
         this.loading.set(false);
       }

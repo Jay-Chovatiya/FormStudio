@@ -5,6 +5,7 @@ import { FormSection } from '../../../core/models/form-section';
 import { FormField } from '../../../core/models/form-field';
 import { Router } from '@angular/router';
 import { TitleCasePipe } from '@angular/common';
+import { getContrastStyles } from '../../../core/utils/theme-contrast.util';
 
 @Component({
   imports: [CdkDrag, CdkDropList, CdkDropListGroup, CdkDragHandle, TitleCasePipe],
@@ -21,26 +22,10 @@ export class FormCanvasComponent {
   readonly canUndo = this.formBuilderState.canUndo;
   readonly canRedo = this.formBuilderState.canRedo;
 
+  readonly getContrastStyles = getContrastStyles;
+
   openFormProperties(): void {
     this.formBuilderState.selectFormSettings();
-  }
-
-  isThemeLight(color?: string | null): boolean {
-    if (!color) return false;
-    const hex = color.replace('#', '').trim();
-    if (hex.length === 3) {
-      const r = parseInt(hex[0] + hex[0], 16);
-      const g = parseInt(hex[1] + hex[1], 16);
-      const b = parseInt(hex[2] + hex[2], 16);
-      return (r * 299 + g * 587 + b * 114) / 1000 > 140;
-    }
-    if (hex.length === 6) {
-      const r = parseInt(hex.substring(0, 2), 16);
-      const g = parseInt(hex.substring(2, 4), 16);
-      const b = parseInt(hex.substring(4, 6), 16);
-      return (r * 299 + g * 587 + b * 114) / 1000 > 140;
-    }
-    return true;
   }
 
   selectSection(sectionId: string | number): void {

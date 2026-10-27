@@ -7,7 +7,6 @@ import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
   imports: [ReactiveFormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'

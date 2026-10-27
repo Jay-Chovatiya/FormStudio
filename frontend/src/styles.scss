@@ -99,7 +99,7 @@ body {
   font-family: inherit;
   font-size: var(--fs-font-size-sm);
   color: var(--fs-text-main);
-  background-color: rgba(15, 23, 42, 0.75);
+  background-color: var(--fs-surface);
   backdrop-filter: blur(8px);
   border: 1px solid var(--fs-border);
   border-radius: var(--fs-radius-sm);
@@ -107,8 +107,8 @@ body {
   outline: none;
 
   option {
-    background-color: #0f172a;
-    color: #f8fafc;
+    background-color: var(--fs-surface);
+    color: var(--fs-text-main);
   }
 
   &::placeholder {
@@ -122,7 +122,7 @@ body {
   &:focus {
     border-color: var(--fs-border-focus);
     box-shadow: var(--fs-focus-ring);
-    background-color: rgba(15, 23, 42, 0.95);
+    background-color: var(--fs-surface);
   }
 
   &:disabled {
@@ -165,6 +165,10 @@ body {
   color: var(--fs-text-main);
   cursor: pointer;
   user-select: none;
+
+  span {
+    color: inherit;
+  }
 
   input[type="checkbox"],
   input[type="radio"] {

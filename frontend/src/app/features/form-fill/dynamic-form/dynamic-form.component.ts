@@ -32,6 +32,7 @@ import { UploadService } from '../../../core/services/upload.service';
 import { NavigationHistoryService } from '../../../core/services/navigation-history.service';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { emailValidator } from '../../../core/utils/regex.constants';
+import { getContrastStyles } from '../../../core/utils/theme-contrast.util';
 import { ToastService } from '../../../core/services/toast.service';
 import { forkJoin, map } from 'rxjs';
 
@@ -69,23 +70,7 @@ export class DynamicFormComponent implements OnInit {
 
   form = new FormGroup<Record<string, AbstractControl>>({});
 
-  isThemeLight(color?: string | null): boolean {
-    if (!color) return false;
-    const hex = color.replace('#', '').trim();
-    if (hex.length === 3) {
-      const r = parseInt(hex[0] + hex[0], 16);
-      const g = parseInt(hex[1] + hex[1], 16);
-      const b = parseInt(hex[2] + hex[2], 16);
-      return (r * 299 + g * 587 + b * 114) / 1000 > 140;
-    }
-    if (hex.length === 6) {
-      const r = parseInt(hex.substring(0, 2), 16);
-      const g = parseInt(hex.substring(2, 4), 16);
-      const b = parseInt(hex.substring(4, 6), 16);
-      return (r * 299 + g * 587 + b * 114) / 1000 > 140;
-    }
-    return true;
-  }
+  readonly getContrastStyles = getContrastStyles;
 
   readonly statusWarning = computed<{ message: string; isBlocked: boolean } | null>(() => {
     if (this.isPreview()) return null;
@@ -175,7 +160,6 @@ export class DynamicFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        console.error('Failed to load form definition:', err);
         this.error.set(err?.message || 'Invalid form URL or form is not currently active.');
       },
     });
@@ -502,10 +486,8 @@ export class DynamicFormComponent implements OnInit {
         this.uploadedFilesMap.set(uploadedMap);
         this.sendSubmission(formDefinition, uploadedMap);
       },
-      error: (err) => {
+      error: () => {
         this.isSubmitting.set(false);
-        const errMsg = err?.error?.message || err?.message || 'Failed to upload file(s). Please try again.';
-        this.toastService.error(errMsg);
       },
     });
   }
@@ -552,9 +534,8 @@ export class DynamicFormComponent implements OnInit {
         }
         this.toastService.success('Form response submitted successfully!');
       },
-      error: (err) => {
+      error: () => {
         this.isSubmitting.set(false);
-        this.toastService.error(err?.error?.message || 'Failed to submit form response.');
       },
     });
   }

@@ -1,5 +1,4 @@
 import { Component, input, output, signal, computed, inject, effect, untracked } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserManagementService } from '../../../core/services/user-management.service';
@@ -9,8 +8,7 @@ import { emailValidator } from '../../../core/utils/regex.constants';
 
 @Component({
   selector: 'app-user-edit-modal',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './user-edit-modal.component.html',
   styleUrl: './user-edit-modal.component.scss'
 })
@@ -56,17 +54,15 @@ export class UserEditModalComponent {
     isActive: [true]
   });
 
-  constructor() {
-    effect(() => {
-      const open = this.isOpen();
-      const targetUser = this.user();
-      untracked(() => {
-        if (open) {
-          this.setupForm(targetUser);
-        }
-      });
+  private readonly formSetupEffect = effect(() => {
+    const open = this.isOpen();
+    const targetUser = this.user();
+    untracked(() => {
+      if (open) {
+        this.setupForm(targetUser);
+      }
     });
-  }
+  });
 
   togglePasswordVisibility(): void {
     this.showPassword.update((val) => !val);

@@ -18,15 +18,26 @@ export class ToastService {
   readonly toasts = this._toasts.asReadonly();
 
   private recentToasts = new Map<string, number>();
+  private lastErrorTime = 0;
   private timers = new Map<string, any>();
 
   show(toast: Omit<Toast, 'id'>): string {
-    const key = `${toast.type}:${toast.message}`;
     const now = Date.now();
+    const normalizedMsg = (toast.message || '').trim().toLowerCase();
+    const key = `${toast.type}:${normalizedMsg}`;
     const lastTime = this.recentToasts.get(key) || 0;
 
-    if (now - lastTime < 1500) {
+
+    if (now - lastTime < 2000) {
       return '';
+    }
+
+    if (toast.type === 'error' && now - this.lastErrorTime < 800) {
+      return '';
+    }
+
+    if (toast.type === 'error') {
+      this.lastErrorTime = now;
     }
     this.recentToasts.set(key, now);
 

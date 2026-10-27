@@ -2,7 +2,8 @@ import {
   Component,
   ElementRef,
   NgZone,
-  ViewChild,
+  viewChild,
+  inject,
   AfterViewInit,
   OnDestroy,
   HostListener,
@@ -40,13 +41,13 @@ interface FallingStar {
 
 @Component({
   selector: 'app-hero-background',
-  standalone: true,
   templateUrl: './hero-background.component.html',
   styleUrl: './hero-background.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeroBackgroundComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('starsCanvas', { static: true }) starsCanvasRef!: ElementRef<HTMLCanvasElement>;
+  readonly starsCanvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('starsCanvas');
+  private readonly ngZone = inject(NgZone);
 
   private isReducedMotion = false;
   private resizeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -57,8 +58,6 @@ export class HeroBackgroundComponent implements AfterViewInit, OnDestroy {
   private fallingStars: FallingStar[] = [];
   private lastFallingStarSpawn = 0;
   private nextFallingStarDelay = 1000;
-
-  constructor(private readonly ngZone: NgZone) {}
 
   ngAfterViewInit(): void {
     this.ngZone.runOutsideAngular(() => {
@@ -104,7 +103,7 @@ export class HeroBackgroundComponent implements AfterViewInit, OnDestroy {
   }
 
   private generateFullSkyStars(): void {
-    const canvas = this.starsCanvasRef?.nativeElement;
+    const canvas = this.starsCanvasRef().nativeElement;
     if (!canvas) return;
 
     const width = typeof window !== 'undefined' ? window.innerWidth : 1920;
@@ -192,7 +191,7 @@ export class HeroBackgroundComponent implements AfterViewInit, OnDestroy {
   }
 
   private startRenderEngine(): void {
-    const canvas = this.starsCanvasRef?.nativeElement;
+    const canvas = this.starsCanvasRef().nativeElement;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');

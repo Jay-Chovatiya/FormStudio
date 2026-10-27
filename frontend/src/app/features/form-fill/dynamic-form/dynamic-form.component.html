@@ -30,9 +30,7 @@
     <div
       class="public-form-card"
       [class.has-custom-theme]="!!currentForm.theme"
-      [class.theme-light]="isThemeLight(currentForm.theme)"
-      [class.theme-dark]="currentForm.theme && !isThemeLight(currentForm.theme)"
-      [style.backgroundColor]="currentForm.theme || null"
+      [style]="getContrastStyles(currentForm.theme)"
     >
       @if (currentForm.logoUrl) {
         <div class="public-logo-wrapper">
@@ -155,10 +153,8 @@
             @if (section.visibility) {
               <section
                 class="df-section"
-                [class.has-custom-theme]="!!(section.theme || currentForm.theme)"
-                [class.theme-light]="isThemeLight(section.theme || currentForm.theme)"
-                [class.theme-dark]="(section.theme || currentForm.theme) && !isThemeLight(section.theme || currentForm.theme)"
-                [style.backgroundColor]="section.theme || null"
+                [class.has-custom-theme]="!!section.theme"
+                [style]="getContrastStyles(section.theme)"
               >
                 <h2 class="df-section-title">{{ section.title }}</h2>
 

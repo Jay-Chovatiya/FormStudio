@@ -245,8 +245,6 @@ export class FormBuilderState {
       updatedAt: new Date().toISOString(),
     });
 
-    console.log(this.form());
-
     this.selectField(sectionId, guid);
     return true;
   }

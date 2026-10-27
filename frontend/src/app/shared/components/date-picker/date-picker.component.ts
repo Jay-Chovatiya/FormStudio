@@ -1,6 +1,7 @@
 import {
   Component,
   ElementRef,
+  inject,
   forwardRef,
   HostListener,
   input,
@@ -186,10 +187,9 @@ export class DatePickerComponent implements ControlValueAccessor {
     return years;
   });
 
+  private readonly elementRef = inject(ElementRef);
   private onChange: (value: string | null) => void = () => {};
   private onTouched: () => void = () => {};
-
-  constructor(private readonly elementRef: ElementRef) {}
 
   // ControlValueAccessor implementation
   writeValue(value: string | null | undefined): void {

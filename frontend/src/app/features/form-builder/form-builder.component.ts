@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, DestroyRef, HostListener, ViewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef, HostListener, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FieldPaletteComponent } from './field-palette/field-palette.component';
 import { FormCanvasComponent } from './form-canvas/form-canvas.component';
@@ -24,7 +24,7 @@ import { FormValidationService } from '../../core/services/form-validation.servi
   templateUrl: './form-builder.component.html',
 })
 export class FormBuilderComponent implements OnInit {
-  @ViewChild(PropertiesPanelComponent) propertiesPanel?: PropertiesPanelComponent;
+  readonly propertiesPanel = viewChild(PropertiesPanelComponent);
   private readonly formBuilderState = inject(FormBuilderState);
   private readonly formService = inject(FormService);
   private readonly route = inject(ActivatedRoute);
@@ -97,12 +97,12 @@ export class FormBuilderComponent implements OnInit {
   }
 
   saveForm(): void {
-    if (this.propertiesPanel?.hasErrors()) {
+    if (this.propertiesPanel()?.hasErrors()) {
       this.toastService.error('Please resolve the errors displayed before saving.', 'Validation Error');
       return;
     }
 
-    this.propertiesPanel?.applyActiveChanges();
+    this.propertiesPanel()?.applyActiveChanges();
 
     const currentForm = this.form();
     if (!currentForm) return;
@@ -117,7 +117,7 @@ export class FormBuilderComponent implements OnInit {
         this.formBuilderState.selectField(validationError.sectionId, validationError.fieldId);
       }
       this.toastService.error(validationError.message, 'Validation Error');
-      setTimeout(() => this.propertiesPanel?.hasErrors(), 0);
+      setTimeout(() => this.propertiesPanel()?.hasErrors(), 0);
       return;
     }
 

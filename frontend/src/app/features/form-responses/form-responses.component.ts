@@ -16,7 +16,6 @@ import { environment } from '../../../environment/environment';
 
 @Component({
   selector: 'app-form-responses',
-  standalone: true,
   imports: [FormsModule, DatePipe],
   templateUrl: './form-responses.component.html',
   styleUrl: './form-responses.component.scss'
@@ -174,7 +173,6 @@ export class FormResponsesComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        console.error('Failed to load submissions:', err);
         this.error.set(err?.message || 'Failed to load form submissions.');
         this.loading.set(false);
       }
