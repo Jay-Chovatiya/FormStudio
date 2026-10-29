@@ -139,7 +139,7 @@ export class HeroBackgroundComponent implements AfterViewInit, OnDestroy {
     let startX = 0;
     let startY = 0;
     let angle = 0;
-    const speed = 16 + Math.random() * 11;
+    const speed = 5 + Math.random() * 11;
     const length = 170 + Math.random() * 150;
     const headRadius = 1.6 + Math.random() * 1.3;
 
